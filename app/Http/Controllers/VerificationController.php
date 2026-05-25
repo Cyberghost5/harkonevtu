@@ -34,8 +34,7 @@ class VerificationController extends Controller
 
         $request->fulfill(); // marks email as verified + fires Verified event
 
-        return redirect()->route('dashboard')
-            ->with('success', 'Email verified successfully. Welcome to PayPulse!');
+        return redirect()->route('dashboard')->with('success', 'Email verified successfully. Welcome to PayPulse!');
     }
 
     public function resendEmail(Request $request): RedirectResponse

@@ -224,6 +224,11 @@
                                   {{ request()->routeIs('services.cable*') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                             Cable TV
                         </a>
+                        <a href="{{ route('services.epins') }}"
+                           class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
+                                  {{ request()->routeIs('services.epins*') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
+                            Exam Pins
+                        </a>
                     </div>
                 </div>
 

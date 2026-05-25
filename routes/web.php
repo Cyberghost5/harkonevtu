@@ -9,6 +9,7 @@ use App\Http\Controllers\AirtimeController;
 use App\Http\Controllers\DataController;
 use App\Http\Controllers\ElectricityController;
 use App\Http\Controllers\CableController;
+use App\Http\Controllers\ExamPinController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -99,6 +100,9 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin'])->group(function () 
         Route::post('/cable/plans',            [CableController::class, 'getPlans'])->name('cable.plans');
         Route::post('/cable/validate-card',    [CableController::class, 'validateCard'])->name('cable.validate');
         Route::post('/cable/purchase',         [CableController::class, 'purchase'])->name('cable.purchase');
+
+        Route::get('/epins',           [ExamPinController::class, 'index'])->name('epins');
+        Route::post('/epins/purchase', [ExamPinController::class, 'purchase'])->name('epins.purchase');
     });
 });
 

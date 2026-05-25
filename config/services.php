@@ -97,4 +97,9 @@ return [
         'base_url'   => env('PAYSCRIBE_BASE_URL', 'https://api.payscribe.ng/api/v1'),
     ],
 
+    'primebiller' => [
+        'token'    => env('PRIMEBILLER_TOKEN'),
+        'base_url' => env('PRIMEBILLER_BASE_URL', 'https://primebiller.com/api/v1'),
+    ],
+
 ];
