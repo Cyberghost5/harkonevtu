@@ -7,6 +7,7 @@ use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\WalletFundingController;
 use App\Http\Controllers\AirtimeController;
 use App\Http\Controllers\DataController;
+use App\Http\Controllers\ElectricityController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -88,6 +89,10 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin'])->group(function () 
         Route::get('/data',              [DataController::class, 'index'])->name('data');
         Route::post('/data/plans',       [DataController::class, 'getPlans'])->name('data.plans');
         Route::post('/data/purchase',    [DataController::class, 'purchase'])->name('data.purchase');
+
+        Route::get('/electricity',                 [ElectricityController::class, 'index'])->name('electricity');
+        Route::post('/electricity/validate-meter', [ElectricityController::class, 'validateMeter'])->name('electricity.validate');
+        Route::post('/electricity/purchase',       [ElectricityController::class, 'purchase'])->name('electricity.purchase');
     });
 });
 
