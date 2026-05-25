@@ -1,0 +1,474 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ApiLog;
+use App\Models\AppSetting;
+use App\Models\ElectricityDisco;
+use App\Models\ServiceTransaction;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
+
+class ElectricityController extends Controller
+{
+    // ─── Pages ────────────────────────────────────────────────────────────────
+
+    public function index(): View
+    {
+        $user   = auth()->user();
+        $discos = ElectricityDisco::active()->get();
+
+        $history = ServiceTransaction::where('user_id', $user->id)
+            ->where('service_type', 'electricity')
+            ->latest()
+            ->paginate(10);
+
+        return view('services.electricity', compact('user', 'discos', 'history'));
+    }
+
+    // ─── AJAX: Validate meter number ──────────────────────────────────────────
+
+    public function validateMeter(Request $request): JsonResponse
+    {
+        $request->validate([
+            'disco_id'   => ['required', 'integer', 'exists:electricity_discos,id'],
+            'meter_type' => ['required', 'in:prepaid,postpaid'],
+            'meter_number' => ['required', 'string', 'min:5', 'max:30'],
+        ]);
+
+        $disco       = ElectricityDisco::findOrFail($request->disco_id);
+        $meterType   = $request->meter_type;
+        $meterNumber = $request->meter_number;
+
+        $api = AppSetting::get('electricity_api', 'vtpass');
+
+        return match ($api) {
+            'easyaccess' => $this->validateMeterEasyaccess($disco, $meterType, $meterNumber),
+            default      => $this->validateMeterVtpass($disco, $meterType, $meterNumber),
+        };
+    }
+
+    // ─── Purchase ─────────────────────────────────────────────────────────────
+
+    public function purchase(Request $request): JsonResponse
+    {
+        // ── Service enabled check ────────────────────────────────────────────
+        if (AppSetting::get('service_electricity', '1') !== '1') {
+            return response()->json(['success' => false, 'message' => 'Electricity service is temporarily unavailable.'], 503);
+        }
+
+        $request->validate([
+            'disco_id'       => ['required', 'integer', 'exists:electricity_discos,id'],
+            'meter_type'     => ['required', 'in:prepaid,postpaid'],
+            'meter_number'   => ['required', 'string', 'min:5', 'max:30'],
+            'amount'         => ['required', 'numeric', 'min:1000', 'max:500000'],
+            'phone'          => ['required', 'string', 'regex:/^(0|\+234)[789][01]\d{8}$/'],
+            'transaction_pin' => ['required', 'digits:4'],
+        ]);
+
+        $user        = auth()->user();
+        $disco       = ElectricityDisco::where('id', $request->disco_id)->where('enabled', true)->firstOrFail();
+        $meterType   = $request->meter_type;
+        $meterNumber = trim($request->meter_number);
+        $amount      = (float) $request->amount;
+        $phone       = preg_replace('/^\+234/', '0', $request->phone);
+
+        // ── 0. Verify PIN ────────────────────────────────────────────────────
+        if (!$user->verifyPin($request->transaction_pin)) {
+            return response()->json([
+                'success'   => false,
+                'message'   => 'Incorrect transaction PIN. Please try again.',
+                'pin_error' => true,
+            ], 422);
+        }
+
+        // ── 1. Min amount ────────────────────────────────────────────────────
+        $minAmount = (float) AppSetting::get('electricity_min_amount', 1000);
+        if ($amount < $minAmount) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Minimum electricity purchase amount is ₦' . number_format($minAmount, 0) . '.',
+            ], 422);
+        }
+
+        // ── 2. Daily spending limit ──────────────────────────────────────────
+        $dailyLimit = (float) AppSetting::get('electricity_daily_limit', 100000);
+        $todaySpent = ServiceTransaction::where('user_id', $user->id)
+            ->where('service_type', 'electricity')
+            ->where('status', 'success')
+            ->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
+            ->sum('amount');
+
+        if (($todaySpent + $amount) > $dailyLimit) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Daily electricity spending limit of ₦' . number_format($dailyLimit, 0) . ' reached. Try again tomorrow.',
+            ], 422);
+        }
+
+        // ── 3. Wallet balance check ──────────────────────────────────────────
+        $wallet = $user->wallet;
+        if (!$wallet || !$wallet->hasSufficientBalance($amount)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient wallet balance. Please fund your wallet.',
+            ], 422);
+        }
+
+        // ── 4. Debit wallet ──────────────────────────────────────────────────
+        $reference = 'ELC' . date('YmdHis') . Str::upper(Str::random(6));
+        $walletTx  = null;
+
+        try {
+            $walletTx = DB::transaction(function () use ($wallet, $amount, $disco, $meterNumber, $meterType, $reference) {
+                return $wallet->debit(
+                    $amount,
+                    $disco->name . ' (' . ucfirst($meterType) . ') – ' . $meterNumber,
+                    $reference,
+                    ['service' => 'electricity', 'disco' => $disco->slug, 'meter' => $meterNumber, 'meter_type' => $meterType]
+                );
+            });
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        // ── 5. Call API ──────────────────────────────────────────────────────
+        [
+            'success'       => $apiSuccess,
+            'reference'     => $apiRef,
+            'token'         => $token,
+            'units'         => $units,
+            'customer_name' => $customerName,
+            'response'      => $apiResponse,
+        ] = $this->callElectricityApi($disco, $meterType, $meterNumber, $amount, $phone, $reference);
+
+        // ── 6. Refund on failure ─────────────────────────────────────────────
+        if (!$apiSuccess) {
+            try {
+                DB::transaction(function () use ($wallet, $amount, $reference, $disco, $meterNumber) {
+                    $wallet->credit(
+                        $amount,
+                        'Refund: ' . $disco->name . ' electricity failed – ' . $meterNumber,
+                        'REFUND_' . $reference,
+                        ['type' => 'refund', 'original_reference' => $reference]
+                    );
+                });
+            } catch (\Exception $e) {
+                Log::critical('Electricity refund failed', [
+                    'user_id'   => $user->id,
+                    'reference' => $reference,
+                    'error'     => $e->getMessage(),
+                ]);
+            }
+
+            return response()->json([
+                'success'  => false,
+                'refunded' => true,
+                'message'  => ($apiResponse['message'] ?? 'Electricity vending failed.') . ' Your wallet has been refunded ₦' . number_format($amount, 2) . '.',
+            ], 422);
+        }
+
+        // ── 7. Record successful transaction ─────────────────────────────────
+        $api = AppSetting::get('electricity_api', 'vtpass');
+
+        ServiceTransaction::create([
+            'user_id'               => $user->id,
+            'wallet_transaction_id' => $walletTx->id,
+            'service_type'          => 'electricity',
+            'provider'              => $disco->slug,
+            'recipient'             => $meterNumber,
+            'amount'                => $amount,
+            'status'                => 'success',
+            'reference'             => $reference,
+            'api_reference'         => $apiRef,
+            'api_response'          => array_merge(is_array($apiResponse) ? $apiResponse : [], [
+                'api_provider'    => $api,
+                'disco'           => $disco->name,
+                'meter_type'      => $meterType,
+                'meter_number'    => $meterNumber,
+                'token'           => $token,
+                'units'           => $units,
+                'customer_name'   => $customerName,
+            ]),
+        ]);
+
+        $successMsg = 'Electricity token purchased successfully!';
+        if ($token) {
+            $successMsg .= ' Token: <strong>' . e($token) . '</strong>';
+            if ($units) {
+                $successMsg .= ' (' . e($units) . ')';
+            }
+        }
+
+        return response()->json([
+            'success'       => true,
+            'message'       => '₦' . number_format($amount, 0) . ' ' . $disco->name . ' electricity purchased successfully.',
+            'token'         => $token,
+            'units'         => $units,
+            'customer_name' => $customerName,
+            'balance'       => '₦' . number_format((float) $wallet->fresh()->balance, 2),
+            'reference'     => $reference,
+        ]);
+    }
+
+    // ─── API Dispatcher ───────────────────────────────────────────────────────
+
+    private function callElectricityApi(
+        ElectricityDisco $disco,
+        string $meterType,
+        string $meterNumber,
+        float $amount,
+        string $phone,
+        string $reference
+    ): array {
+        $api = AppSetting::get('electricity_api', 'vtpass');
+
+        return match ($api) {
+            'easyaccess' => $this->callEasyaccessElectricity($disco, $meterType, $meterNumber, $amount, $reference),
+            default      => $this->callVtpassElectricity($disco, $meterType, $meterNumber, $amount, $phone, $reference),
+        };
+    }
+
+    // ─── VTPass: validate meter ───────────────────────────────────────────────
+
+    private function validateMeterVtpass(ElectricityDisco $disco, string $meterType, string $meterNumber): JsonResponse
+    {
+        $endpoint = config('services.vtpass.base_url') . '/api/merchant-verify';
+        $payload  = [
+            'serviceID'   => $disco->slug,
+            'billersCode' => $meterNumber,
+            'type'        => $meterType,
+        ];
+
+        try {
+            $response = Http::withHeaders([
+                'api-key'    => config('services.vtpass.api_key'),
+                'public-key' => config('services.vtpass.public_key'),
+            ])->timeout(20)->post($endpoint, $payload);
+
+            $data = $response->json() ?? [];
+            $code = $data['code'] ?? '';
+
+            if ($code === '000') {
+                $content = $data['content'] ?? [];
+                return response()->json([
+                    'success'          => true,
+                    'customer_name'    => $content['Customer_Name']    ?? $content['name']    ?? null,
+                    'customer_address' => $content['Address']          ?? $content['address'] ?? null,
+                    'meter_number'     => $content['Meter_Number']     ?? $meterNumber,
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $data['response_description'] ?? 'Invalid meter number or details not found.',
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('VTPass meter validation failed', ['meter' => $meterNumber, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Meter validation unavailable. Please try again.'], 503);
+        }
+    }
+
+    // ─── EasyAccess: validate meter ───────────────────────────────────────────
+
+    private function validateMeterEasyaccess(ElectricityDisco $disco, string $meterType, string $meterNumber): JsonResponse
+    {
+        $endpoint = 'https://easyaccessapi.com.ng/api/verifyelectricity.php';
+        $payload  = [
+            'company'   => $disco->idForApi('easyaccess'),
+            'metertype' => $meterType,
+            'meterno'   => $meterNumber,
+        ];
+
+        try {
+            $response = Http::withHeaders([
+                'AuthorizationToken' => config('services.easyaccess.token'),
+            ])->timeout(20)->post($endpoint, $payload);
+
+            $data   = $response->json() ?? [];
+            $status = $data['success'] ?? 'false';
+
+            if ($status === 'true') {
+                $content = $data['message']['content'] ?? [];
+                return response()->json([
+                    'success'          => true,
+                    'customer_name'    => $content['Customer_Name'] ?? null,
+                    'customer_address' => $content['Address']       ?? null,
+                    'meter_number'     => $meterNumber,
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $data['message'] ?? 'Invalid meter number.',
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('EasyAccess meter validation failed', ['meter' => $meterNumber, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Meter validation unavailable. Please try again.'], 503);
+        }
+    }
+
+    // ─── VTPass: purchase ─────────────────────────────────────────────────────
+
+    private function callVtpassElectricity(
+        ElectricityDisco $disco,
+        string $meterType,
+        string $meterNumber,
+        float $amount,
+        string $phone,
+        string $reference
+    ): array {
+        $vtpassRef = date('YmdHis') . Str::upper(Str::random(6));
+        $endpoint  = config('services.vtpass.base_url') . '/api/pay';
+        $payload   = [
+            'request_id'     => $vtpassRef,
+            'serviceID'      => $disco->slug,
+            'variation_code' => $meterType,
+            'billersCode'    => $meterNumber,
+            'amount'         => (int) $amount,
+            'phone'          => $phone,
+        ];
+        $data        = [];
+        $httpStatus  = null;
+        $success     = false;
+        $apiRef      = $vtpassRef;
+        $token       = null;
+        $units       = null;
+        $customerName = null;
+
+        $start = hrtime(true);
+        try {
+            $response   = Http::withHeaders([
+                'api-key'    => config('services.vtpass.api_key'),
+                'public-key' => config('services.vtpass.public_key'),
+            ])->timeout(30)->post($endpoint, $payload);
+            $httpStatus = $response->status();
+            $raw        = $response->json();
+            $data       = is_array($raw) ? $raw : ['message' => 'Unknown VTPass response'];
+            $code       = $data['code'] ?? '';
+            $success    = in_array($code, ['000', '099']);
+            $apiRef     = $data['content']['transactions']['transactionId'] ?? $data['requestId'] ?? $vtpassRef;
+
+            if ($success) {
+                $txn          = $data['content']['transactions'] ?? [];
+                $rawToken     = $txn['token'] ?? $data['purchased_code'] ?? null;
+                $token        = $rawToken ? preg_replace('/^Token\s*:\s*/i', '', trim((string) $rawToken)) : null;
+                $units        = $txn['units'] ?? null;
+                $customerName = $txn['customerName'] ?? $data['customerName'] ?? null;
+            } else {
+                $data['message'] = $data['response_description'] ?? 'Electricity vending failed.';
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('VTPass electricity request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'electricity',
+                'provider'    => 'vtpass',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint,
+                'method'      => 'POST',
+                'payload'     => $payload,
+                'response'    => $data,
+                'http_status' => $httpStatus,
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
+        }
+
+        return [
+            'success'       => $success,
+            'reference'     => $apiRef,
+            'token'         => $token,
+            'units'         => $units,
+            'customer_name' => $customerName,
+            'response'      => $data,
+        ];
+    }
+
+    // ─── EasyAccess: purchase ─────────────────────────────────────────────────
+
+    private function callEasyaccessElectricity(
+        ElectricityDisco $disco,
+        string $meterType,
+        string $meterNumber,
+        float $amount,
+        string $reference
+    ): array {
+        $endpoint = 'https://easyaccessapi.com.ng/api/payelectricity.php';
+        $payload  = [
+            'company'   => $disco->idForApi('easyaccess'),
+            'metertype' => $meterType,
+            'meterno'   => $meterNumber,
+            'amount'    => (int) $amount,
+        ];
+        $data        = [];
+        $httpStatus  = null;
+        $success     = false;
+        $apiRef      = $reference;
+        $token       = null;
+        $units       = null;
+        $customerName = null;
+
+        $start = hrtime(true);
+        try {
+            $response   = Http::withHeaders([
+                'AuthorizationToken' => config('services.easyaccess.token'),
+            ])->timeout(30)->post($endpoint, $payload);
+            $httpStatus = $response->status();
+            $raw        = $response->json();
+            $data       = is_array($raw) ? $raw : ['message' => 'Unknown EasyAccess response'];
+            $statusCode = $data['success']          ?? 'false';
+            $msgCode    = $data['message']['code']  ?? '';
+            $success    = ($statusCode === 'true') && ($msgCode === '000');
+
+            if ($success) {
+                $msg  = $data['message'] ?? [];
+                $rawToken = $msg['mainToken'] ?? $msg['token'] ?? $msg['Token'] ?? null;
+                $token    = $rawToken ? preg_replace('/^Token\s*:\s*/i', '', trim((string) $rawToken)) : null;
+                $units    = $msg['mainTokenUnit'] ?? $msg['units'] ?? null;
+                // Fetch customer name via a follow-up verify call (best-effort)
+                $customerName = null;
+            } else {
+                $errorMsg = $data['message'] ?? 'EasyAccess electricity vending failed.';
+                $data['message'] = is_array($errorMsg) ? ($errorMsg['content'] ?? json_encode($errorMsg)) : $errorMsg;
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('EasyAccess electricity request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'electricity',
+                'provider'    => 'easyaccess',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint,
+                'method'      => 'POST',
+                'payload'     => $payload,
+                'response'    => $data,
+                'http_status' => $httpStatus,
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
+        }
+
+        return [
+            'success'       => $success,
+            'reference'     => $apiRef,
+            'token'         => $token,
+            'units'         => $units,
+            'customer_name' => $customerName,
+            'response'      => $data,
+        ];
+    }
+}
