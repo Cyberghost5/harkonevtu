@@ -17,17 +17,21 @@ class ApiLog extends Model
         'endpoint',
         'method',
         'payload',
+        'request_headers',
         'response',
+        'response_headers',
         'http_status',
         'duration_ms',
         'success',
     ];
 
     protected $casts = [
-        'payload'    => 'array',
-        'response'   => 'array',
-        'success'    => 'boolean',
-        'created_at' => 'datetime',
+        'payload'          => 'array',
+        'request_headers'  => 'array',
+        'response'         => 'array',
+        'response_headers' => 'array',
+        'success'          => 'boolean',
+        'created_at'       => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -56,18 +60,23 @@ class ApiLog extends Model
     {
         $resp = $data['response'] ?? null;
 
+        $reqHeaders  = $data['request_headers']  ?? null;
+        $respHeaders = $data['response_headers'] ?? null;
+
         return static::create([
-            'user_id'     => $data['user_id']    ?? null,
-            'service'     => $data['service'],
-            'provider'    => $data['provider'],
-            'reference'   => $data['reference'],
-            'endpoint'    => $data['endpoint'],
-            'method'      => $data['method']     ?? 'POST',
-            'payload'     => $data['payload']    ?? null,
-            'response'    => is_array($resp) ? $resp : ['raw' => $resp],
-            'http_status' => $data['http_status'] ?? null,
-            'duration_ms' => $data['duration_ms'] ?? null,
-            'success'     => $data['success']    ?? false,
+            'user_id'          => $data['user_id']    ?? null,
+            'service'          => $data['service'],
+            'provider'         => $data['provider'],
+            'reference'        => $data['reference'],
+            'endpoint'         => $data['endpoint'],
+            'method'           => $data['method']     ?? 'POST',
+            'payload'          => $data['payload']    ?? null,
+            'request_headers'  => is_array($reqHeaders)  ? $reqHeaders  : null,
+            'response'         => is_array($resp) ? $resp : ['raw' => $resp],
+            'response_headers' => is_array($respHeaders) ? $respHeaders : null,
+            'http_status'      => $data['http_status'] ?? null,
+            'duration_ms'      => $data['duration_ms'] ?? null,
+            'success'          => $data['success']    ?? false,
         ]);
     }
 }

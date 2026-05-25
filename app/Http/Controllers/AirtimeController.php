@@ -222,13 +222,16 @@ class AirtimeController extends Controller
         $success     = false;
         $apiRef      = $vtpassRef;
 
+        $requestHeaders = [
+            'api-key'    => config('services.vtpass.api_key'),
+            'public-key' => config('services.vtpass.public_key'),
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'api-key'    => config('services.vtpass.api_key'),
-                'public-key' => config('services.vtpass.public_key'),
-            ])->timeout(30)->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $raw        = $response->json();
             $data       = is_array($raw) ? $raw : ['message' => is_string($raw) ? $raw : 'Unknown VTpass response'];
             $code       = $data['code'] ?? '';
@@ -241,16 +244,18 @@ class AirtimeController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'airtime',
-                'provider'    => 'vtpass',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'airtime',
+                'provider'         => 'vtpass',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
@@ -275,10 +280,13 @@ class AirtimeController extends Controller
         $success    = false;
         $apiRef     = $reference;
 
+        $requestHeaders  = [];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::timeout(30)->get($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response        = Http::timeout(30)->get($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
             $status     = $data['status'] ?? '';
             $apiRef     = $data['orderid'] ?? $reference;
@@ -293,16 +301,18 @@ class AirtimeController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'airtime',
-                'provider'    => 'clubkonnect',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'GET',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'airtime',
+                'provider'         => 'clubkonnect',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'GET',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
@@ -326,13 +336,16 @@ class AirtimeController extends Controller
         $success    = false;
         $apiRef     = $reference;
 
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . config('services.autopilot.api_key'),
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('services.autopilot.api_key'),
-                'Content-Type'  => 'application/json',
-            ])->timeout(30)->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
             $success    = ($data['status'] ?? false) === true && ($data['code'] ?? 0) === 200;
             $apiRef     = $data['data']['reference'] ?? $reference;
@@ -346,16 +359,18 @@ class AirtimeController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'airtime',
-                'provider'    => 'autopilot',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'airtime',
+                'provider'         => 'autopilot',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
@@ -379,14 +394,17 @@ class AirtimeController extends Controller
         $success    = false;
         $apiRef     = $reference;
 
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . config('services.merrybills.token'),
+            'Accept'        => 'application/json',
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('services.merrybills.token'),
-                'Accept'        => 'application/json',
-                'Content-Type'  => 'application/json',
-            ])->timeout(30)->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
             $success    = ($data['status'] ?? '') === 'success' || ($data['Status'] ?? '') === '200';
             $apiRef     = $data['reference'] ?? $data['transid'] ?? $reference;
@@ -400,16 +418,18 @@ class AirtimeController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'airtime',
-                'provider'    => 'merrybills',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'airtime',
+                'provider'         => 'merrybills',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 

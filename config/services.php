@@ -91,4 +91,10 @@ return [
         'base_url'   => env('GLOBACOM_BASE_URL', 'https://gift-api.gloworld.com'),
     ],
 
+    'payscribe' => [
+        'public_key' => env('PAYSCRIBE_PUBLIC_KEY'),
+        'secret_key' => env('PAYSCRIBE_SECRET_KEY'),
+        'base_url'   => env('PAYSCRIBE_BASE_URL', 'https://api.payscribe.ng/api/v1'),
+    ],
+
 ];

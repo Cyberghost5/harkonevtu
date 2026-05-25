@@ -105,7 +105,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
                                     </svg>
                                 </div>
-                                <input id="meter-number" type="text" inputmode="numeric" maxlength="20"
+                                <input id="meter-number" type="number" inputmode="numeric" maxlength="20"
                                        placeholder="e.g. 45046920190"
                                        class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-vtu-primary focus:border-transparent transition"/>
                             </div>
@@ -498,12 +498,14 @@ function showCustomerCard(name, address) {
     document.getElementById('customer-name').textContent    = name    ?? 'Customer verified';
     document.getElementById('customer-address').textContent = address ?? '';
     document.getElementById('customer-card').classList.remove('hidden');
+    document.getElementById('validate-btn').classList.add('hidden');
 }
 
 function hideCustomerCard() {
     document.getElementById('customer-card').classList.add('hidden');
     document.getElementById('customer-name').textContent    = '';
     document.getElementById('customer-address').textContent = '';
+    document.getElementById('validate-btn').classList.remove('hidden');
 }
 
 // Allow re-validation when meter number changes

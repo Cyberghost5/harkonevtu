@@ -45,10 +45,11 @@ class ElectricityController extends Controller
         $meterType   = $request->meter_type;
         $meterNumber = $request->meter_number;
 
-        $api = AppSetting::get('electricity_api', 'vtpass');
+        $api = AppSetting::get('electricity_api', 'easyaccess');
 
         return match ($api) {
             'easyaccess' => $this->validateMeterEasyaccess($disco, $meterType, $meterNumber),
+            'payscribe'  => $this->validateMeterPayscribe($disco, $meterType, $meterNumber),
             default      => $this->validateMeterVtpass($disco, $meterType, $meterNumber),
         };
     }
@@ -230,6 +231,7 @@ class ElectricityController extends Controller
 
         return match ($api) {
             'easyaccess' => $this->callEasyaccessElectricity($disco, $meterType, $meterNumber, $amount, $reference),
+            'payscribe'  => $this->callPayscribeElectricity($disco, $meterType, $meterNumber, $amount, $reference),
             default      => $this->callVtpassElectricity($disco, $meterType, $meterNumber, $amount, $phone, $reference),
         };
     }
@@ -238,81 +240,220 @@ class ElectricityController extends Controller
 
     private function validateMeterVtpass(ElectricityDisco $disco, string $meterType, string $meterNumber): JsonResponse
     {
-        $endpoint = config('services.vtpass.base_url') . '/api/merchant-verify';
-        $payload  = [
+        $endpoint   = config('services.vtpass.base_url') . '/api/merchant-verify';
+        $payload    = [
             'serviceID'   => $disco->slug,
             'billersCode' => $meterNumber,
             'type'        => $meterType,
         ];
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $result     = null;
 
+        $requestHeaders = [
+            'api-key'    => config('services.vtpass.api_key'),
+            'public-key' => config('services.vtpass.public_key'),
+        ];
+        $responseHeaders = null;
+        $start = hrtime(true);
         try {
-            $response = Http::withHeaders([
-                'api-key'    => config('services.vtpass.api_key'),
-                'public-key' => config('services.vtpass.public_key'),
-            ])->timeout(20)->post($endpoint, $payload);
+            $httpResponse = Http::withHeaders($requestHeaders)->timeout(20)->post($endpoint, $payload);
 
-            $data = $response->json() ?? [];
-            $code = $data['code'] ?? '';
+            $httpStatus      = $httpResponse->status();
+            $responseHeaders = $httpResponse->headers();
+            $data            = $httpResponse->json() ?? [];
+            $code       = $data['code'] ?? '';
 
             if ($code === '000') {
                 $content = $data['content'] ?? [];
-                return response()->json([
+                $success = true;
+                $result  = response()->json([
                     'success'          => true,
                     'customer_name'    => $content['Customer_Name']    ?? $content['name']    ?? null,
                     'customer_address' => $content['Address']          ?? $content['address'] ?? null,
                     'meter_number'     => $content['Meter_Number']     ?? $meterNumber,
                 ]);
+            } else {
+                $result = response()->json([
+                    'success' => false,
+                    'message' => $data['response_description'] ?? 'Invalid meter number or details not found.',
+                ], 422);
             }
-
-            return response()->json([
-                'success' => false,
-                'message' => $data['response_description'] ?? 'Invalid meter number or details not found.',
-            ], 422);
-
         } catch (\Exception $e) {
+            $data   = ['error' => $e->getMessage()];
             Log::error('VTPass meter validation failed', ['meter' => $meterNumber, 'error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => 'Meter validation unavailable. Please try again.'], 503);
+            $result = response()->json(['success' => false, 'message' => 'Meter validation unavailable. Please try again.'], 503);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'          => 'electricity_validate',
+                'provider'         => 'vtpass',
+                'reference'        => $meterNumber,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
         }
+
+        return $result;
+    }
+
+    // ─── Payscribe: validate meter ────────────────────────────────────────────
+
+    private function validateMeterPayscribe(ElectricityDisco $disco, string $meterType, string $meterNumber): JsonResponse
+    {
+        $endpoint = config('services.payscribe.base_url') . '/electricity/validate';
+
+        // Payscribe requires a raw JSON string body with Content-Type: text/plain
+        $rawBody = json_encode([
+            'service'      => $disco->idForApi('payscribe'),
+            'meter_number' => $meterNumber,
+            'amount'       => '1000',
+            'meter_type'   => $meterType,
+        ]);
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $result     = null;
+
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . config('services.payscribe.public_key'),
+            'Content-Type'  => 'text/plain',
+        ];
+        $responseHeaders = null;
+        $start = hrtime(true);
+        try {
+            $httpResponse  = Http::withHeaders($requestHeaders)->timeout(20)->withBody($rawBody, 'text/plain')->post($endpoint);
+
+            $httpStatus      = $httpResponse->status();
+            $responseHeaders = $httpResponse->headers();
+            $data            = $httpResponse->json() ?? [];
+            $status        = $data['status']      ?? false;
+            $statusMessage = $data['description'] ?? 'Invalid meter number or details not found.';
+
+            if ($status) {
+                $details      = $data['message']['details'] ?? [];
+                $customerName = $details['customer_name']   ?? null;
+
+                if ($customerName === null) {
+                    $result = response()->json([
+                        'success' => false,
+                        'message' => 'Could not find customer details for this meter number.',
+                    ], 422);
+                } else {
+                    $success = true;
+                    $result  = response()->json([
+                        'success'          => true,
+                        'customer_name'    => $customerName,
+                        'customer_address' => $details['address'] ?? null,
+                        'meter_number'     => $meterNumber,
+                    ]);
+                }
+            } else {
+                $result = response()->json(['success' => false, 'message' => $statusMessage], 422);
+            }
+        } catch (\Exception $e) {
+            $data   = ['error' => $e->getMessage()];
+            Log::error('Payscribe meter validation failed', ['meter' => $meterNumber, 'error' => $e->getMessage()]);
+            $result = response()->json(['success' => false, 'message' => 'Meter validation unavailable. Please try again.'], 503);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'          => 'electricity_validate',
+                'provider'         => 'payscribe',
+                'reference'        => $meterNumber,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => json_decode($rawBody, true),
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
+        }
+
+        return $result;
     }
 
     // ─── EasyAccess: validate meter ───────────────────────────────────────────
 
     private function validateMeterEasyaccess(ElectricityDisco $disco, string $meterType, string $meterNumber): JsonResponse
     {
-        $endpoint = 'https://easyaccessapi.com.ng/api/verifyelectricity.php';
-        $payload  = [
+        $endpoint   = config('services.easyaccess.base_url') . '/api/verifyelectricity.php';
+        $payload    = [
             'company'   => $disco->idForApi('easyaccess'),
             'metertype' => $meterType,
             'meterno'   => $meterNumber,
         ];
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $result     = null;
 
+        $requestHeaders = [
+            'AuthorizationToken' => config('services.easyaccess.token'),
+        ];
+        $responseHeaders = null;
+        $start = hrtime(true);
         try {
-            $response = Http::withHeaders([
-                'AuthorizationToken' => config('services.easyaccess.token'),
-            ])->timeout(20)->post($endpoint, $payload);
+            $httpResponse = Http::withHeaders($requestHeaders)->timeout(20)->post($endpoint, $payload);
 
-            $data   = $response->json() ?? [];
-            $status = $data['success'] ?? 'false';
+            $httpStatus      = $httpResponse->status();
+            $responseHeaders = $httpResponse->headers();
+            $data            = $httpResponse->json() ?? [];
+            $status     = $data['success'] ?? 'false';
 
             if ($status === 'true') {
                 $content = $data['message']['content'] ?? [];
-                return response()->json([
+                $success = true;
+                $result  = response()->json([
                     'success'          => true,
                     'customer_name'    => $content['Customer_Name'] ?? null,
                     'customer_address' => $content['Address']       ?? null,
                     'meter_number'     => $meterNumber,
                 ]);
+            } else {
+                $errMsg = $data['message'] ?? 'Invalid meter number.';
+                $result = response()->json([
+                    'success' => false,
+                    'message' => is_array($errMsg) ? json_encode($errMsg) : $errMsg,
+                ], 422);
             }
-
-            return response()->json([
-                'success' => false,
-                'message' => $data['message'] ?? 'Invalid meter number.',
-            ], 422);
-
         } catch (\Exception $e) {
+            $data   = ['error' => $e->getMessage()];
             Log::error('EasyAccess meter validation failed', ['meter' => $meterNumber, 'error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => 'Meter validation unavailable. Please try again.'], 503);
+            $result = response()->json(['success' => false, 'message' => 'Meter validation unavailable. Please try again.'], 503);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'          => 'electricity_validate',
+                'provider'         => 'easyaccess',
+                'reference'        => $meterNumber,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
         }
+
+        return $result;
     }
 
     // ─── VTPass: purchase ─────────────────────────────────────────────────────
@@ -343,13 +484,16 @@ class ElectricityController extends Controller
         $units       = null;
         $customerName = null;
 
+        $requestHeaders = [
+            'api-key'    => config('services.vtpass.api_key'),
+            'public-key' => config('services.vtpass.public_key'),
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'api-key'    => config('services.vtpass.api_key'),
-                'public-key' => config('services.vtpass.public_key'),
-            ])->timeout(30)->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $raw        = $response->json();
             $data       = is_array($raw) ? $raw : ['message' => 'Unknown VTPass response'];
             $code       = $data['code'] ?? '';
@@ -372,16 +516,101 @@ class ElectricityController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'electricity',
-                'provider'    => 'vtpass',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'electricity',
+                'provider'         => 'vtpass',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
+        }
+
+        return [
+            'success'       => $success,
+            'reference'     => $apiRef,
+            'token'         => $token,
+            'units'         => $units,
+            'customer_name' => $customerName,
+            'response'      => $data,
+        ];
+    }
+
+    // ─── Payscribe: purchase ──────────────────────────────────────────────────
+
+    private function callPayscribeElectricity(
+        ElectricityDisco $disco,
+        string $meterType,
+        string $meterNumber,
+        float $amount,
+        string $reference
+    ): array {
+        $endpoint = config('services.payscribe.base_url') . '/electricity/vend';
+        $payload  = [
+            'service'       => $disco->idForApi('payscribe'),
+            'meter_number'  => $meterNumber,
+            'meter_type'    => $meterType,
+            'amount'        => (string) (int) $amount,
+            'customer_name' => auth()->user()->name,
+            'ref'           => $reference,
+        ];
+        $data         = [];
+        $httpStatus   = null;
+        $success      = false;
+        $apiRef       = $reference;
+        $token        = null;
+        $units        = null;
+        $customerName = null;
+
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . config('services.payscribe.public_key'),
+            'Accept'        => 'application/json',
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
+        $start = hrtime(true);
+        try {
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $raw        = $response->json();
+            $data       = is_array($raw) ? $raw : ['message' => 'Unknown Payscribe response'];
+            $statusCode = $data['status_code'] ?? '';
+            $success    = in_array($statusCode, ['200', '201']);
+
+            if ($success) {
+                $details      = $data['message']['details'] ?? [];
+                $token        = isset($details['token']) ? trim((string) $details['token']) : null;
+                $units        = $details['unit'] ?? null;
+                $customerName = $details['customer_name'] ?? null;
+                $apiRef       = $data['reference'] ?? $reference;
+            } else {
+                $data['message'] = $data['description'] ?? 'Payscribe electricity vending failed.';
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('Payscribe electricity request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'          => 'electricity',
+                'provider'         => 'payscribe',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
@@ -404,7 +633,7 @@ class ElectricityController extends Controller
         float $amount,
         string $reference
     ): array {
-        $endpoint = 'https://easyaccessapi.com.ng/api/payelectricity.php';
+        $endpoint = config('services.easyaccess.base_url') . '/api/payelectricity.php';
         $payload  = [
             'company'   => $disco->idForApi('easyaccess'),
             'metertype' => $meterType,
@@ -419,12 +648,15 @@ class ElectricityController extends Controller
         $units       = null;
         $customerName = null;
 
+        $requestHeaders = [
+            'AuthorizationToken' => config('services.easyaccess.token'),
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'AuthorizationToken' => config('services.easyaccess.token'),
-            ])->timeout(30)->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $raw        = $response->json();
             $data       = is_array($raw) ? $raw : ['message' => 'Unknown EasyAccess response'];
             $statusCode = $data['success']          ?? 'false';
@@ -449,16 +681,18 @@ class ElectricityController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'electricity',
-                'provider'    => 'easyaccess',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'electricity',
+                'provider'         => 'easyaccess',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 

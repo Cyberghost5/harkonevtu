@@ -219,10 +219,11 @@
                                   {{ request()->routeIs('services.electricity') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                             Electricity
                         </a>
-                        <span class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-400 dark:text-slate-600 cursor-not-allowed">
+                        <a href="{{ route('services.cable') }}"
+                           class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
+                                  {{ request()->routeIs('services.cable*') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                             Cable TV
-                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-400">Soon</span>
-                        </span>
+                        </a>
                     </div>
                 </div>
 

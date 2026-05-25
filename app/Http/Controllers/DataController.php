@@ -310,13 +310,16 @@ class DataController extends Controller
         $success    = false;
         $apiRef     = $vtpassRef;
 
+        $requestHeaders = [
+            'api-key'    => config('services.vtpass.api_key'),
+            'public-key' => config('services.vtpass.public_key'),
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'api-key'    => config('services.vtpass.api_key'),
-                'public-key' => config('services.vtpass.public_key'),
-            ])->timeout(30)->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $raw        = $response->json();
             $data       = is_array($raw) ? $raw : ['message' => is_string($raw) ? $raw : 'Unknown VTpass response'];
             $code       = $data['code'] ?? '';
@@ -329,16 +332,18 @@ class DataController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'vtpass',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'data',
+                'provider'         => 'vtpass',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
@@ -363,10 +368,13 @@ class DataController extends Controller
         $success    = false;
         $apiRef     = $reference;
 
+        $requestHeaders  = [];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::timeout(30)->get($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response        = Http::timeout(30)->get($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
             $status     = $data['status'] ?? '';
             $apiRef     = $data['orderid'] ?? $reference;
@@ -381,16 +389,18 @@ class DataController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'clubkonnect',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'GET',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'data',
+                'provider'         => 'clubkonnect',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'GET',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
@@ -414,13 +424,16 @@ class DataController extends Controller
         $success    = false;
         $apiRef     = $reference;
 
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . config('services.autopilot.api_key'),
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('services.autopilot.api_key'),
-                'Content-Type'  => 'application/json',
-            ])->timeout(30)->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
             $success    = ($data['status'] ?? false) === true && ($data['code'] ?? 0) === 200;
             $apiRef     = $data['data']['reference'] ?? $reference;
@@ -434,16 +447,18 @@ class DataController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'autopilot',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'data',
+                'provider'         => 'autopilot',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
@@ -467,13 +482,16 @@ class DataController extends Controller
         $success    = false;
         $apiRef     = $reference;
 
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . config('services.merrybills.token'),
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('services.merrybills.token'),
-                'Content-Type'  => 'application/json',
-            ])->timeout(30)->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
             $success    = ($data['status'] ?? false) === true;
             $apiRef     = $data['ref'] ?? $data['data']['ref'] ?? $reference;
@@ -487,16 +505,18 @@ class DataController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'merrybills',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'data',
+                'provider'         => 'merrybills',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
@@ -519,13 +539,16 @@ class DataController extends Controller
         $success    = false;
         $apiRef     = $reference;
 
+        $requestHeaders = [
+            'AuthorizationToken' => config('services.easyaccess.token'),
+            'cache-control'      => 'no-cache',
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'AuthorizationToken' => config('services.easyaccess.token'),
-                'cache-control'      => 'no-cache',
-            ])->timeout(30)->asForm()->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->asForm()->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
             $success    = isset($data['success']) && (string) $data['success'] === 'true';
             if (!$success) {
@@ -538,16 +561,18 @@ class DataController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'easyaccess',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'data',
+                'provider'         => 'easyaccess',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
@@ -571,13 +596,16 @@ class DataController extends Controller
         $success    = false;
         $apiRef     = $reference;
 
+        $requestHeaders = [
+            'Authorization' => config('services.aabaxztech.token'),
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'Authorization' => config('services.aabaxztech.token'),
-                'Content-Type'  => 'application/json',
-            ])->timeout(30)->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
             $status     = $data['status'] ?? '';
             // 'process' means the order is queued but will be delivered - treat as success
@@ -596,16 +624,18 @@ class DataController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'aabaxztech',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'data',
+                'provider'         => 'aabaxztech',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
@@ -629,13 +659,16 @@ class DataController extends Controller
         $success    = false;
         $apiRef     = $reference;
 
+        $requestHeaders = [
+            'Authorization' => 'Token ' . config('services.legitdataway.token'),
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'Authorization' => 'Token ' . config('services.legitdataway.token'),
-                'Content-Type'  => 'application/json',
-            ])->timeout(30)->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
             $status     = $data['status'] ?? '';
             // 'process' means queued - treat as success (wallet already debited)
@@ -650,16 +683,18 @@ class DataController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'legitdataway',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'data',
+                'provider'         => 'legitdataway',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
@@ -689,13 +724,16 @@ class DataController extends Controller
         $success    = false;
         $apiRef     = $reference;
 
+        $requestHeaders = [
+            'x-api-key'    => config('services.globacom.x_api_key'),
+            'Content-Type' => 'application/json',
+        ];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders([
-                'x-api-key'    => config('services.globacom.x_api_key'),
-                'Content-Type' => 'application/json',
-            ])->timeout(30)->post($endpoint, $payload);
-            $httpStatus = $response->status();
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
             $status     = $data['status'] ?? '';
             $success    = $status === 'ok';
@@ -710,16 +748,18 @@ class DataController extends Controller
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'globacom',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $data,
-                'http_status' => $httpStatus,
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'service'          => 'data',
+                'provider'         => 'globacom',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
         }
 
