@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'ensure.verified' => \App\Http\Middleware\EnsureVerified::class,
             'ensure.pin'      => \App\Http\Middleware\EnsurePinIsSet::class,
+            'admin'           => \App\Http\Middleware\EnsureAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

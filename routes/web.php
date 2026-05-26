@@ -10,6 +10,13 @@ use App\Http\Controllers\DataController;
 use App\Http\Controllers\ElectricityController;
 use App\Http\Controllers\CableController;
 use App\Http\Controllers\ExamPinController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminTransactionController;
+use App\Http\Controllers\Admin\AdminFundingController;
+use App\Http\Controllers\Admin\AdminApiLogController;
+use App\Http\Controllers\Admin\AdminSettingsController;
+use App\Http\Controllers\Admin\AdminCouponController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -110,4 +117,70 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin'])->group(function () 
 Route::withoutMiddleware(['web'])->group(function () {
     Route::post('/webhook/paystack',    [WalletFundingController::class, 'paystackWebhook'])->name('webhook.paystack');
     Route::post('/webhook/flutterwave', [WalletFundingController::class, 'flutterwaveWebhook'])->name('webhook.flutterwave');
+});
+
+// ── Admin Panel ───────────────────────────────────────────────────────────────
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/',                    [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    // Users
+    Route::get('/users',               [AdminUserController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}',        [AdminUserController::class, 'show'])->name('users.show');
+    Route::patch('/users/{user}',      [AdminUserController::class, 'update'])->name('users.update');
+    Route::post('/users/{user}/adjust-wallet', [AdminUserController::class, 'adjustWallet'])->name('users.adjust-wallet');
+
+    // Transactions
+    Route::get('/transactions',        [AdminTransactionController::class, 'index'])->name('transactions.index');
+
+    // Funding Requests
+    Route::get('/funding',             [AdminFundingController::class, 'index'])->name('funding.index');
+    Route::post('/funding/{id}/approve', [AdminFundingController::class, 'approve'])->name('funding.approve');
+    Route::post('/funding/{id}/reject',  [AdminFundingController::class, 'reject'])->name('funding.reject');
+
+    // API Logs
+    Route::get('/api-logs',            [AdminApiLogController::class, 'index'])->name('api-logs.index');
+
+    // Settings — redirect legacy index to general
+    Route::get('/settings',                        fn() => redirect()->route('admin.settings.general'))->name('settings.index');
+
+    // General Settings
+    Route::get('/settings/general',                [AdminSettingsController::class, 'general'])->name('settings.general');
+    Route::post('/settings/general',               [AdminSettingsController::class, 'updateGeneral'])->name('settings.general.update');
+
+    // Email Settings
+    Route::get('/settings/email',                  [AdminSettingsController::class, 'email'])->name('settings.email');
+    Route::post('/settings/email',                 [AdminSettingsController::class, 'updateEmail'])->name('settings.email.update');
+    Route::post('/settings/email/test',            [AdminSettingsController::class, 'sendTestEmail'])->name('settings.email.test');
+
+    // API Keys Settings
+    Route::get('/settings/api-keys',               [AdminSettingsController::class, 'apiKeys'])->name('settings.api-keys');
+    Route::post('/settings/api-keys',              [AdminSettingsController::class, 'updateApiKeys'])->name('settings.api-keys.update');
+
+    // API Settings
+    Route::get('/settings/api',                    [AdminSettingsController::class, 'api'])->name('settings.api');
+    Route::post('/settings/api',                   [AdminSettingsController::class, 'updateApi'])->name('settings.api.update');
+
+    // Account Settings (bank accounts CRUD)
+    Route::get('/settings/accounts',               [AdminSettingsController::class, 'accounts'])->name('settings.accounts');
+    Route::post('/settings/accounts',              [AdminSettingsController::class, 'storeAccount'])->name('settings.accounts.store');
+    Route::patch('/settings/accounts/{id}',        [AdminSettingsController::class, 'updateAccount'])->name('settings.accounts.update');
+    Route::delete('/settings/accounts/{id}',       [AdminSettingsController::class, 'destroyAccount'])->name('settings.accounts.destroy');
+
+    // Cable Plan Settings
+    Route::get('/settings/cable-plans',            [AdminSettingsController::class, 'cablePlans'])->name('settings.cable-plans');
+    Route::post('/settings/cable-plans',           [AdminSettingsController::class, 'storeCablePlan'])->name('settings.cable-plans.store');
+    Route::patch('/settings/cable-plans/{id}',     [AdminSettingsController::class, 'updateCablePlan'])->name('settings.cable-plans.update');
+    Route::delete('/settings/cable-plans/{id}',    [AdminSettingsController::class, 'destroyCablePlan'])->name('settings.cable-plans.destroy');
+
+    // Data Plan Settings
+    Route::get('/settings/data-plans/{network?}',  [AdminSettingsController::class, 'dataPlans'])->name('settings.data-plans');
+    Route::post('/settings/data-plans',            [AdminSettingsController::class, 'storeDataPlan'])->name('settings.data-plans.store');
+    Route::patch('/settings/data-plans/{id}',      [AdminSettingsController::class, 'updateDataPlan'])->name('settings.data-plans.update');
+    Route::delete('/settings/data-plans/{id}',     [AdminSettingsController::class, 'destroyDataPlan'])->name('settings.data-plans.destroy');
+
+    // Coupons
+    Route::get('/coupons',             [AdminCouponController::class, 'index'])->name('coupons.index');
+    Route::post('/coupons',            [AdminCouponController::class, 'store'])->name('coupons.store');
+    Route::patch('/coupons/{coupon}',  [AdminCouponController::class, 'update'])->name('coupons.update');
+    Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
 });

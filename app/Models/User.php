@@ -14,7 +14,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 
-#[Fillable(['name', 'username', 'email', 'phone', 'password', 'user_type', 'referral_code', 'referred_by', 'transaction_pin'])]
+#[Fillable(['name', 'username', 'email', 'phone', 'password', 'user_type', 'is_admin', 'is_active', 'referral_code', 'referred_by', 'transaction_pin'])]
 #[Hidden(['password', 'remember_token', 'transaction_pin'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -31,6 +31,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function walletTransactions(): HasMany
     {
         return $this->hasMany(WalletTransaction::class);
+    }
+
+    public function serviceTransactions(): HasMany
+    {
+        return $this->hasMany(ServiceTransaction::class);
     }
 
     // ─── PIN Helpers ──────────────────────────────────────────────────────────
@@ -57,6 +62,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->user_type === 'agent';
     }
 
+    public function isAdmin(): bool
+    {
+        return (bool) $this->is_admin;
+    }
+
+    public function isActive(): bool
+    {
+        return (bool) $this->is_active;
+    }
+
     public function displayName(): string
     {
         return $this->username ?? $this->name;
@@ -80,6 +95,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
             'password'          => 'hashed',
+            'is_admin'          => 'boolean',
+            'is_active'         => 'boolean',
         ];
     }
 }
