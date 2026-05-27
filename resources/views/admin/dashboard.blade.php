@@ -41,7 +41,7 @@
                 </div>
             </div>
             <p class="text-xl font-bold font-outfit text-white">&#8358;{{ number_format($stats['users_balance'], 2) }}</p>
-            <p class="text-[10px] mt-1" style="color:#4CAF50">Total wallet funds</p>
+            <p class="text-[10px] mt-1" style="color:{{ $themeColor }}">Total wallet funds</p>
         </div>
         <div class="rounded-2xl p-4 flex flex-col justify-between" style="background:linear-gradient(135deg,#1b3a1b,#2d5a2d);min-height:88px">
             <div class="flex items-center justify-between mb-2">
@@ -51,7 +51,7 @@
                 </div>
             </div>
             <p class="text-xl font-bold font-outfit text-white">&#8358;{{ number_format($stats['today_revenue'], 2) }}</p>
-            <p class="text-[10px] mt-1" style="color:#4CAF50">Revenue today</p>
+            <p class="text-[10px] mt-1" style="color:{{ $themeColor }}">Revenue today</p>
         </div>
         <div class="rounded-2xl p-4 flex flex-col justify-between" style="background:linear-gradient(135deg,#274027,#3a5e3a);min-height:88px">
             <div class="flex items-center justify-between mb-2">
@@ -61,7 +61,7 @@
                 </div>
             </div>
             <p class="text-xl font-bold font-outfit text-white">{{ number_format($stats['total_users']) }}</p>
-            <p class="text-[10px] mt-1" style="color:#4CAF50">{{ $stats['active_users'] }} active</p>
+            <p class="text-[10px] mt-1" style="color:{{ $themeColor }}">{{ $stats['active_users'] }} active</p>
         </div>
         <div class="rounded-2xl p-4 flex flex-col justify-between" style="background:linear-gradient(135deg,#274027,#3a5e3a);min-height:88px">
             <div class="flex items-center justify-between mb-2">
@@ -71,7 +71,7 @@
                 </div>
             </div>
             <p class="text-xl font-bold font-outfit text-white">{{ number_format($stats['total_admins']) }}</p>
-            <p class="text-[10px] mt-1" style="color:#4CAF50">Super admins</p>
+            <p class="text-[10px] mt-1" style="color:{{ $themeColor }}">Super admins</p>
         </div>
     </div>
 </div>
@@ -83,7 +83,7 @@
             <div>
                 <p class="text-xs text-gray-400 font-medium mb-1">Total Spendings</p>
                 <p class="text-3xl font-extrabold font-outfit" style="color:#1b3a1b">&#8358;{{ number_format($stats['total_revenue'], 2) }}</p>
-                <p class="text-xs font-semibold mt-0.5" style="color:#4CAF50">All-time platform spending</p>
+                <p class="text-xs font-semibold mt-0.5" style="color:{{ $themeColor }}">All-time platform spending</p>
             </div>
             <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:#f0fdf4;color:#166534">Revenue</span>
         </div>
@@ -176,7 +176,7 @@
     <div class="col-span-3 xl:col-span-2 bg-white rounded-2xl overflow-hidden">
         <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid #f1f5f9">
             <h3 class="text-sm font-semibold text-gray-800">Latest Transactions</h3>
-            <a href="{{ route('admin.transactions.index') }}" class="text-xs font-medium" style="color:#4CAF50">View all &rarr;</a>
+            <a href="{{ route('admin.transactions.index') }}" class="text-xs font-medium" style="color:{{ $themeColor }}">View all &rarr;</a>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
@@ -225,12 +225,12 @@
     <div class="col-span-3 xl:col-span-1 bg-white rounded-2xl overflow-hidden">
         <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid #f1f5f9">
             <h3 class="text-sm font-semibold text-gray-800">Latest Members</h3>
-            <a href="{{ route('admin.users.index') }}" class="text-xs font-medium" style="color:#4CAF50">View all &rarr;</a>
+            <a href="{{ route('admin.users.index') }}" class="text-xs font-medium" style="color:{{ $themeColor }}">View all &rarr;</a>
         </div>
         <div class="divide-y divide-gray-50">
             @forelse($recentUsers as $user)
             <div class="flex items-center gap-3 px-5 py-3.5">
-                <div class="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:#4CAF50">
+                <div class="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:{{ $themeColor }}">
                     {{ $user->initials() }}
                 </div>
                 <div class="min-w-0 flex-1">

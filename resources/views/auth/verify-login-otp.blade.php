@@ -1,20 +1,20 @@
 @extends('layouts.auth')
 
-@section('title', 'Verify Phone')
+@section('title', 'Verify Login OTP')
 
 @section('content')
 <div class="w-full max-w-md mx-auto">
     <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-indigo-100 dark:bg-indigo-500/10 mb-4">
+        <div class="inline-flex items-center justify-center h-16 w-16 rounded-2xl mb-4" style="background-color:{{ $themeColor }}20">
             <svg class="h-8 w-8 text-vtu-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
-                      d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
             </svg>
         </div>
-        <h1 class="text-2xl font-outfit font-bold text-slate-900 dark:text-white">Verify your phone</h1>
+        <h1 class="text-2xl font-outfit font-bold text-slate-900 dark:text-white">Check your email</h1>
         <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            We sent a 6-digit code to<br>
-            <strong class="text-slate-700 dark:text-slate-300">{{ $phone }}</strong>
+            We sent a 6-digit login code to<br>
+            <strong class="text-slate-700 dark:text-slate-300">{{ $maskedEmail }}</strong>
         </p>
     </div>
 
@@ -32,10 +32,10 @@
 
     <div class="rounded-2xl bg-white dark:bg-vtu-darkCard border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-5">
 
-        <form method="POST" action="{{ route('verification.phone.confirm') }}" class="space-y-5">
+        <form method="POST" action="{{ route('login.otp.verify') }}" class="space-y-5">
             @csrf
 
-            {{-- OTP input --}}
+            {{-- OTP inputs --}}
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 text-center">
                     Enter 6-digit OTP
@@ -46,7 +46,8 @@
                            inputmode="numeric"
                            maxlength="1"
                            pattern="[0-9]*"
-                           class="otp-digit w-11 h-12 text-center text-xl font-bold rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-vtu-primary transition-colors"
+                           class="otp-digit w-11 h-12 text-center text-xl font-bold rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none transition-colors"
+                           style="--tw-ring-color:{{ $themeColor }}"
                            autocomplete="one-time-code"/>
                     @endfor
                 </div>
@@ -57,28 +58,26 @@
             </div>
 
             <button type="submit"
-                    class="w-full py-3 rounded-xl text-sm font-semibold bg-vtu-primary hover:bg-indigo-600 text-white transition-colors shadow-md shadow-indigo-500/20">
-                Verify Phone Number
+                    class="w-full py-3 rounded-xl text-sm font-semibold text-white transition-colors shadow-md hover:opacity-90"
+                    style="background:{{ $themeColor }}">
+                Verify &amp; Sign In
             </button>
         </form>
 
         <div class="text-center text-sm text-slate-500 dark:text-slate-400">
             Didn't receive the code?
-            <form method="POST" action="{{ route('verification.phone.send') }}" class="inline">
+            <form method="POST" action="{{ route('login.otp.resend') }}" class="inline">
                 @csrf
-                <button type="submit" class="font-semibold text-vtu-primary hover:text-indigo-700 transition-colors ml-1">
+                <button type="submit" class="font-semibold hover:opacity-80 transition-colors ml-1" style="color:{{ $themeColor }}">
                     Resend OTP
                 </button>
             </form>
         </div>
 
         <div class="text-center">
-            <form method="POST" action="{{ route('logout') }}" class="inline">
-                @csrf
-                <button type="submit" class="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
-                    Sign out
-                </button>
-            </form>
+            <a href="{{ route('login') }}" class="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+                &larr; Back to login
+            </a>
         </div>
     </div>
 </div>
@@ -86,7 +85,6 @@
 
 @section('scripts')
 <script>
-    // Auto-advance OTP inputs
     const digits = document.querySelectorAll('.otp-digit');
     const hidden = document.getElementById('otp-hidden');
 
@@ -105,7 +103,6 @@
             }
         });
 
-        // Handle paste
         input.addEventListener('paste', function (e) {
             e.preventDefault();
             const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
@@ -121,7 +118,6 @@
         hidden.value = Array.from(digits).map(d => d.value).join('');
     }
 
-    // Focus first input
     digits[0]?.focus();
 </script>
 @endsection

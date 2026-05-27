@@ -1,6 +1,6 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Fund Wallet – PayPulse')
+@section('title', 'Fund Wallet')
 
 @section('content')
 
@@ -251,7 +251,7 @@
                 // Fallback for bank-transfer redirect flows - server verifies and redirects to dashboard
                 redirect_url:    '{{ route("wallet.fund.gateway.flutterwave.callback") }}',
                 customer: { email: USER_EMAIL, name: USER_NAME },
-                customizations: { title: 'PayPulse Wallet', description: 'Wallet top-up' },
+                customizations: { title: '{{ $siteName }} Wallet', description: 'Wallet top-up' },
                 callback: function(response) {
                     // Flutterwave uses 'transaction_id' in docs but 'id' in some payment flows
                     const txId = response.transaction_id || response.id;

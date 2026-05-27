@@ -38,6 +38,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password',        [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
+// ── Login OTP (pre-auth state — no guest or auth middleware) ──────────────────
+Route::get('/login/verify-otp',  [AuthController::class, 'showLoginOtp'])->name('login.otp');
+Route::post('/login/verify-otp', [AuthController::class, 'verifyLoginOtp'])->name('login.otp.verify');
+Route::post('/login/resend-otp', [AuthController::class, 'resendLoginOtp'])->name('login.otp.resend');
+
 // ── Auth-only (no verification / PIN required - verification + PIN setup flow) ─
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

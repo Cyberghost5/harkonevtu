@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'VTU Platform - Premium Airtime, Data & Bills')</title>
+    <title>@hasSection('title')@yield('title') – @endif{{ $siteName }}</title>
+    @if($siteFavicon)<link rel="icon" href="{{ Storage::url($siteFavicon) }}">@endif
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Purchase cheap airtime, data bundles, electricity tokens, and cable TV subscriptions instantly. Secure and reliable virtual top-up platform.">
+    <meta name="description" content="{{ $siteDescription ?: 'Purchase cheap airtime, data bundles, electricity tokens, and cable TV subscriptions instantly.' }}">
+    @if(!empty($siteKeywords))<meta name="keywords" content="{{ $siteKeywords }}">@endif
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,12 +30,12 @@
                     },
                     colors: {
                         vtu: {
-                            primary: '#4F46E5', // Indigo-600
-                            secondary: '#06B6D4', // Cyan-500
+                            primary: '{{ $themeColor }}',
+                            secondary: '{{ $themeSecondary }}',
                             dark: '#0B0F19',
                             darkCard: '#1E293B',
                             light: '#F8FAFC',
-                            accent: '#F59E0B' // Amber-500
+                            accent: '#F59E0B'
                         }
                     },
                     animation: {
@@ -70,13 +72,13 @@
         }
 
         .gradient-bg {
-            background: radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.08) 0%, transparent 40%),
-                        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
+            background: radial-gradient(circle at 10% 20%, rgba({{ $themeColorRgb }}, 0.08) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba({{ $themeSecondaryRgb }}, 0.08) 0%, transparent 40%);
         }
 
         .dark .gradient-bg {
-            background: radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.12) 0%, transparent 50%);
+            background: radial-gradient(circle at 10% 20%, rgba({{ $themeColorRgb }}, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 90% 80%, rgba({{ $themeSecondaryRgb }}, 0.12) 0%, transparent 50%);
         }
 
         .custom-scrollbar::-webkit-scrollbar {
@@ -108,12 +110,16 @@
                 <!-- Logo -->
                 <div class="flex-shrink-0 flex items-center">
                     <a href="{{ url('/') }}" class="flex items-center space-x-2">
-                        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                        </div>
-                        <span class="text-xl font-bold font-outfit tracking-tight bg-gradient-to-r from-vtu-primary to-vtu-secondary bg-clip-text text-transparent">PayPulse</span>
+                        <div class="h-10 w-10 rounded-xl flex items-center justify-center overflow-hidden {{ $siteLogo1 ? '' : 'bg-gradient-to-tr from-vtu-primary to-vtu-secondary shadow-lg shadow-indigo-500/20' }}">
+                                @if($siteLogo1)
+                                <img src="{{ Storage::url($siteLogo1) }}" class="h-full w-full object-contain" alt="{{ $siteName }}">
+                                @else
+                                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                @endif
+                            </div>
+                        <span class="text-xl font-bold font-outfit tracking-tight bg-gradient-to-r from-vtu-primary to-vtu-secondary bg-clip-text text-transparent">{{ $siteName }}</span>
                     </a>
                 </div>
 
@@ -193,12 +199,16 @@
                 <!-- Branding column -->
                 <div class="col-span-1 md:col-span-1 space-y-4">
                     <div class="flex items-center space-x-2">
-                        <div class="h-8 w-8 rounded-lg bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                        </div>
-                        <span class="text-lg font-bold font-outfit tracking-tight text-white">PayPulse</span>
+                        <div class="h-8 w-8 rounded-lg flex items-center justify-center overflow-hidden {{ $siteLogo1 ? '' : 'bg-gradient-to-tr from-vtu-primary to-vtu-secondary' }}">
+                                @if($siteLogo1)
+                                <img src="{{ Storage::url($siteLogo1) }}" class="h-full w-full object-contain" alt="{{ $siteName }}">
+                                @else
+                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                @endif
+                            </div>
+                        <span class="text-lg font-bold font-outfit tracking-tight text-white">{{ $siteName }}</span>
                     </div>
                     <p class="text-sm">Nigeria's most reliable platform for cheap data, airtime, electricity, and cable TV subscription topups.</p>
                 </div>
@@ -233,7 +243,7 @@
                             <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
-                            <span>support@paypulse.ng</span>
+                            <span>{{ $adminEmail ?: 'support@'.request()->getHost() }}</span>
                         </li>
                         <li class="flex items-center space-x-2">
                             <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -246,7 +256,7 @@
             </div>
 
             <div class="mt-8 border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between text-xs">
-                <p>&copy; {{ date('Y') }} PayPulse. All rights reserved.</p>
+                <p>@if($siteCopyright){{ $siteCopyright }}@else&copy; {{ date('Y') }} {{ $siteName }}. All rights reserved.@endif</p>
                 <p class="mt-4 md:mt-0 flex space-x-4">
                     <span>Designed with ❤️ for premium experience</span>
                 </p>

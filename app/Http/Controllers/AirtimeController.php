@@ -200,6 +200,7 @@ class AirtimeController extends Controller
         return match ($api) {
             'clubkonnect' => $this->callClubkonnect($network, $amount, $phone, $reference),
             'autopilot'   => $this->callAutopilot($network, $amount, $phone, $reference),
+            'legitdataway'=> $this->callLegitdataway($network, $amount, $phone, $reference),
             'merrybills'  => $this->callMerrybills($network, $amount, $phone, $reference),
             default       => $this->callVtpass($network, $amount, $phone, $reference),
         };
@@ -361,6 +362,66 @@ class AirtimeController extends Controller
                 'user_id'     => auth()->id(),
                 'service'          => 'airtime',
                 'provider'         => 'autopilot',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
+        }
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
+    }
+
+    // ─── Legitdataway ────────────────────────────────────────────────────────────
+
+    private function callLegitdataway(NetworkAirtime $network, float $amount, string $phone, string $reference): array
+    {
+        $endpoint   = config('services.legitdataway.base_url') . '/topup';
+        $payload    = [
+            'network' => $network->legitdataway_id,
+            'phone' => $phone,
+            'plan_type' => 'VTU',
+            'amount' => (int) $amount,
+            'bypass' => true,
+            'request-id' => $reference,
+        ];
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $apiRef     = $reference;
+
+        $requestHeaders = [
+            'Authorization' => 'Token ' . config('services.legitdataway.token'),
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
+        $start = hrtime(true);
+        try {
+            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $data       = $response->json() ?? [];
+            $status     = $data['status'] ?? '';
+            // 'process' means queued - treat as success (wallet already debited)
+            $success    = in_array($status, ['success', 'process'], true);
+            if (!$success) {
+                $data['message'] = $data['message'] ?? 'Legitdataway transaction failed.';
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('Legitdataway request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'          => 'airtime',
+                'provider'         => 'legitdataway',
                 'reference'        => $reference,
                 'endpoint'         => $endpoint,
                 'method'           => 'POST',

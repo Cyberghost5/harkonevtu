@@ -1,6 +1,6 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Auto Bank Transfer – PayPulse')
+@section('title', 'Auto Bank Transfer')
 
 @section('content')
 <div class="max-w-3xl mx-auto space-y-6">
@@ -174,7 +174,7 @@
         </h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">
             Your BVN is required to generate static Wema, Titan, and Moniepoint/Sterling bank accounts as directed by the Central Bank of Nigeria (CBN).
-            <strong class="text-slate-700 dark:text-slate-300">PayPulse will never store your BVN</strong> - it is sent directly and securely to our payment partners.
+            <strong class="text-slate-700 dark:text-slate-300">{{ $siteName }} will never store your BVN</strong> - it is sent directly and securely to our payment partners.
         </p>
 
         {{-- BVN input --}}

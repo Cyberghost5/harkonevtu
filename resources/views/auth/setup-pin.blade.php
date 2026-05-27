@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Set Up PIN – PayPulse')
+@section('title', 'Set Up PIN')
 
 @section('content')
 <div class="w-full max-w-md mx-auto">

@@ -106,6 +106,7 @@ class AdminSettingsController extends Controller
             'monnify_secret_key','monnify_contract_no','monnify_api',
             'payscribe_secret_key','payscribe_public_key',
             'tx_charge_m2m','tx_charge_bank',
+            'vtpass_username','vtpass_password','vtpass_api_key',
             'primebiller_api_key','primebiller_status',
             'aabaxztech_username','aabaxztech_password','aabaxztech_api_key',
             'autopilot_email','autopilot_api_key',
@@ -128,7 +129,7 @@ class AdminSettingsController extends Controller
 
     public function updateApiKeys(Request $request)
     {
-        $passwordFields = ['aabaxztech_password','legitdataway_password','merrybills_password'];
+        $passwordFields = ['vtpass_password','aabaxztech_password','legitdataway_password','merrybills_password'];
         $data = $request->except(['_token','_method']);
         foreach ($data as $key => $value) {
             if (in_array($key, $passwordFields) && $value === '') {
@@ -157,10 +158,34 @@ class AdminSettingsController extends Controller
             'agent_airtime_mtn','agent_airtime_airtel','agent_airtime_glo','agent_airtime_etisalat',
             'normal_pin_mtn','normal_pin_airtel','normal_pin_glo','normal_pin_etisalat',
             'agent_pin_mtn','agent_pin_airtel','agent_pin_glo','agent_pin_etisalat',
+            // service enable/disable toggles
+            'data_service_status','airtime_service_status','electricity_service_status',
+            'cable_service_status','epins_service_status','betting_service_status',
         ];
         $s = AppSetting::getMany($keys);
-        $providers = ['vtpass','easyaccess','primebiller','payscribe','merrybills','clubkonnect','autopilot','aabaxztech','legitdataway'];
-        return view('admin.settings.api', compact('s','providers'));
+
+        // Only surface providers whose credentials have been configured
+        $providerCredentialMap = [
+            'vtpass'       => 'vtpass_api_key',
+            'easyaccess'   => 'easyaccess_api_key',
+            'primebiller'  => 'primebiller_api_key',
+            'payscribe'    => 'payscribe_secret_key',
+            'merrybills'   => 'merrybills_token',
+            'clubkonnect'  => 'clubkonnect_api_key',
+            'autopilot'    => 'autopilot_api_key',
+            'aabaxztech'   => 'aabaxztech_api_key',
+            'legitdataway' => 'legitdataway_api_key',
+            'globacom'    => 'globacom_xapi_key',
+        ];
+        $credValues = AppSetting::getMany(array_values($providerCredentialMap));
+        $availableProviders = [];
+        foreach ($providerCredentialMap as $name => $credKey) {
+            if (!empty($credValues[$credKey])) {
+                $availableProviders[] = $name;
+            }
+        }
+
+        return view('admin.settings.api', compact('s', 'availableProviders'));
     }
 
     public function updateApi(Request $request)

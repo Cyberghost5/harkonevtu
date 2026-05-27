@@ -167,6 +167,34 @@
                 </div>
             </div>
 
+            {{-- ── VTU API: VTPass ──────────────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-lg font-bold text-slate-800 mb-4">
+                    VTU API
+                    <span class="text-sm font-normal text-slate-400 ml-1">from
+                        <a href="https://vtpass.com" target="_blank" class="text-blue-500 hover:underline">VTPass</a>
+                    </span>
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Username / Email</label>
+                        <input type="text" name="vtpass_username" value="{{ $s['vtpass_username'] ?? '' }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Password</label>
+                        <input type="password" name="vtpass_password" value="{{ $s['vtpass_password'] ?? '' }}"
+                               placeholder="Leave blank to keep current"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
+                        <input type="text" name="vtpass_api_key" value="{{ $s['vtpass_api_key'] ?? '' }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                    </div>
+                </div>
+            </div>
+
             {{-- ── VTU API: Primebiller ─────────────────────────────────── --}}
             <div class="px-6 py-6">
                 <h4 class="text-lg font-bold text-slate-800 mb-4">
@@ -522,7 +550,7 @@
             <div class="px-6 py-5">
                 <button type="submit"
                         class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm transition-opacity hover:opacity-90"
-                        style="background:#4CAF50">
+                        style="background:{{ $themeColor }}">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
                     Save
                 </button>

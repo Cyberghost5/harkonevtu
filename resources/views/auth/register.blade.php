@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Create Account – PayPulse')
+@section('title', 'Create Account')
 
 @section('content')
 <div class="min-h-screen flex">
@@ -14,12 +14,16 @@
         {{-- Logo --}}
         <div class="relative z-10">
             <a href="/" class="inline-flex items-center space-x-3">
-                <div class="h-11 w-11 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                <div class="h-11 w-11 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg overflow-hidden">
+                    @if($siteLogo1)
+                    <img src="{{ Storage::url($siteLogo1) }}" class="h-full w-full object-contain" alt="{{ $siteName }}">
+                    @else
                     <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                     </svg>
+                    @endif
                 </div>
-                <span class="text-2xl font-bold font-outfit text-white tracking-tight">PayPulse</span>
+                <span class="text-2xl font-bold font-outfit text-white tracking-tight">{{ $siteName }}</span>
             </a>
         </div>
 
@@ -89,12 +93,16 @@
 
         {{-- Mobile logo --}}
         <div class="lg:hidden mb-6 flex items-center space-x-2">
-            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center shadow-md shadow-indigo-500/20">
+            <div class="h-10 w-10 rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/20 overflow-hidden {{ $siteLogo1 ? '' : 'bg-gradient-to-tr from-vtu-primary to-vtu-secondary' }}">
+                @if($siteLogo1)
+                <img src="{{ Storage::url($siteLogo1) }}" class="h-full w-full object-contain" alt="{{ $siteName }}">
+                @else
                 <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
+                @endif
             </div>
-            <span class="text-xl font-bold font-outfit tracking-tight bg-gradient-to-r from-vtu-primary to-vtu-secondary bg-clip-text text-transparent">PayPulse</span>
+            <span class="text-xl font-bold font-outfit tracking-tight bg-gradient-to-r from-vtu-primary to-vtu-secondary bg-clip-text text-transparent">{{ $siteName }}</span>
         </div>
 
         <div class="w-full max-w-md mx-auto">
@@ -236,7 +244,7 @@
                         <input type="checkbox" name="terms" id="terms" value="1"
                             class="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-vtu-primary accent-vtu-primary focus:ring-vtu-primary/30 flex-shrink-0">
                         <span class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                            I agree to PayPulse's
+                            I agree to {{ $siteName }}'s
                             <a href="#" class="font-semibold text-vtu-primary hover:text-indigo-700 transition-colors">Terms of Service</a>
                             and
                             <a href="#" class="font-semibold text-vtu-primary hover:text-indigo-700 transition-colors">Privacy Policy</a>

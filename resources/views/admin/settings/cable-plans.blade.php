@@ -29,7 +29,7 @@
         </div>
         <button onclick="openAddModal()"
                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl shadow-sm transition-opacity hover:opacity-90"
-                style="background:#4CAF50">
+                style="background:{{ $themeColor }}">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             New Plan
         </button>
@@ -184,7 +184,7 @@
                         class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">Cancel</button>
                 <button type="submit"
                         class="px-4 py-2 text-sm font-semibold text-white rounded-xl transition-opacity hover:opacity-90"
-                        style="background:#4CAF50">Add Plan</button>
+                        style="background:{{ $themeColor }}">Add Plan</button>
             </div>
         </form>
     </div>
@@ -250,7 +250,7 @@
                         class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">Cancel</button>
                 <button type="submit"
                         class="px-4 py-2 text-sm font-semibold text-white rounded-xl transition-opacity hover:opacity-90"
-                        style="background:#4CAF50">Save Changes</button>
+                        style="background:{{ $themeColor }}">Save Changes</button>
             </div>
         </form>
     </div>

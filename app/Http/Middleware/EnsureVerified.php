@@ -11,26 +11,18 @@ class EnsureVerified
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $required = AppSetting::get('require_verification', 'none');
-
-        if ($required === 'none') {
+        // If admin has disabled email verification, pass through
+        if (AppSetting::get('email_verification', '1') !== '1') {
             return $next($request);
         }
 
         $user = $request->user();
 
-        if ($required === 'email' && !$user->hasVerifiedEmail()) {
+        if (!$user->hasVerifiedEmail()) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Your email address is not verified.'], 403);
             }
             return redirect()->route('verification.notice');
-        }
-
-        if ($required === 'phone' && !$user->hasVerifiedPhone()) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Your phone number is not verified.'], 403);
-            }
-            return redirect()->route('verification.phone');
         }
 
         return $next($request);

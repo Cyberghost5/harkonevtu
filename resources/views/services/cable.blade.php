@@ -1,6 +1,6 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Cable TV Subscription – PayPulse')
+@section('title', 'Cable TV Subscription')
 
 @section('content')
 <div class="max-w-5xl mx-auto space-y-6">

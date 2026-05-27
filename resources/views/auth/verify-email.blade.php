@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Verify Email – PayPulse')
+{{-- @section('title', 'Verify Email') --}}
 
 @section('content')
 <div class="w-full max-w-md mx-auto">

@@ -1,6 +1,6 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Buy Data – PayPulse')
+@section('title', 'Buy Data')
 
 @section('content')
 <div class="max-w-5xl mx-auto space-y-6">

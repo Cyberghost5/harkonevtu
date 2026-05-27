@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Dashboard – PayPulse')</title>
+    <title>@hasSection('title')@yield('title') – @endif{{ $siteName }}</title>
+    @if($siteFavicon)<link rel="icon" href="{{ Storage::url($siteFavicon) }}">@endif
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,8 +23,8 @@
                     },
                     colors: {
                         vtu: {
-                            primary:  '#4F46E5',
-                            secondary:'#06B6D4',
+                            primary:  '{{ $themeColor }}',
+                            secondary:'{{ $themeSecondary }}',
                             dark:     '#0B0F19',
                             darkCard: '#1E293B',
                             light:    '#F8FAFC',
@@ -79,12 +80,16 @@
             {{-- Logo --}}
             <div class="flex-shrink-0 flex items-center px-5 py-4 border-b border-slate-100 dark:border-slate-800">
                 <a href="/" class="flex items-center space-x-2.5">
-                    <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center shadow-md shadow-indigo-500/20">
+                    <div class="h-9 w-9 rounded-xl flex items-center justify-center overflow-hidden {{ $siteLogo1 ? '' : 'bg-gradient-to-tr from-vtu-primary to-vtu-secondary shadow-md shadow-indigo-500/20' }}">
+                        @if($siteLogo1)
+                        <img src="{{ Storage::url($siteLogo1) }}" class="h-full w-full object-contain" alt="{{ $siteName }}">
+                        @else
                         <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
+                        @endif
                     </div>
-                    <span class="text-lg font-bold font-outfit tracking-tight bg-gradient-to-r from-vtu-primary to-vtu-secondary bg-clip-text text-transparent">PayPulse</span>
+                    <span class="text-lg font-bold font-outfit tracking-tight bg-gradient-to-r from-vtu-primary to-vtu-secondary bg-clip-text text-transparent">{{ $siteName }}</span>
                 </a>
             </div>
 

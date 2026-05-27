@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Forgot Password – PayPulse')
+@section('title', 'Forgot Password')
 
 @section('content')
 <div class="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 dark:from-vtu-dark dark:via-vtu-dark dark:to-indigo-950/20">
@@ -13,12 +13,16 @@
 
     {{-- Logo --}}
     <a href="/" class="mb-8 inline-flex items-center space-x-2.5">
-        <div class="h-11 w-11 rounded-2xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <div class="h-11 w-11 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 overflow-hidden {{ $siteLogo1 ? '' : 'bg-gradient-to-tr from-vtu-primary to-vtu-secondary' }}">
+            @if($siteLogo1)
+            <img src="{{ Storage::url($siteLogo1) }}" class="h-full w-full object-contain" alt="{{ $siteName }}">
+            @else
             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
             </svg>
+            @endif
         </div>
-        <span class="text-2xl font-bold font-outfit tracking-tight bg-gradient-to-r from-vtu-primary to-vtu-secondary bg-clip-text text-transparent">PayPulse</span>
+        <span class="text-2xl font-bold font-outfit tracking-tight bg-gradient-to-r from-vtu-primary to-vtu-secondary bg-clip-text text-transparent">{{ $siteName }}</span>
     </a>
 
     {{-- Card --}}

@@ -1,6 +1,6 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Manual Funding – PayPulse')
+@section('title', 'Manual Funding')
 
 @section('content')
 

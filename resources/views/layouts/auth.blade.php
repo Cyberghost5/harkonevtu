@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'PayPulse')</title>
+    <title>@hasSection('title')@yield('title') – @endif{{ $siteName }}</title>
+    @if($siteFavicon)<link rel="icon" href="{{ Storage::url($siteFavicon) }}">@endif
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,8 +23,8 @@
                     },
                     colors: {
                         vtu: {
-                            primary:  '#4F46E5',
-                            secondary:'#06B6D4',
+                            primary:  '{{ $themeColor }}',
+                            secondary:'{{ $themeSecondary }}',
                             dark:     '#0B0F19',
                             darkCard: '#1E293B',
                             light:    '#F8FAFC',
