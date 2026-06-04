@@ -466,7 +466,7 @@
 
             } else {
                 const msg = data.refunded
-                    ? (data.message + ' Your wallet has been refunded.')
+                    ? (data.message)
                     : (data.message || 'Purchase failed. Please try again.');
                 showResultModal(false, data.refunded ? 'Purchase Failed' : 'Error', msg, data.reference ?? null);
             }

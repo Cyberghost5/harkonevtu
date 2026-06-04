@@ -138,7 +138,7 @@ class UserSettingsController extends Controller
             ->with('success', 'A PIN reset link has been sent to your email address. It expires in 60 minutes.');
     }
 
-    // ─── Show PIN reset form (no auth needed — email link) ───────────────────
+    // ─── Show PIN reset form (no auth needed - email link) ───────────────────
 
     public function showPinReset(string $token): View|RedirectResponse
     {

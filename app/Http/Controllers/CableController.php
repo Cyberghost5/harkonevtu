@@ -176,7 +176,7 @@ class CableController extends Controller
             return response()->json([
                 'success'  => false,
                 'refunded' => true,
-                'message'  => ($apiResponse['message'] ?? 'Cable subscription failed.') . ' Your wallet has been refunded ₦' . number_format($amount, 2) . '.',
+                'message'  => $apiResponse['message'] ?? 'Cable subscription failed.',
             ], 422);
         }
 

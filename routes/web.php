@@ -147,7 +147,7 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin'])->group(function () 
     Route::delete('/settings/delete',               [UserSettingsController::class, 'deleteAccount'])->name('settings.delete');
 });
 
-// ── PIN Reset (no auth needed — accessed via email link) ──────────────────────
+// ── PIN Reset (no auth needed - accessed via email link) ──────────────────────
 Route::get('/settings/pin/reset/{token}',  [UserSettingsController::class, 'showPinReset'])->name('settings.pin.reset.form');
 Route::post('/settings/pin/reset/{token}', [UserSettingsController::class, 'resetPin'])->name('settings.pin.reset.submit');
 

@@ -170,7 +170,7 @@ class ElectricityController extends Controller
             return response()->json([
                 'success'  => false,
                 'refunded' => true,
-                'message'  => ($apiResponse['message'] ?? 'Electricity vending failed.') . ' Your wallet has been refunded ₦' . number_format($amount, 2) . '.',
+                'message'  => $apiResponse['message'] ?? 'Electricity vending failed.',
             ], 422);
         }
 

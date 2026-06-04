@@ -131,7 +131,7 @@ class AirtimeController extends Controller
             return response()->json([
                 'success'  => false,
                 'refunded' => true,
-                'message'  => ($apiResponse['message'] ?? 'Airtime delivery failed.') . ' Your wallet has been refunded ₦' . number_format($finalAmount, 2) . '.',
+                'message'  => $apiResponse['message'] ?? 'Airtime delivery failed.',
             ], 422);
         }
 

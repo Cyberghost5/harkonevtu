@@ -219,7 +219,7 @@ class DataController extends Controller
             return response()->json([
                 'success'  => false,
                 'refunded' => true,
-                'message'  => ($apiResponse['message'] ?? 'Data delivery failed.') . ' Your wallet has been refunded ₦' . number_format($finalAmount, 2) . '.',
+                'message'  => $apiResponse['message'] ?? 'Data delivery failed.',
             ], 422);
         }
 

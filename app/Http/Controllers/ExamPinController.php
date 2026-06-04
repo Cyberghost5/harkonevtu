@@ -132,7 +132,7 @@ class ExamPinController extends Controller
             return response()->json([
                 'success'  => false,
                 'refunded' => true,
-                'message'  => ($apiResponse['message'] ?? 'Exam pin purchase failed.') . ' Your wallet has been refunded ₦' . number_format($amount, 2) . '.',
+                'message'  => $apiResponse['message'] ?? 'Exam pin purchase failed.',
             ], 422);
         }
 
