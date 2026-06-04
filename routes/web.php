@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\AdminCouponController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\SupportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -41,7 +42,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password',        [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
-// ── Login OTP (pre-auth state — no guest or auth middleware) ──────────────────
+// ── Login OTP (pre-auth state - no guest or auth middleware) ──────────────────
 Route::get('/login/verify-otp',  [AuthController::class, 'showLoginOtp'])->name('login.otp');
 Route::post('/login/verify-otp', [AuthController::class, 'verifyLoginOtp'])->name('login.otp.verify');
 Route::post('/login/resend-otp', [AuthController::class, 'resendLoginOtp'])->name('login.otp.resend');
@@ -129,6 +130,9 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin'])->group(function () 
 
     // ── Transaction History ───────────────────────────────────────────────────
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
+
+    // ── Contact Support ──────────────────────────────────────────────────────
+    Route::get('/support', [SupportController::class, 'index'])->name('support');
 });
 
 // ── Payment Webhooks (no auth, no CSRF) ──────────────────────────────────────
@@ -158,7 +162,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // API Logs
     Route::get('/api-logs',            [AdminApiLogController::class, 'index'])->name('api-logs.index');
 
-    // Settings — redirect legacy index to general
+    // Settings - redirect legacy index to general
     Route::get('/settings',                        fn() => redirect()->route('admin.settings.general'))->name('settings.index');
 
     // General Settings

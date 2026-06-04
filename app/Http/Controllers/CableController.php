@@ -374,7 +374,7 @@ class CableController extends Controller
         $payscribePlanId = $plan->idForApi('payscribe');
 
         if (!$payscribePlanId || $payscribePlanId === $plan->vtpass_id) {
-            // Plan has no Payscribe ID — fall back to VTPass validate
+            // Plan has no Payscribe ID - fall back to VTPass validate
             return $this->validateCardVtpass($provider, $smartcard);
         }
 

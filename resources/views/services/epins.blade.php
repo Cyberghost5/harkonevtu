@@ -234,7 +234,7 @@
                     @php
                         $txData   = $tx->api_response ?? [];
                         $txPins   = $txData['pins'] ?? [];
-                        $txQty    = $txData['quantity'] ?? count($txPins) ?: '—';
+                        $txQty    = $txData['quantity'] ?? count($txPins) ?: '-';
                         $txExam   = $txData['exam_type'] ?? strtoupper($tx->provider);
                     @endphp
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
@@ -267,7 +267,7 @@
                                 View Pins
                             </button>
                             @else
-                            <span class="text-xs text-slate-400">—</span>
+                            <span class="text-xs text-slate-400">-</span>
                             @endif
                         </td>
                     </tr>
@@ -533,7 +533,7 @@ function showPinsModal(pins, examType, reference) {
         list.innerHTML = '<p class="text-sm text-slate-500 text-center py-4">No pins to display.</p>';
     } else {
         pins.forEach((item, idx) => {
-            const pinValue    = item.pin    ?? '—';
+            const pinValue    = item.pin    ?? '-';
             const serialValue = item.serial ?? null;
             const card = document.createElement('div');
             card.className = 'rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3.5';

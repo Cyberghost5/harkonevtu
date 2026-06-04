@@ -77,16 +77,16 @@
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
                     onclick="toggleLogDetail('log-{{ $log->id }}')">
                     <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">{{ Str::limit($log->reference, 20) }}</td>
-                    <td class="px-4 py-2.5 text-xs text-slate-600 dark:text-slate-400">{{ $log->user?->name ?? '—' }}</td>
+                    <td class="px-4 py-2.5 text-xs text-slate-600 dark:text-slate-400">{{ $log->user?->name ?? '-' }}</td>
                     <td class="px-4 py-2.5 text-xs capitalize font-medium text-slate-700 dark:text-slate-300">{{ $log->service }}</td>
                     <td class="px-4 py-2.5 text-xs capitalize text-slate-500">{{ $log->provider }}</td>
                     <td class="px-4 py-2.5 font-mono text-[11px] text-slate-400 max-w-[150px] truncate">{{ $log->endpoint }}</td>
                     <td class="px-4 py-2.5 text-xs">
                         <span class="font-mono {{ ($log->http_status >= 200 && $log->http_status < 300) ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
-                            {{ $log->http_status ?? '—' }}
+                            {{ $log->http_status ?? '-' }}
                         </span>
                     </td>
-                    <td class="px-4 py-2.5 text-xs text-slate-400">{{ $log->duration_ms ? round($log->duration_ms).'ms' : '—' }}</td>
+                    <td class="px-4 py-2.5 text-xs text-slate-400">{{ $log->duration_ms ? round($log->duration_ms).'ms' : '-' }}</td>
                     <td class="px-4 py-2.5">
                         @if($log->success)
                         <span class="text-[11px] px-1.5 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">OK</span>

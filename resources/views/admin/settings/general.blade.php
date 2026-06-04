@@ -174,6 +174,43 @@
                 </div>
             </div>
 
+            {{-- Support Contact Details --}}
+            <div>
+                <h3 class="text-sm font-semibold text-slate-700 mb-3">Support Contact Details</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">WhatsApp Number</label>
+                        <input type="text" name="support_whatsapp" value="{{ $s['support_whatsapp'] ?? '' }}"
+                               placeholder="e.g. 2348012345678"
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Support Phone</label>
+                        <input type="text" name="support_phone" value="{{ $s['support_phone'] ?? '' }}"
+                               placeholder="e.g. 08012345678"
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Support Email</label>
+                        <input type="email" name="support_email" value="{{ $s['support_email'] ?? '' }}"
+                               placeholder="support@yourdomain.com"
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Support Hours</label>
+                        <input type="text" name="support_hours" value="{{ $s['support_hours'] ?? '8am – 6pm' }}"
+                               placeholder="e.g. 8am – 6pm"
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Ticket URL <span class="text-xs text-slate-400">(optional)</span></label>
+                        <input type="url" name="support_ticket_url" value="{{ $s['support_ticket_url'] ?? '' }}"
+                               placeholder="https://"
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                    </div>
+                </div>
+            </div>
+
             {{-- Save button --}}
             <div class="pt-2">
                 <button type="submit"

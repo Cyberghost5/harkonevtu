@@ -33,7 +33,7 @@
                         <div class="relative">
                             <select id="disco-select"
                                     class="w-full pl-4 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-vtu-primary focus:border-transparent transition appearance-none">
-                                <option value="">— Select electricity provider —</option>
+                                <option value="">- Select electricity provider -</option>
                                 @foreach($discos as $disco)
                                 <option value="{{ $disco->id }}">{{ $disco->name }}</option>
                                 @endforeach
@@ -257,7 +257,7 @@
                         'Select your DISCO (distribution company)',
                         'Choose Prepaid or Postpaid meter type',
                         'Enter meter number and click Validate',
-                        'Enter amount (min ₦1,000) and confirm — token delivered instantly',
+                        'Enter amount (min ₦1,000) and confirm - token delivered instantly',
                     ] as $i => $step)
                     <li class="flex items-start gap-2.5">
                         <span class="flex-shrink-0 h-5 w-5 rounded-full bg-indigo-100 dark:bg-indigo-500/10 text-vtu-primary text-[10px] font-bold flex items-center justify-center mt-0.5">{{ $i + 1 }}</span>
@@ -333,10 +333,10 @@
                                 {{ $token }}
                             </span>
                             @else
-                            <span class="text-xs text-slate-400">—</span>
+                            <span class="text-xs text-slate-400">-</span>
                             @endif
                         </td>
-                        <td class="px-6 py-3.5 text-xs text-slate-600 dark:text-slate-400">{{ $units ?? '—' }}</td>
+                        <td class="px-6 py-3.5 text-xs text-slate-600 dark:text-slate-400">{{ $units ?? '-' }}</td>
                         <td class="px-6 py-3.5 font-semibold text-slate-900 dark:text-white">₦{{ number_format($tx->amount, 2) }}</td>
                         <td class="px-6 py-3.5">
                             <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold

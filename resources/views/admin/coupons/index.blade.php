@@ -82,7 +82,7 @@
                                 {{ $coupon->uses_count }} / {{ $coupon->max_uses == 0 ? '∞' : $coupon->max_uses }}
                             </td>
                             <td class="px-4 py-3 text-xs text-slate-500">
-                                {{ $coupon->expires_at ? $coupon->expires_at->format('d M Y') : '—' }}
+                                {{ $coupon->expires_at ? $coupon->expires_at->format('d M Y') : '-' }}
                             </td>
                             <td class="px-4 py-3">
                                 @if($coupon->is_active)

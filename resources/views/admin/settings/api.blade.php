@@ -86,7 +86,7 @@
                 <h4 class="text-xl font-bold text-slate-800 mb-1">Data API</h4>
                 <p class="text-xs text-slate-400 mb-5">Select the provider to route each mobile network's data purchases</p>
                 @if(empty($availableProviders))
-                <p class="text-sm text-slate-400 italic">No providers available — configure API keys first.</p>
+                <p class="text-sm text-slate-400 italic">No providers available - configure API keys first.</p>
                 @else
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     @foreach(['data_api_mtn'=>'MTN Data','data_api_airtel'=>'Airtel Data','data_api_glo'=>'Glo Data','data_api_etisalat'=>'9Mobile Data'] as $key=>$label)
@@ -95,7 +95,7 @@
                         <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
                             @foreach($providerOpts as $p)
                             <option value="{{ $p }}" {{ ($s[$key] ?? '') === $p ? 'selected' : '' }}>
-                                {{ $p ? ucfirst($p) : '— Select Provider —' }}
+                                {{ $p ? ucfirst($p) : '- Select Provider -' }}
                             </option>
                             @endforeach
                         </select>
@@ -131,7 +131,7 @@
                         <label class="block text-xs font-medium text-slate-500 mb-1">{{ $label }}</label>
                         <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
                             @foreach($net_opts as $o)
-                            <option value="{{ $o }}" {{ ($s[$key] ?? '') === $o ? 'selected' : '' }}>{{ $o ?: '— Select —' }}</option>
+                            <option value="{{ $o }}" {{ ($s[$key] ?? '') === $o ? 'selected' : '' }}>{{ $o ?: '- Select -' }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -149,7 +149,7 @@
                         <label class="block text-xs font-medium text-slate-500 mb-1">{{ $label }}</label>
                         <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
                             @foreach($net_opts as $o)
-                            <option value="{{ $o }}" {{ ($s[$key] ?? '') === $o ? 'selected' : '' }}>{{ $o ?: '— Select —' }}</option>
+                            <option value="{{ $o }}" {{ ($s[$key] ?? '') === $o ? 'selected' : '' }}>{{ $o ?: '- Select -' }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -162,7 +162,7 @@
                 <h4 class="text-xl font-bold text-slate-800 mb-1">Service API Routing</h4>
                 <p class="text-xs text-slate-400 mb-5">Assign a provider for each service type and set the dealing charge</p>
                 @if(empty($availableProviders))
-                <p class="text-sm text-slate-400 italic">No providers available — configure API keys first.</p>
+                <p class="text-sm text-slate-400 italic">No providers available - configure API keys first.</p>
                 @else
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     @foreach([
@@ -179,7 +179,7 @@
                         <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
                             @foreach($providerOpts as $p)
                             <option value="{{ $p }}" {{ ($s[$key] ?? '') === $p ? 'selected' : '' }}>
-                                {{ $p ? ucfirst($p) : '— Select Provider —' }}
+                                {{ $p ? ucfirst($p) : '- Select Provider -' }}
                             </option>
                             @endforeach
                         </select>

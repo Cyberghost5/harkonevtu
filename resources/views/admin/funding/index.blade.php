@@ -54,7 +54,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {{-- Info --}}
                 <div class="space-y-2 text-sm">
-                    <div class="flex gap-2"><span class="text-slate-400 w-28 flex-shrink-0">Bank Ref:</span><span class="font-mono text-xs text-slate-700 dark:text-slate-300">{{ $req->bank_reference ?? '—' }}</span></div>
+                    <div class="flex gap-2"><span class="text-slate-400 w-28 flex-shrink-0">Bank Ref:</span><span class="font-mono text-xs text-slate-700 dark:text-slate-300">{{ $req->bank_reference ?? '-' }}</span></div>
                     @if($req->admin_note)<div class="flex gap-2"><span class="text-slate-400 w-28 flex-shrink-0">Admin Note:</span><span class="text-xs text-slate-600 dark:text-slate-400">{{ $req->admin_note }}</span></div>@endif
                     @if($req->reviewed_at)<div class="flex gap-2"><span class="text-slate-400 w-28 flex-shrink-0">Reviewed:</span><span class="text-xs text-slate-500">{{ $req->reviewed_at->format('d M Y, H:i') }}</span></div>@endif
                 </div>

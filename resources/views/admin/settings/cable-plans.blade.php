@@ -71,12 +71,12 @@
                     <td class="px-4 py-2.5 text-slate-400 text-xs">{{ $i + 1 }}</td>
                     <td class="px-4 py-2.5">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                            {{ $plan->provider->name ?? '—' }}
+                            {{ $plan->provider->name ?? '-' }}
                         </span>
                     </td>
                     <td class="px-4 py-2.5 font-medium text-slate-800">{{ $plan->name }}</td>
                     <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->vtpass_id }}</td>
-                    <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->easyaccess_id ?? '—' }}</td>
+                    <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->easyaccess_id ?? '-' }}</td>
                     <td class="px-4 py-2.5 text-right font-semibold text-slate-700">{{ number_format($plan->amount, 0) }}</td>
                     <td class="px-4 py-2.5 text-center text-slate-500">{{ $plan->sort_order }}</td>
                     <td class="px-4 py-2.5 text-center">
@@ -138,7 +138,7 @@
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-slate-500 mb-1">Provider <span class="text-red-500">*</span></label>
                     <select name="cable_provider_id" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
-                        <option value="">— Select Provider —</option>
+                        <option value="">- Select Provider -</option>
                         @foreach($providers as $prov)
                         <option value="{{ $prov->id }}">{{ $prov->name }}</option>
                         @endforeach

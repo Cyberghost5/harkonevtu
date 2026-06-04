@@ -144,7 +144,7 @@ class AuthController extends Controller
             return redirect()->route('verification.notice');
         }
 
-        // Verification disabled — go directly to PIN setup
+        // Verification disabled - go directly to PIN setup
         return redirect()->route('pin.setup');
     }
 
@@ -239,7 +239,7 @@ class AuthController extends Controller
         try {
             Mail::raw(
                 "Your {$siteName} login OTP is: {$otp}\n\nThis code expires in 10 minutes. Do not share it with anyone.",
-                fn($msg) => $msg->to($user->email)->subject("Your Login OTP — {$siteName}")
+                fn($msg) => $msg->to($user->email)->subject("Your Login OTP - {$siteName}")
             );
         } catch (\Exception $e) {
             Log::warning('[Login OTP] Failed to send email to ' . $user->email . ': ' . $e->getMessage());

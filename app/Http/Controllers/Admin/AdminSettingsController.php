@@ -20,6 +20,7 @@ class AdminSettingsController extends Controller
             'favicon','logo1','logo2',
             'email_verification','otp_verification',
             'theme_color','app_version',
+            'support_whatsapp','support_phone','support_email','support_hours','support_ticket_url',
         ];
         $s = AppSetting::getMany($keys);
         return view('admin.settings.general', compact('s'));
@@ -32,6 +33,7 @@ class AdminSettingsController extends Controller
             'location','copyright','admin_email',
             'email_verification','otp_verification',
             'theme_color','app_version',
+            'support_whatsapp','support_phone','support_email','support_hours','support_ticket_url',
         ];
 
         foreach ($textFields as $key) {
@@ -87,7 +89,7 @@ class AdminSettingsController extends Controller
 
         try {
             Mail::raw('This is a test email from ' . AppSetting::get('site_name', 'PayPulse') . '. Your email configuration is working correctly.', function ($msg) use ($to) {
-                $msg->to($to)->subject('Test Email — ' . AppSetting::get('site_name', 'PayPulse'));
+                $msg->to($to)->subject('Test Email - ' . AppSetting::get('site_name', 'PayPulse'));
             });
             return back()->with('success', 'Test email sent to ' . $to);
         } catch (\Exception $e) {

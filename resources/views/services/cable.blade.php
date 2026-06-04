@@ -72,7 +72,7 @@
                             <select id="plan-select"
                                     class="w-full pl-4 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-vtu-primary focus:border-transparent transition appearance-none"
                                     onchange="onPlanChange()">
-                                <option value="">— Select a plan —</option>
+                                <option value="">- Select a plan -</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                 <svg id="plan-spinner" class="hidden h-4 w-4 animate-spin text-slate-400" fill="none" viewBox="0 0 24 24">
@@ -234,7 +234,7 @@
                         'Select your cable TV provider (DSTV, GOtv or Startimes)',
                         'Choose your preferred subscription plan',
                         'Enter your smartcard / IUC number and validate',
-                        'Confirm payment — subscription is renewed instantly',
+                        'Confirm payment - subscription is renewed instantly',
                     ] as $i => $step)
                     <li class="flex items-start gap-2.5">
                         <span class="flex-shrink-0 h-5 w-5 rounded-full bg-indigo-100 dark:bg-indigo-500/10 text-vtu-primary text-[10px] font-bold flex items-center justify-center mt-0.5">{{ $i + 1 }}</span>
@@ -294,7 +294,7 @@
                     @php
                         $txData       = $tx->api_response ?? [];
                         $providerName = $txData['provider']      ?? strtoupper($tx->provider);
-                        $planName     = $txData['plan']          ?? '—';
+                        $planName     = $txData['plan']          ?? '-';
                         $customerName = $txData['customer_name'] ?? null;
                     @endphp
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
@@ -303,7 +303,7 @@
                         </td>
                         <td class="px-6 py-3.5 text-xs text-slate-600 dark:text-slate-400">{{ $planName }}</td>
                         <td class="px-6 py-3.5 text-slate-600 dark:text-slate-400 font-mono text-xs">{{ $tx->recipient }}</td>
-                        <td class="px-6 py-3.5 text-xs text-slate-500 dark:text-slate-400">{{ $customerName ?? '—' }}</td>
+                        <td class="px-6 py-3.5 text-xs text-slate-500 dark:text-slate-400">{{ $customerName ?? '-' }}</td>
                         <td class="px-6 py-3.5 font-semibold text-slate-900 dark:text-white">₦{{ number_format($tx->amount, 2) }}</td>
                         <td class="px-6 py-3.5">
                             <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold
@@ -399,7 +399,7 @@ async function loadPlans(providerId) {
             body: JSON.stringify({ provider_id: providerId }),
         });
         const json = await resp.json();
-        select.innerHTML = '<option value="">— Select a plan —</option>';
+        select.innerHTML = '<option value="">- Select a plan -</option>';
         (json.plans || []).forEach(plan => {
             const opt = document.createElement('option');
             opt.value        = plan.id;
@@ -409,7 +409,7 @@ async function loadPlans(providerId) {
             select.appendChild(opt);
         });
     } catch (e) {
-        select.innerHTML = '<option value="">Failed to load plans — try again</option>';
+        select.innerHTML = '<option value="">Failed to load plans - try again</option>';
     } finally {
         select.disabled = false;
         spinner.classList.add('hidden');
@@ -450,7 +450,7 @@ function onPlanChange() {
 
 function resetPlanSelect() {
     const select = document.getElementById('plan-select');
-    select.innerHTML = '<option value="">— Select a plan —</option>';
+    select.innerHTML = '<option value="">- Select a plan -</option>';
     selectedPlan = null;
     document.getElementById('plan-amount-badge').classList.add('hidden');
     document.getElementById('smartcard-row').classList.add('hidden');

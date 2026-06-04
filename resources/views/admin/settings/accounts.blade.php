@@ -56,7 +56,7 @@
                     <td class="px-6 py-3 font-medium text-slate-800">{{ $account->bank_name }}</td>
                     <td class="px-6 py-3 text-slate-600 font-mono">{{ $account->account_number }}</td>
                     <td class="px-6 py-3 text-slate-600">{{ $account->account_name }}</td>
-                    <td class="px-6 py-3 text-slate-500">{{ $account->short_code ?? '—' }}</td>
+                    <td class="px-6 py-3 text-slate-500">{{ $account->short_code ?? '-' }}</td>
                     <td class="px-6 py-3">
                         <div class="flex items-center gap-2">
                             <button onclick="openEditModal({{ $account->id }}, {{ json_encode($account->bank_name) }}, {{ json_encode($account->account_number) }}, {{ json_encode($account->account_name) }}, {{ json_encode($account->short_code ?? '') }})"

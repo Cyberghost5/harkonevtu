@@ -101,12 +101,12 @@
                             {{ $typeLabels[$plan->data_type] ?? strtoupper($plan->data_type) }}
                         </span>
                     </td>
-                    <td class="px-4 py-2.5 text-xs text-slate-500">{{ $plan->validity ?? '—' }}</td>
-                    <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->vtpass_id ?? '—' }}</td>
-                    <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->clubkonnect_id ?? '—' }}</td>
-                    <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->easyaccess_id ?? '—' }}</td>
+                    <td class="px-4 py-2.5 text-xs text-slate-500">{{ $plan->validity ?? '-' }}</td>
+                    <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->vtpass_id ?? '-' }}</td>
+                    <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->clubkonnect_id ?? '-' }}</td>
+                    <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->easyaccess_id ?? '-' }}</td>
                     <td class="px-4 py-2.5 text-right font-semibold text-slate-700">{{ number_format($plan->amount, 0) }}</td>
-                    <td class="px-4 py-2.5 text-right text-slate-600">{{ $plan->amount_agent ? number_format($plan->amount_agent, 0) : '—' }}</td>
+                    <td class="px-4 py-2.5 text-right text-slate-600">{{ $plan->amount_agent ? number_format($plan->amount_agent, 0) : '-' }}</td>
                     <td class="px-4 py-2.5 text-center text-slate-500 text-xs">{{ $plan->sort_order }}</td>
                     <td class="px-4 py-2.5 text-center">
                         @if($plan->enabled)
@@ -165,7 +165,7 @@
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Data Type <span class="text-red-500">*</span></label>
                     <select name="data_type" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
-                        <option value="">— Select —</option>
+                        <option value="">- Select -</option>
                         <option value="sme">SME</option>
                         <option value="gifting">Gifting</option>
                         <option value="cg">Corp. Gifting</option>
@@ -196,7 +196,7 @@
                         @foreach(['vtpass_id'=>'VTPass','clubkonnect_id'=>'Clubkonnect','easyaccess_id'=>'EasyAccess','aabaxztech_id'=>'Aabaxztech','legitdataway_id'=>'LegitDataway','globacom_id'=>'Globacom','autopilot_id'=>'AutoPilot','merrybills_product_id'=>'Merrybills Product','merrybills_id'=>'Merrybills ID'] as $field => $lbl)
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">{{ $lbl }}</label>
-                            <input type="text" name="{{ $field }}" placeholder="—"
+                            <input type="text" name="{{ $field }}" placeholder="-"
                                    class="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white font-mono focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
                         </div>
                         @endforeach

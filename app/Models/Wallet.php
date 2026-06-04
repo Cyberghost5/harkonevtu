@@ -48,7 +48,7 @@ class Wallet extends Model
         $this->increment('balance', $amount);
 
         if ($isRefund) {
-            // Reverse the spending counter — the money was never truly spent
+            // Reverse the spending counter - the money was never truly spent
             $this->decrement('total_spent', min($amount, (float) $this->total_spent));
         } else {
             $this->increment('total_funded', $amount);

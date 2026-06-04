@@ -12,7 +12,7 @@ return new class extends Migration
     {
         // Remove token entries that were mistakenly seeded into app_settings.
         // All API credentials are sourced exclusively from the .env file
-        // via config/services.php — they must never live in the database.
+        // via config/services.php - they must never live in the database.
         DB::table('app_settings')
             ->whereIn('key', ['easyaccess_token', 'aabaxztech_token', 'legitdataway_token'])
             ->delete();

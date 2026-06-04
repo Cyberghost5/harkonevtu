@@ -183,7 +183,7 @@
                                 @foreach ($plans as $plan)
                                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                                     <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">{{ $plan->plan_name }}</td>
-                                    <td class="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs">{{ $plan->validity ?? '—' }}</td>
+                                    <td class="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs">{{ $plan->validity ?? '-' }}</td>
                                     <td class="px-4 py-3 text-right font-bold text-slate-900 dark:text-white">
                                         ₦{{ number_format((float)($isAgent && $plan->amount_agent > 0 ? $plan->amount_agent : $plan->amount), 2) }}
                                     </td>
@@ -293,7 +293,7 @@
             @endif
         </div>
         <p class="mt-2 text-xs text-slate-400 dark:text-slate-500">
-            Electricity tokens are priced at face value — you pay exactly what you want to recharge.
+            Electricity tokens are priced at face value - you pay exactly what you want to recharge.
             @if ($txChargeValue > 0)
                 A service fee applies per transaction.
             @endif
@@ -342,7 +342,7 @@
                                 </div>
                             </td>
                             <td class="px-4 py-3.5 text-xs text-slate-500 dark:text-slate-400 max-w-xs">
-                                {{ $pin->instructions ? Str::limit($pin->instructions, 80) : '—' }}
+                                {{ $pin->instructions ? Str::limit($pin->instructions, 80) : '-' }}
                             </td>
                             <td class="px-4 py-3.5 text-right font-bold text-slate-900 dark:text-white whitespace-nowrap">
                                 ₦{{ number_format((float) $pin->amount, 2) }}
