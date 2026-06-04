@@ -25,6 +25,16 @@ return new class extends Migration
             ['key' => 'bank_name',                 'value' => '',         'created_at' => $now, 'updated_at' => $now],
             ['key' => 'bank_account_name',         'value' => '',         'created_at' => $now, 'updated_at' => $now],
             ['key' => 'bank_account_number',       'value' => '',         'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'site_name',                 'value' => 'KlassPay', 'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'site_description',          'value' => '',         'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'site_keywords',             'value' => '',         'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'admin_email',              'value' => '',         'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'copyright',                'value' => '',         'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'location',                 'value' => '',         'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'favicon',                  'value' => '',         'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'logo1',                    'value' => '',         'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'logo2',                    'value' => '',         'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'theme_color',              'value' => '#4caf50',  'created_at' => $now, 'updated_at' => $now],
         ]);
     }
 

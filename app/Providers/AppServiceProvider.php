@@ -51,7 +51,7 @@ class AppServiceProvider extends ServiceProvider
     // ── Color Derivation ──────────────────────────────────────────────────────
 
     private function deriveThemeColors(string $input): array
-    {
+    { 
         $hex = preg_replace('/[^0-9a-fA-F]/', '', $input);
         if (strlen($hex) === 3) {
             $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
