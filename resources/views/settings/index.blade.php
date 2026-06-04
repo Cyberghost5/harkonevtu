@@ -11,7 +11,7 @@
         'rejected'  => 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',
     ];
     $kycBadge = $kycColors[$user->kyc_status ?? 'pending'] ?? $kycColors['pending'];
-    $tabs = ['profile' => 'Profile', 'account' => 'Account', 'account-details' => 'Account Details', 'transactions' => 'Transactions', 'api' => 'API'];
+    $tabs = ['profile' => 'Profile', 'account' => 'Change Password', 'account-details' => 'Account Details', 'transactions' => 'Change PIN', 'api' => 'API'];
 @endphp
 
 <div x-data="{ tab: @js($tab) }" class="max-w-7xl mx-auto">
@@ -208,70 +208,6 @@
                     </form>
                 </div>
 
-                {{-- ── Account Tab (Change Password) ─────────────────────── --}}
-                <div x-show="tab === 'account'" x-cloak>
-                    <h3 class="text-base font-bold text-slate-800 dark:text-white mb-5">Change Password</h3>
-                    <form method="POST" action="{{ route('settings.password.change') }}" class="space-y-5">
-                        @csrf @method('PUT')
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Current Password</label>
-                            <input type="password" name="current_password" autocomplete="current-password"
-                                   class="w-full px-4 py-2.5 text-sm border @error('current_password') border-rose-400 @else border-slate-200 dark:border-slate-700 @enderror rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
-                            @error('current_password')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">New Password</label>
-                            <input type="password" name="password" autocomplete="new-password"
-                                   class="w-full px-4 py-2.5 text-sm border @error('password') border-rose-400 @else border-slate-200 dark:border-slate-700 @enderror rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
-                            @error('password')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Confirm New Password</label>
-                            <input type="password" name="password_confirmation" autocomplete="new-password"
-                                   class="w-full px-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
-                        </div>
-                        <div class="pt-2">
-                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white rounded-xl transition-opacity hover:opacity-90" style="background: {{ $themeColor }}">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                Change Password
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                {{-- ── Account Details Tab (Bank Info) ───────────────────── --}}
-                <div x-show="tab === 'account-details'" x-cloak>
-                    <h3 class="text-base font-bold text-slate-800 dark:text-white mb-1">Payout Bank Details</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">Used for Airtime-to-Cash and manual withdrawals.</p>
-                    <form method="POST" action="{{ route('settings.bank.update') }}" class="space-y-5">
-                        @csrf @method('PUT')
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Bank Name</label>
-                            <input type="text" name="bank_name" value="{{ old('bank_name', $user->bank_name) }}" placeholder="e.g. GTBank"
-                                   class="w-full px-4 py-2.5 text-sm border @error('bank_name') border-rose-400 @else border-slate-200 dark:border-slate-700 @enderror rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
-                            @error('bank_name')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Account Number</label>
-                            <input type="text" name="bank_account_number" value="{{ old('bank_account_number', $user->bank_account_number) }}" placeholder="10-digit account number" maxlength="10"
-                                   class="w-full px-4 py-2.5 text-sm border @error('bank_account_number') border-rose-400 @else border-slate-200 dark:border-slate-700 @enderror rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
-                            @error('bank_account_number')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Account Name</label>
-                            <input type="text" name="bank_account_name" value="{{ old('bank_account_name', $user->bank_account_name) }}" placeholder="Name as on your bank account"
-                                   class="w-full px-4 py-2.5 text-sm border @error('bank_account_name') border-rose-400 @else border-slate-200 dark:border-slate-700 @enderror rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
-                            @error('bank_account_name')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
-                        </div>
-                        <div class="pt-2">
-                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white rounded-xl transition-opacity hover:opacity-90" style="background: {{ $themeColor }}">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-                                Save Bank Details
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
                 {{-- ── Transactions Tab (Change PIN / Reset PIN) ──────────── --}}
                 <div x-show="tab === 'transactions'" x-cloak x-data="{ form: '{{ session('active_form', 'change_pin') }}' }">
 
@@ -331,6 +267,70 @@
                             </form>
                         </div>
                     </div>
+                </div>
+
+                {{-- ── Account Details Tab (Bank Info) ───────────────────── --}}
+                <div x-show="tab === 'account-details'" x-cloak>
+                    <h3 class="text-base font-bold text-slate-800 dark:text-white mb-1">Payout Bank Details</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">Used for Airtime-to-Cash and manual withdrawals.</p>
+                    <form method="POST" action="{{ route('settings.bank.update') }}" class="space-y-5">
+                        @csrf @method('PUT')
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Bank Name</label>
+                            <input type="text" name="bank_name" value="{{ old('bank_name', $user->bank_name) }}" placeholder="e.g. GTBank"
+                                   class="w-full px-4 py-2.5 text-sm border @error('bank_name') border-rose-400 @else border-slate-200 dark:border-slate-700 @enderror rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
+                            @error('bank_name')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Account Number</label>
+                            <input type="text" name="bank_account_number" value="{{ old('bank_account_number', $user->bank_account_number) }}" placeholder="10-digit account number" maxlength="10"
+                                   class="w-full px-4 py-2.5 text-sm border @error('bank_account_number') border-rose-400 @else border-slate-200 dark:border-slate-700 @enderror rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
+                            @error('bank_account_number')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Account Name</label>
+                            <input type="text" name="bank_account_name" value="{{ old('bank_account_name', $user->bank_account_name) }}" placeholder="Name as on your bank account"
+                                   class="w-full px-4 py-2.5 text-sm border @error('bank_account_name') border-rose-400 @else border-slate-200 dark:border-slate-700 @enderror rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
+                            @error('bank_account_name')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="pt-2">
+                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white rounded-xl transition-opacity hover:opacity-90" style="background: {{ $themeColor }}">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                                Save Bank Details
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {{-- ── Account Tab (Change Password) ─────────────────────── --}}
+                <div x-show="tab === 'account'" x-cloak>
+                    <h3 class="text-base font-bold text-slate-800 dark:text-white mb-5">Change Password</h3>
+                    <form method="POST" action="{{ route('settings.password.change') }}" class="space-y-5">
+                        @csrf @method('PUT')
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Current Password</label>
+                            <input type="password" name="current_password" autocomplete="current-password"
+                                   class="w-full px-4 py-2.5 text-sm border @error('current_password') border-rose-400 @else border-slate-200 dark:border-slate-700 @enderror rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
+                            @error('current_password')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">New Password</label>
+                            <input type="password" name="password" autocomplete="new-password"
+                                   class="w-full px-4 py-2.5 text-sm border @error('password') border-rose-400 @else border-slate-200 dark:border-slate-700 @enderror rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
+                            @error('password')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Confirm New Password</label>
+                            <input type="password" name="password_confirmation" autocomplete="new-password"
+                                   class="w-full px-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--vtu-primary)]/30 focus:border-[color:var(--vtu-primary)] transition-colors">
+                        </div>
+                        <div class="pt-2">
+                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white rounded-xl transition-opacity hover:opacity-90" style="background: {{ $themeColor }}">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                Change Password
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
                 {{-- ── API Tab ────────────────────────────────────────────── --}}
