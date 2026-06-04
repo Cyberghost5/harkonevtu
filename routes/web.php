@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\AdminApiLogController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminCouponController;
 use App\Http\Controllers\ReferralController;
+use App\Http\Controllers\PricingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -121,6 +122,9 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin'])->group(function () 
     // ── Referral ──────────────────────────────────────────────────────────────
     Route::get('/referral',           [ReferralController::class, 'index'])->name('referral');
     Route::post('/referral/withdraw', [ReferralController::class, 'withdraw'])->name('referral.withdraw');
+
+    // ── Pricing ───────────────────────────────────────────────────────────────
+    Route::get('/pricing', [PricingController::class, 'index'])->name('pricing');
 });
 
 // ── Payment Webhooks (no auth, no CSRF) ──────────────────────────────────────
