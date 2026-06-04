@@ -71,7 +71,7 @@ return [
 
     'easyaccess' => [
         'token' => env('EASYACCESS_TOKEN'),
-        'base_url' => env('EASYACCESS_BASE_URL', 'https://easyaccess.com/api'),
+        'base_url' => env('EASYACCESS_BASE_URL', 'https://easyaccessapi.com.ng/api/live/v1'),
     ],
 
     'aabaxztech' => [
