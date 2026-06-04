@@ -11,7 +11,7 @@
         'rejected'  => 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',
     ];
     $kycBadge = $kycColors[$user->kyc_status ?? 'pending'] ?? $kycColors['pending'];
-    $tabs = ['profile' => 'Profile', 'account' => 'Change Password', 'account-details' => 'Account Details', 'transactions' => 'Change PIN', 'api' => 'API'];
+    $tabs = ['profile' => 'Profile', 'account-details' => 'Account Details', 'account' => 'Change Password', 'transactions' => 'Change PIN', 'api' => 'API'];
 @endphp
 
 <div x-data="{ tab: @js($tab) }" class="max-w-7xl mx-auto">
