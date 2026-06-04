@@ -23,7 +23,24 @@ class DashboardController extends Controller
 
         $wallet         = $user->wallet;
         $totalReferrals = User::where('referred_by', $user->referral_code)->count();
-        $recentTx       = $wallet->transactions()->latest()->take(5)->get();
+
+        // Collect references of all refund credits so we can hide both the
+        // refund entry itself and the matching orphaned failed debit.
+        $refundedOriginalRefs = $wallet->transactions()
+            ->where('reference', 'like', 'REFUND_%')
+            ->pluck('reference')
+            ->map(fn ($r) => substr($r, 7)) // strip "REFUND_" prefix
+            ->values()
+            ->all();
+
+        $recentTx = $wallet->transactions()
+            ->where('reference', 'not like', 'REFUND_%')          // hide refund credits
+            ->when($refundedOriginalRefs, fn ($q) =>
+                $q->whereNotIn('reference', $refundedOriginalRefs) // hide orphaned failed debits
+            )
+            ->latest()
+            ->take(5)
+            ->get();
 
         return view('dashboard', compact('user', 'wallet', 'totalReferrals', 'recentTx'));
     }

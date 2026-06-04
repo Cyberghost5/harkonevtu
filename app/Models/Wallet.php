@@ -40,10 +40,18 @@ class Wallet extends Model
      */
     public function credit(float $amount, string $description, string $reference, array $meta = []): WalletTransaction
     {
-        $before = (float) $this->balance;
+        $before     = (float) $this->balance;
+        $isRefund   = ($meta['type'] ?? null) === 'refund';
 
         $this->increment('balance', $amount);
-        $this->increment('total_funded', $amount);
+
+        if ($isRefund) {
+            // Reverse the spending counter — the money was never truly spent
+            $this->decrement('total_spent', min($amount, (float) $this->total_spent));
+        } else {
+            $this->increment('total_funded', $amount);
+        }
+
         $this->refresh();
 
         return $this->transactions()->create([
