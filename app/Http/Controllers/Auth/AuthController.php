@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use App\Mail\LoginOtpMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
@@ -237,10 +238,7 @@ class AuthController extends Controller
         $siteName = AppSetting::get('site_name', config('app.name'));
 
         try {
-            Mail::raw(
-                "Your {$siteName} login OTP is: {$otp}\n\nThis code expires in 10 minutes. Do not share it with anyone.",
-                fn($msg) => $msg->to($user->email)->subject("Your Login OTP - {$siteName}")
-            );
+            Mail::to($user->email)->send(new LoginOtpMail($user, $otp));
         } catch (\Exception $e) {
             Log::warning('[Login OTP] Failed to send email to ' . $user->email . ': ' . $e->getMessage());
         }
