@@ -21,6 +21,7 @@ use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\SupportController;
+use App\Http\Controllers\UserSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -133,7 +134,22 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin'])->group(function () 
 
     // ── Contact Support ──────────────────────────────────────────────────────
     Route::get('/support', [SupportController::class, 'index'])->name('support');
+
+    // ── User Settings ──────────────────────────────────────────────────────
+    Route::get('/settings',                         [UserSettingsController::class, 'index'])->name('settings');
+    Route::put('/settings/profile',                 [UserSettingsController::class, 'updateProfile'])->name('settings.profile.update');
+    Route::post('/settings/notification',           [UserSettingsController::class, 'updateNotification'])->name('settings.notification');
+    Route::put('/settings/password',                [UserSettingsController::class, 'changePassword'])->name('settings.password.change');
+    Route::put('/settings/pin/change',              [UserSettingsController::class, 'changePin'])->name('settings.pin.change');
+    Route::post('/settings/pin/reset-request',      [UserSettingsController::class, 'requestPinReset'])->name('settings.pin.reset.request');
+    Route::put('/settings/bank',                    [UserSettingsController::class, 'updateBankDetails'])->name('settings.bank.update');
+    Route::post('/settings/api/generate',           [UserSettingsController::class, 'generateApiToken'])->name('settings.api.generate');
+    Route::delete('/settings/delete',               [UserSettingsController::class, 'deleteAccount'])->name('settings.delete');
 });
+
+// ── PIN Reset (no auth needed — accessed via email link) ──────────────────────
+Route::get('/settings/pin/reset/{token}',  [UserSettingsController::class, 'showPinReset'])->name('settings.pin.reset.form');
+Route::post('/settings/pin/reset/{token}', [UserSettingsController::class, 'resetPin'])->name('settings.pin.reset.submit');
 
 // ── Payment Webhooks (no auth, no CSRF) ──────────────────────────────────────
 Route::withoutMiddleware(['web'])->group(function () {

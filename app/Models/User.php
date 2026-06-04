@@ -14,7 +14,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 
-#[Fillable(['name', 'username', 'email', 'phone', 'password', 'user_type', 'is_admin', 'is_active', 'referral_code', 'referred_by', 'transaction_pin'])]
+#[Fillable(['name', 'username', 'email', 'phone', 'password', 'user_type', 'is_admin', 'is_active', 'referral_code', 'referred_by', 'transaction_pin', 'low_balance_notification', 'kyc_status', 'avatar', 'bank_name', 'bank_account_number', 'bank_account_name'])]
 #[Hidden(['password', 'remember_token', 'transaction_pin'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -92,11 +92,13 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'phone_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_admin'          => 'boolean',
-            'is_active'         => 'boolean',
+            'email_verified_at'         => 'datetime',
+            'phone_verified_at'         => 'datetime',
+            'password'                  => 'hashed',
+            'is_admin'                  => 'boolean',
+            'is_active'                 => 'boolean',
+            'low_balance_notification'  => 'boolean',
+            'referral_commission_paid'  => 'boolean',
         ];
     }
 }
