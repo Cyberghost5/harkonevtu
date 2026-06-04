@@ -5,15 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Wallet extends Model
 {
-    protected $fillable = ['user_id', 'balance', 'total_funded', 'total_spent'];
+    protected $fillable = ['user_id', 'balance', 'total_funded', 'total_spent', 'referral_balance'];
 
     protected $casts = [
-        'balance'      => 'decimal:2',
-        'total_funded' => 'decimal:2',
-        'total_spent'  => 'decimal:2',
+        'balance'          => 'decimal:2',
+        'total_funded'     => 'decimal:2',
+        'total_spent'      => 'decimal:2',
+        'referral_balance' => 'decimal:2',
     ];
 
     // ─── Relationships ────────────────────────────────────────────────────────
@@ -96,4 +98,28 @@ class Wallet extends Model
             'metadata'       => $meta ?: null,
         ]);
     }
+
+    // ─── Referral Helpers ─────────────────────────────────────────────────────
+
+    /**
+     * Credit the referral balance (does NOT touch main balance or total_funded).
+     */
+    public function creditReferral(float $amount): void
+    {
+        $this->increment('referral_balance', $amount);
+    }
+
+    /**
+     * Move referral balance into main wallet as a regular credit.
+     */
+    public function withdrawReferral(float $amount): WalletTransaction
+    {
+        $this->decrement('referral_balance', $amount);
+        return $this->credit(
+            $amount,
+            'Referral bonus withdrawal',
+            'REFWD_' . strtoupper(Str::random(12)),
+        );
+    }
 }
+

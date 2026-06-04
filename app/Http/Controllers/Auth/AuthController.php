@@ -82,6 +82,11 @@ class AuthController extends Controller
 
     public function showRegister()
     {
+        // Persist referral code from URL into session so it survives the POST
+        if (request()->filled('ref')) {
+            session(['ref_code' => strtoupper(trim(request('ref')))]);
+        }
+
         return view('auth.register');
     }
 

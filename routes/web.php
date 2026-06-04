@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\AdminFundingController;
 use App\Http\Controllers\Admin\AdminApiLogController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminCouponController;
+use App\Http\Controllers\ReferralController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -116,6 +117,10 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin'])->group(function () 
         Route::get('/epins',           [ExamPinController::class, 'index'])->name('epins');
         Route::post('/epins/purchase', [ExamPinController::class, 'purchase'])->name('epins.purchase');
     });
+
+    // ── Referral ──────────────────────────────────────────────────────────────
+    Route::get('/referral',           [ReferralController::class, 'index'])->name('referral');
+    Route::post('/referral/withdraw', [ReferralController::class, 'withdraw'])->name('referral.withdraw');
 });
 
 // ── Payment Webhooks (no auth, no CSRF) ──────────────────────────────────────

@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ServiceTransaction extends Model
 {
+    // ─── Observer ─────────────────────────────────────────────────────────────
+
+    protected static function booted(): void
+    {
+        static::observe(\App\Observers\ServiceTransactionObserver::class);
+    }
+
     protected $fillable = [
         'user_id',
         'wallet_transaction_id',
