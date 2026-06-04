@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminCouponController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\PricingController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -125,6 +126,9 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin'])->group(function () 
 
     // ── Pricing ───────────────────────────────────────────────────────────────
     Route::get('/pricing', [PricingController::class, 'index'])->name('pricing');
+
+    // ── Transaction History ───────────────────────────────────────────────────
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
 });
 
 // ── Payment Webhooks (no auth, no CSRF) ──────────────────────────────────────
