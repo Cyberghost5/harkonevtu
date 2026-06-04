@@ -1,9 +1,13 @@
 @extends('emails.layout')
 
-@section('subject', 'Your Login OTP – ' . ($_siteName ?? config('app.name')))
+@section('subject', 'Your Login OTP')
 @section('title', 'Login OTP')
 
 @section('body')
+@php
+    $_theme    = \App\Models\AppSetting::get('theme_color', '#22c55e');
+    $_siteName = \App\Models\AppSetting::get('site_name', config('app.name'));
+@endphp
 <p style="color:#455056;font-size:15px;line-height:24px;margin:0;text-align:left">
     Hello <strong>{{ $user->displayName() }}</strong>,
 </p>
