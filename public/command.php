@@ -20,6 +20,7 @@ $allowedCommands = [
     'db_seed'          => ['label' => 'DB Seed',           'cmd' => 'db:seed --force',         'group' => 'Database', 'danger' => true],
     // Queue
     'queue_restart'    => ['label' => 'Queue Restart',     'cmd' => 'queue:restart',           'group' => 'Queue',    'danger' => false],
+    'queue_work'       => ['label' => 'Queue Work',        'cmd' => 'queue:work',              'group' => 'Queue',    'danger' => false],
     // Storage
     'storage_link'     => ['label' => 'Storage Link',      'cmd' => 'storage:link',            'group' => 'Storage',  'danger' => false],
     // Info
