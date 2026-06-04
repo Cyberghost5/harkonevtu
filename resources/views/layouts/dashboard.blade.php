@@ -37,6 +37,7 @@
     </script>
 
     <style type="text/css">
+        [x-cloak] { display: none !important; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .font-outfit { font-family: 'Outfit', sans-serif; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
