@@ -202,7 +202,7 @@ class AirtimeController extends Controller
             'autopilot'   => $this->callAutopilot($network, $amount, $phone, $reference),
             'legitdataway'=> $this->callLegitdataway($network, $amount, $phone, $reference),
             'merrybills'  => $this->callMerrybills($network, $amount, $phone, $reference),
-            'easyaccess'   => $this->callEasyairtime($network, $amount, $phone, $reference),
+            'easyaccess'   => $this->callEasyaccess($network, $amount, $phone, $reference),
             default       => $this->callVtpass($network, $amount, $phone, $reference),
         };
     }
@@ -381,9 +381,9 @@ class AirtimeController extends Controller
 
     // ─── Easyairtime ─────────────────────────────────────────────────────────
 
-    private function callEasyairtime(NetworkAirtime $network, float $amount, string $phone, string $reference): array
+    private function callEasyaccess(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
-        $endpoint   = config('services.easyairtime.base_url') . '/topup';
+        $endpoint   = config('services.easyaccess.base_url') . '/topup';
         $payload    = [
             'network' => $network->easyaccess_id,
             'mobileno' => $phone,
@@ -397,7 +397,7 @@ class AirtimeController extends Controller
         $apiRef     = $reference;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . config('services.easyairtime.token'),
+            'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
             'Cache-Control' => 'no-cache',
         ];
         $responseHeaders = null;
@@ -421,7 +421,7 @@ class AirtimeController extends Controller
             ApiLog::record([
                 'user_id'     => auth()->id(),
                 'service'          => 'airtime',
-                'provider'         => 'easyairtime',
+                'provider'         => 'easyaccess',
                 'reference'        => $reference,
                 'endpoint'         => $endpoint,
                 'method'           => 'POST',
