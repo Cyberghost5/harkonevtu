@@ -412,7 +412,7 @@ class DataController extends Controller
     private function callAutopilotData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
         $endpoint  = config('services.autopilot.base_url') . '/data';
-        $networkId = $this->autopilotNetworkIds[$network->network_key] ?? 1;
+        $networkId = (string) ($this->autopilotNetworkIds[$network->network_key] ?? 1);
         $payload   = [
             'networkId'   => $networkId,
             'dataType'  => $plan->data_type,
