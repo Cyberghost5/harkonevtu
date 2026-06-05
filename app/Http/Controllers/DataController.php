@@ -710,9 +710,10 @@ class DataController extends Controller
 
     private function callGlobacomData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
+        $trx_ref = "TRX".time();
         $endpoint  = rtrim(config('services.globacom.base_url'), '/') . '/';
         $payload   = [
-            'transId'    => $reference,
+            'transId'    => $trx_ref,
             'msisdn'     => preg_replace('/^0/', '234', $phone), // Globacom expects 234XXXXXXXXXX
             'bucketId'   => (int) config('services.globacom.bucket_id'),
             'planId'     => (int) $plan->idForApi('globacom'),
@@ -723,7 +724,7 @@ class DataController extends Controller
         $data       = [];
         $httpStatus = null;
         $success    = false;
-        $apiRef     = $reference;
+        $apiRef     = $trx_ref;
 
         $requestHeaders = [
             'x-api-key'    => config('services.globacom.x_api_key'),
@@ -738,20 +739,20 @@ class DataController extends Controller
             $data       = $response->json() ?? [];
             $status     = $data['status'] ?? '';
             $success    = $status === 'ok';
-            $apiRef     = $data['egmstransId'] ?? $data['transId'] ?? $reference;
+            $apiRef     = $data['egmstransId'] ?? $data['transId'] ?? $trx_ref;
             if (!$success) {
                 $data['message'] = $data['message'] ?? 'Globacom transaction failed.';
             }
         } catch (\Exception $e) {
             $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
-            Log::error('Globacom data request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+            Log::error('Globacom data request failed', ['reference' => $trx_ref, 'error' => $e->getMessage()]);
         } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
                 'user_id'     => auth()->id(),
                 'service'          => 'data',
                 'provider'         => 'globacom',
-                'reference'        => $reference,
+                'reference'        => $trx_ref,
                 'endpoint'         => $endpoint,
                 'method'           => 'POST',
                 'payload'          => $payload,
