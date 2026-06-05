@@ -345,7 +345,7 @@ class AirtimeController extends Controller
         $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $response   = Http::withHeaders($requestHeaders)->timeout(60)->post($endpoint, $payload);
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
