@@ -414,10 +414,11 @@ class DataController extends Controller
         $endpoint  = config('services.autopilot.base_url') . '/data';
         $networkId = $this->autopilotNetworkIds[$network->network_key] ?? 1;
         $payload   = [
-            'network'   => $networkId,
-            'val_id'    => $plan->autopilot_id,
+            'networkId'   => $networkId,
+            'dataType'  => $plan->data_type,
+            'planId'    => $plan->autopilot_id,
             'phone'     => $phone,
-            'ref_id'    => $reference,
+            'reference'    => $reference,
         ];
         $data       = [];
         $httpStatus = null;
