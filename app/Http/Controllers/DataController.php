@@ -715,9 +715,9 @@ class DataController extends Controller
         $payload   = [
             'transId'    => $trx_ref,
             'msisdn'     => preg_replace('/^0/', '234', $phone), // Globacom expects 234XXXXXXXXXX
-            'bucketId'   => (int) config('services.globacom.bucket_id'),
-            'planId'     => (int) $plan->idForApi('globacom'),
-            'sponsorId'  => config('services.globacom.sponsor_id'),
+            'bucketId'   => (string) config('services.globacom.bucket_id'),
+            'planId'     => (string) $plan->idForApi('globacom'),
+            'sponsorId'  => (string) config('services.globacom.sponsor_id'),
             'quantity'   => 1,
             'ignoresms'  => false,
         ];
