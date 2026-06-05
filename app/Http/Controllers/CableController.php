@@ -301,7 +301,7 @@ class CableController extends Controller
 
     private function validateCardEasyaccess(CableProvider $provider, string $smartcard): JsonResponse
     {
-        $endpoint = config('services.easyaccess.base_url') . '/verifytv.php';
+        $endpoint = config('services.easyaccess.base_url') . '/verify-tv';
         $payload    = [
             'company'     => $provider->idForApi('easyaccess'),
             'iucno' => $smartcard,
@@ -312,7 +312,8 @@ class CableController extends Controller
         $result     = null;
 
         $requestHeaders = [
-            'AuthorizationToken' => config('services.easyaccess.token'),
+            'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
+            'Cache-Control' => 'no-cache',
         ];
         $responseHeaders = null;
         $start = hrtime(true);
@@ -326,7 +327,7 @@ class CableController extends Controller
 
             if ($status === 'true') {
                 $content = $data['message']['content'] ?? $data['message'] ?? [];
-                $name    = is_array($content) ? ($content['Customer_Name'] ?? $content['name'] ?? null) : null;
+                $name    = is_array($content) ? ($content['Customer_Name'] ?? $content['name'] ?? $content['customer_name'] ?? null) : null;
                 $success = true;
                 $result  = response()->json([
                     'success'       => true,
@@ -531,7 +532,7 @@ class CableController extends Controller
         string $smartcard,
         string $reference
     ): array {
-        $endpoint = config('services.easyaccess.base_url') . '/paytv.php';
+        $endpoint = config('services.easyaccess.base_url') . '/pay-tv';
         $payload  = [
             'company'         => $provider->idForApi('easyaccess'),
             'iucno' => $smartcard,
@@ -544,8 +545,8 @@ class CableController extends Controller
         $customerName = null;
 
         $requestHeaders = [
-            'cache-control'       => 'no-cache',
-            'AuthorizationToken' => config('services.easyaccess.token'),
+            'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
+            'Cache-Control'       => 'no-cache',
         ];
         $responseHeaders = null;
         $start = hrtime(true);

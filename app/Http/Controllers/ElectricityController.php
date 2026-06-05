@@ -633,7 +633,7 @@ class ElectricityController extends Controller
         float $amount,
         string $reference
     ): array {
-        $endpoint = config('services.easyaccess.base_url') . '/api/payelectricity.php';
+        $endpoint = config('services.easyaccess.base_url') . '/pay-electricity';
         $payload  = [
             'company'   => $disco->idForApi('easyaccess'),
             'metertype' => $meterType,
@@ -649,7 +649,8 @@ class ElectricityController extends Controller
         $customerName = null;
 
         $requestHeaders = [
-            'AuthorizationToken' => config('services.easyaccess.token'),
+            'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
+            'Cache-Control' => 'no-cache',
         ];
         $responseHeaders = null;
         $start = hrtime(true);

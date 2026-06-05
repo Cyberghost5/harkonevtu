@@ -527,11 +527,11 @@ class DataController extends Controller
 
     private function callEasyaccessData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
-        $endpoint  = config('services.easyaccess.base_url') . '/data.php';
+        $endpoint  = config('services.easyaccess.base_url') . '/purchase-data';
         $payload   = [
             'network'          => $network->easyaccess_id,
-            'mobileno'         => $phone,
             'dataplan'         => $plan->easyaccess_id,
+            'mobileno'         => $phone,
             'client_reference' => $reference,
         ];
         $data       = [];
@@ -540,8 +540,8 @@ class DataController extends Controller
         $apiRef     = $reference;
 
         $requestHeaders = [
-            'AuthorizationToken' => config('services.easyaccess.token'),
-            'cache-control'      => 'no-cache',
+            'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
+            'Cache-Control' => 'no-cache',
         ];
         $responseHeaders = null;
         $start = hrtime(true);

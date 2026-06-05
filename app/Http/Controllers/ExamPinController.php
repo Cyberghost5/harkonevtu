@@ -275,8 +275,11 @@ class ExamPinController extends Controller
     private function callEasyaccessExamPin(ExamPinType $examType, int $quantity, string $reference): array
     {
         $baseUrl  = config('services.easyaccess.base_url');
-        $endpoint = $baseUrl . $examType->easyaccess_endpoint;
-        $payload  = ['no_of_pins' => $quantity];
+        $endpoint = $baseUrl . '/exam-pins'; //$examType->easyaccess_endpoint;
+        $payload  = [
+            'exam_board' => $examType->id,
+            'no_of_pins' => $quantity
+        ];
 
         $data            = [];
         $httpStatus      = null;
@@ -286,8 +289,8 @@ class ExamPinController extends Controller
         $responseHeaders = null;
 
         $requestHeaders = [
-            'AuthorizationToken' => config('services.easyaccess.token'),
-            'cache-control'      => 'no-cache',
+            'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
+            'Cache-Control' => 'no-cache',
         ];
         $start = hrtime(true);
         try {

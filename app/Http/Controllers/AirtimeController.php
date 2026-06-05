@@ -386,11 +386,10 @@ class AirtimeController extends Controller
         $endpoint   = config('services.easyairtime.base_url') . '/topup';
         $payload    = [
             'network' => $network->easyaccess_id,
-            'phone' => $phone,
-            'plan_type' => 'VTU',
+            'mobileno' => $phone,
+            'airtimetype' => 'VTU',
             'amount' => (int) $amount,
-            'bypass' => true,
-            'request-id' => $reference,
+            'client_reference' => $reference,
         ];
         $data       = [];
         $httpStatus = null;
@@ -398,8 +397,8 @@ class AirtimeController extends Controller
         $apiRef     = $reference;
 
         $requestHeaders = [
-            'Authorization' => 'Token ' . config('services.easyairtime.token'),
-            'Content-Type'  => 'application/json',
+            'Authorization' => 'Bearer ' . config('services.easyairtime.token'),
+            'Cache-Control' => 'no-cache',
         ];
         $responseHeaders = null;
         $start = hrtime(true);
