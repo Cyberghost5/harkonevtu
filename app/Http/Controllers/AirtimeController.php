@@ -202,7 +202,7 @@ class AirtimeController extends Controller
             'autopilot'   => $this->callAutopilot($network, $amount, $phone, $reference),
             'legitdataway'=> $this->callLegitdataway($network, $amount, $phone, $reference),
             'merrybills'  => $this->callMerrybills($network, $amount, $phone, $reference),
-            'easyairtime'   => $this->callEasyairtime($network, $amount, $phone, $reference),
+            'easyaccess'   => $this->callEasyairtime($network, $amount, $phone, $reference),
             default       => $this->callVtpass($network, $amount, $phone, $reference),
         };
     }

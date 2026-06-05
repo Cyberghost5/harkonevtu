@@ -187,7 +187,28 @@ class AdminSettingsController extends Controller
             }
         }
 
-        return view('admin.settings.api', compact('s', 'availableProviders'));
+        // Per-service integrated API lists — only show APIs that are actually
+        // coded into each service controller AND have credentials configured.
+        $airtimeIntegrated   = ['vtpass', 'clubkonnect', 'autopilot', 'legitdataway', 'merrybills', 'easyaccess'];
+        $airtimeProviders    = array_values(array_intersect($availableProviders, $airtimeIntegrated));
+
+        $dataIntegrated      = ['vtpass', 'clubkonnect', 'autopilot', 'merrybills', 'easyaccess', 'aabaxztech', 'legitdataway', 'globacom'];
+        $dataProviders       = array_values(array_intersect($availableProviders, $dataIntegrated));
+
+        $electricityIntegrated = ['vtpass', 'easyaccess', 'payscribe'];
+        $electricityProviders  = array_values(array_intersect($availableProviders, $electricityIntegrated));
+
+        $cableIntegrated     = ['vtpass', 'easyaccess', 'payscribe'];
+        $cableProviders      = array_values(array_intersect($availableProviders, $cableIntegrated));
+
+        $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller'];
+        $epinsProviders      = array_values(array_intersect($availableProviders, $epinsIntegrated));
+
+        return view('admin.settings.api', compact(
+            's', 'availableProviders',
+            'airtimeProviders', 'dataProviders',
+            'electricityProviders', 'cableProviders', 'epinsProviders'
+        ));
     }
 
     public function updateApi(Request $request)

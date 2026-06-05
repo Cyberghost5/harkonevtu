@@ -93,12 +93,16 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">{{ $label }}</label>
                         <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
-                            @foreach($providerOpts as $p)
+                            <option value="">- Select Provider -</option>
+                            @foreach($dataProviders as $p)
                             <option value="{{ $p }}" {{ ($s[$key] ?? '') === $p ? 'selected' : '' }}>
-                                {{ $p ? ucfirst($p) : '- Select Provider -' }}
+                                {{ ucfirst($p) }}
                             </option>
                             @endforeach
                         </select>
+                        @if(empty($dataProviders))
+                            <p class="mt-1 text-xs text-amber-500">No data-compatible providers have credentials configured.</p>
+                        @endif
                     </div>
                     @endforeach
                 </div>
@@ -165,13 +169,27 @@
                 <p class="text-sm text-slate-400 italic">No providers available - configure API keys first.</p>
                 @else
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    {{-- Airtime — only shows its own integrated providers --}}
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API for Airtime</label>
+                        <select name="airtime_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                            <option value="">- Select Provider -</option>
+                            @foreach($airtimeProviders as $p)
+                            <option value="{{ $p }}" {{ ($s['airtime_api'] ?? '') === $p ? 'selected' : '' }}>
+                                {{ ucfirst($p) }}
+                            </option>
+                            @endforeach
+                        </select>
+                        @if(empty($airtimeProviders))
+                            <p class="mt-1 text-xs text-amber-500">No airtime-compatible providers have credentials configured.</p>
+                        @endif
+                    </div>
+
+                    {{-- Other services still use the full available-providers list --}}
                     @foreach([
-                        'airtime_api'     => 'Airtime',
                         'datacard_api'    => 'DataCard',
                         'airtime_pin_api' => 'Airtime PIN',
-                        'electricity_api' => 'Electricity',
-                        'cable_api'       => 'Cable TV',
-                        'epins_api'       => 'Exam Pins (ePins)',
                         'betting_api'     => 'Betting',
                     ] as $key => $label)
                     <div>
@@ -185,6 +203,54 @@
                         </select>
                     </div>
                     @endforeach
+
+                    {{-- Electricity — only shows its own integrated providers --}}
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API for Electricity</label>
+                        <select name="electricity_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                            <option value="">- Select Provider -</option>
+                            @foreach($electricityProviders as $p)
+                            <option value="{{ $p }}" {{ ($s['electricity_api'] ?? '') === $p ? 'selected' : '' }}>
+                                {{ ucfirst($p) }}
+                            </option>
+                            @endforeach
+                        </select>
+                        @if(empty($electricityProviders))
+                            <p class="mt-1 text-xs text-amber-500">No electricity-compatible providers have credentials configured.</p>
+                        @endif
+                    </div>
+
+                    {{-- Cable TV — only shows its own integrated providers --}}
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API for Cable TV</label>
+                        <select name="cable_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                            <option value="">- Select Provider -</option>
+                            @foreach($cableProviders as $p)
+                            <option value="{{ $p }}" {{ ($s['cable_api'] ?? '') === $p ? 'selected' : '' }}>
+                                {{ ucfirst($p) }}
+                            </option>
+                            @endforeach
+                        </select>
+                        @if(empty($cableProviders))
+                            <p class="mt-1 text-xs text-amber-500">No cable-compatible providers have credentials configured.</p>
+                        @endif
+                    </div>
+
+                    {{-- Exam Pins — only shows its own integrated providers --}}
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API for Exam Pins (ePins)</label>
+                        <select name="epins_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                            <option value="">- Select Provider -</option>
+                            @foreach($epinsProviders as $p)
+                            <option value="{{ $p }}" {{ ($s['epins_api'] ?? '') === $p ? 'selected' : '' }}>
+                                {{ ucfirst($p) }}
+                            </option>
+                            @endforeach
+                        </select>
+                        @if(empty($epinsProviders))
+                            <p class="mt-1 text-xs text-amber-500">No epin-compatible providers have credentials configured.</p>
+                        @endif
+                    </div>
 
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">
