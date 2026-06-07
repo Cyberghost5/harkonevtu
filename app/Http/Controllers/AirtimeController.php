@@ -330,7 +330,8 @@ class AirtimeController extends Controller
             'networkId' => $network->autopilot_id,
             'amount' => (string) $amount,
             'phone' => $phone,
-            'airtimeType' => 'VTU',
+            // 'airtimeType' => 'VTU',
+            'airtimeType' => 'SNS',
             'reference' => $reference,
         ];
         $data       = [];
