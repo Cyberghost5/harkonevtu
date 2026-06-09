@@ -420,7 +420,7 @@ class DataController extends Controller
         if ($plan->data_type === 'gifting') {
             $dataType = 'GIFTING';
         }
-        if ($plan->data_type === 'cg' && $plan->network_key) {
+        if ($plan->data_type === 'cg' && $plan->network_key === 'airtel') {
             $dataType = 'DIRECT GIFTING';
         }
         if ($plan->data_type === 'awoof') {
