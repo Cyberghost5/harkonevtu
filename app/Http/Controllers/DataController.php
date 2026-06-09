@@ -413,9 +413,25 @@ class DataController extends Controller
     {
         $endpoint  = config('services.autopilot.base_url') . '/data';
         $networkId = (string) ($this->autopilotNetworkIds[$network->network_key] ?? 1);
+        // Change the data_type to 'gifting' for gifting plans to match Autopilot's expected value
+        if ($plan->data_type === 'cg') {
+            $dataType = 'CORPORATE GIFTING';
+        }
+        if ($plan->data_type === 'gifting') {
+            $dataType = 'GIFTING';
+        }
+        if ($plan->data_type === 'cg' && $plan->network_key) {
+            $dataType = 'DIRECT GIFTING';
+        }
+        if ($plan->data_type === 'awoof') {
+            $dataType = 'CORPORATE GIFTING';
+        }
+        if ($plan->data_type === 'sme') {
+            $dataType = 'SME';
+        }
         $payload   = [
             'networkId'   => $networkId,
-            'dataType'  => $plan->data_type,
+            'dataType'  => $dataType,
             'planId'    => $plan->autopilot_id,
             'phone'     => $phone,
             'reference'    => $reference,
