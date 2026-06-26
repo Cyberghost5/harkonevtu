@@ -18,7 +18,69 @@ class AppServiceProvider extends ServiceProvider
                 $s = AppSetting::getMany([
                     'site_name', 'site_description', 'site_keywords', 'admin_email',
                     'copyright', 'location', 'favicon', 'logo1', 'logo2', 'theme_color',
+                    'easyaccess_api_key',
+                    'vtpass_api_key', 'vtpass_public_key', 'vtpass_secret_key',
+                    'clubkonnect_api_key', 'clubkonnect_user_id',
+                    'autopilot_api_key',
+                    'merrybills_token', 'merrybills_pin',
+                    'aabaxztech_api_key',
+                    'legitdataway_api_key',
+                    'globacom_xapi_key', 'globacom_sponsor_id', 'globacom_bucket_id',
+                    'payscribe_secret_key', 'payscribe_public_key',
+                    'primebiller_api_key',
+                    'paystack_secret_key', 'paystack_public_key',
+                    'flutterwave_secret_key', 'flutterwave_public_key', 'flutterwave_encryption_key', 'flutterwave_hash',
+                    'mail_host', 'mail_username', 'mail_password', 'mail_port', 'mail_from_address', 'mail_reply_to',
                 ]);
+
+                // Map database settings to dynamic configuration overrides
+                config([
+                    'services.easyaccess.token' => !empty($s['easyaccess_api_key']) ? $s['easyaccess_api_key'] : config('services.easyaccess.token'),
+                    'services.vtpass.api_key' => !empty($s['vtpass_api_key']) ? $s['vtpass_api_key'] : config('services.vtpass.api_key'),
+                    'services.vtpass.public_key' => !empty($s['vtpass_public_key']) ? $s['vtpass_public_key'] : config('services.vtpass.public_key'),
+                    'services.vtpass.secret_key' => !empty($s['vtpass_secret_key']) ? $s['vtpass_secret_key'] : config('services.vtpass.secret_key'),
+                    'services.clubkonnect.api_key' => !empty($s['clubkonnect_api_key']) ? $s['clubkonnect_api_key'] : config('services.clubkonnect.api_key'),
+                    'services.clubkonnect.user_id' => !empty($s['clubkonnect_user_id']) ? $s['clubkonnect_user_id'] : config('services.clubkonnect.user_id'),
+                    'services.autopilot.api_key' => !empty($s['autopilot_api_key']) ? $s['autopilot_api_key'] : config('services.autopilot.api_key'),
+                    'services.merrybills.token' => !empty($s['merrybills_token']) ? $s['merrybills_token'] : config('services.merrybills.token'),
+                    'services.merrybills.pin' => !empty($s['merrybills_pin']) ? $s['merrybills_pin'] : config('services.merrybills.pin'),
+                    'services.aabaxztech.token' => !empty($s['aabaxztech_api_key']) ? $s['aabaxztech_api_key'] : config('services.aabaxztech.token'),
+                    'services.legitdataway.token' => !empty($s['legitdataway_api_key']) ? $s['legitdataway_api_key'] : config('services.legitdataway.token'),
+                    'services.globacom.x_api_key' => !empty($s['globacom_xapi_key']) ? $s['globacom_xapi_key'] : config('services.globacom.x_api_key'),
+                    'services.globacom.sponsor_id' => !empty($s['globacom_sponsor_id']) ? $s['globacom_sponsor_id'] : config('services.globacom.sponsor_id'),
+                    'services.globacom.bucket_id' => !empty($s['globacom_bucket_id']) ? $s['globacom_bucket_id'] : config('services.globacom.bucket_id'),
+                    'services.payscribe.secret_key' => !empty($s['payscribe_secret_key']) ? $s['payscribe_secret_key'] : config('services.payscribe.secret_key'),
+                    'services.payscribe.public_key' => !empty($s['payscribe_public_key']) ? $s['payscribe_public_key'] : config('services.payscribe.public_key'),
+                    'services.primebiller.token' => !empty($s['primebiller_api_key']) ? $s['primebiller_api_key'] : config('services.primebiller.token'),
+                    'services.paystack.secret_key' => !empty($s['paystack_secret_key']) ? $s['paystack_secret_key'] : config('services.paystack.secret_key'),
+                    'services.paystack.public_key' => !empty($s['paystack_public_key']) ? $s['paystack_public_key'] : config('services.paystack.public_key'),
+                    'services.flutterwave.secret_key' => !empty($s['flutterwave_secret_key']) ? $s['flutterwave_secret_key'] : config('services.flutterwave.secret_key'),
+                    'services.flutterwave.public_key' => !empty($s['flutterwave_public_key']) ? $s['flutterwave_public_key'] : config('services.flutterwave.public_key'),
+                    'services.flutterwave.encryption_key' => !empty($s['flutterwave_encryption_key']) ? $s['flutterwave_encryption_key'] : config('services.flutterwave.encryption_key'),
+                    'services.flutterwave.hash' => !empty($s['flutterwave_hash']) ? $s['flutterwave_hash'] : config('services.flutterwave.hash'),
+                ]);
+
+                // Map SMTP mailer configuration dynamically
+                if (!empty($s['mail_host'])) {
+                    $port = (int) ($s['mail_port'] ?: 587);
+                    $scheme = null;
+                    if ($port === 465) {
+                        $scheme = 'smtps';
+                    } elseif ($port === 587) {
+                        $scheme = 'tls';
+                    }
+
+                    config([
+                        'mail.default' => 'smtp',
+                        'mail.mailers.smtp.host' => $s['mail_host'],
+                        'mail.mailers.smtp.port' => $port,
+                        'mail.mailers.smtp.username' => $s['mail_username'],
+                        'mail.mailers.smtp.password' => $s['mail_password'],
+                        'mail.mailers.smtp.scheme' => $scheme,
+                        'mail.from.address' => $s['mail_from_address'] ?: config('mail.from.address'),
+                        'mail.from.name' => $s['site_name'] ?: config('mail.from.name'),
+                    ]);
+                }
 
                 $colors = $this->deriveThemeColors($s['theme_color'] ?: '#4caf50');
                 $this->shareAll($s, $colors);

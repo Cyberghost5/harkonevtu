@@ -93,7 +93,11 @@ class AirtimeController extends Controller
         $walletTx  = null;
 
         try {
-            $walletTx = DB::transaction(function () use ($wallet, $finalAmount, $networkKey, $phone, $reference, $network) {
+            $walletTx = DB::transaction(function () use ($user, $finalAmount, $networkKey, $phone, $reference, $network) {
+                $wallet = \App\Models\Wallet::where('user_id', $user->id)->lockForUpdate()->firstOrFail();
+                if (!$wallet->hasSufficientBalance($finalAmount)) {
+                    throw new \Exception('Insufficient wallet balance. Please fund your wallet.');
+                }
                 return $wallet->debit(
                     $finalAmount,
                     $network->name . ' Airtime - ' . $phone,
@@ -112,7 +116,8 @@ class AirtimeController extends Controller
         // ── 5. Refund on failure - do NOT record failed transactions ─────────
         if (!$apiSuccess) {
             try {
-                DB::transaction(function () use ($wallet, $finalAmount, $reference, $network, $phone) {
+                DB::transaction(function () use ($user, $finalAmount, $reference, $network, $phone) {
+                    $wallet = \App\Models\Wallet::where('user_id', $user->id)->lockForUpdate()->firstOrFail();
                     $wallet->credit(
                         $finalAmount,
                         'Refund: ' . $network->name . ' Airtime failed - ' . $phone,

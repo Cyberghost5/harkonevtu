@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
@@ -117,10 +118,50 @@ class VerificationController extends Controller
         // Store OTP in cache for 10 minutes
         Cache::put('phone_otp_' . $user->id, $otp, now()->addMinutes(10));
 
-        // In production, replace this with your SMS provider (e.g. Termii, Twilio)
+        // Always log the OTP locally for reference/fallback
         Log::info('[PayPulse OTP] Phone: ' . $user->phone . ' | OTP: ' . $otp);
 
-        // TODO: Send via SMS provider
-        // Http::post('https://api.ng.termii.com/api/sms/send', [...]);
+        $apiKey = AppSetting::get('bulksms_api_key');
+        $sender = AppSetting::get('bulksms_sender') ?: AppSetting::get('site_name', 'PayPulse');
+        if (strlen($sender) > 11) {
+            $sender = substr($sender, 0, 11);
+        }
+
+        if ($apiKey) {
+            $phone = $user->phone;
+            // Format phone to international (e.g. 23480...)
+            if (str_starts_with($phone, '0')) {
+                $phone = '234' . substr($phone, 1);
+            } elseif (str_starts_with($phone, '+')) {
+                $phone = substr($phone, 1);
+            }
+
+            $message = "Your " . AppSetting::get('site_name', 'PayPulse') . " verification code is: " . $otp;
+
+            try {
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json',
+                ])->post('https://www.bulksmsnigeria.com/api/v2/sms', [
+                    'from' => $sender,
+                    'to' => $phone,
+                    'body' => $message,
+                ]);
+
+                if ($response->failed() || ($response->json('status') !== 'success' && $response->json('data.status') !== 'success')) {
+                    Log::error('BulkSMS Nigeria OTP delivery failed', [
+                        'status' => $response->status(),
+                        'response' => $response->json(),
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('BulkSMS Nigeria API request exception', [
+                    'error' => $e->getMessage()
+                ]);
+            }
+        } else {
+            Log::warning('BulkSMS API key not set. Logged OTP: ' . $otp);
+        }
     }
 }

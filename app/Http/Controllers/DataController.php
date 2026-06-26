@@ -181,7 +181,11 @@ class DataController extends Controller
         $walletTx  = null;
 
         try {
-            $walletTx = DB::transaction(function () use ($wallet, $finalAmount, $network, $plan, $phone, $reference) {
+            $walletTx = DB::transaction(function () use ($user, $finalAmount, $network, $plan, $phone, $reference) {
+                $wallet = \App\Models\Wallet::where('user_id', $user->id)->lockForUpdate()->firstOrFail();
+                if (!$wallet->hasSufficientBalance($finalAmount)) {
+                    throw new \Exception('Insufficient wallet balance. Please fund your wallet.');
+                }
                 return $wallet->debit(
                     $finalAmount,
                     $network->name . ' Data - ' . $plan->plan_name . ' - ' . $phone,
@@ -200,7 +204,8 @@ class DataController extends Controller
         // Refund on failure - no transaction record saved
         if (!$apiSuccess) {
             try {
-                DB::transaction(function () use ($wallet, $finalAmount, $reference, $network, $phone, $plan) {
+                DB::transaction(function () use ($user, $finalAmount, $reference, $network, $phone) {
+                    $wallet = \App\Models\Wallet::where('user_id', $user->id)->lockForUpdate()->firstOrFail();
                     $wallet->credit(
                         $finalAmount,
                         'Refund: ' . $network->name . ' Data failed - ' . $phone,

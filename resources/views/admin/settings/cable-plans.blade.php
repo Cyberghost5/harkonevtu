@@ -137,7 +137,7 @@
             <div class="grid grid-cols-2 gap-4">
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-slate-500 mb-1">Provider <span class="text-red-500">*</span></label>
-                    <select name="cable_provider_id" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                    <select name="cable_provider_id" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                         <option value="">- Select Provider -</option>
                         @foreach($providers as $prov)
                         <option value="{{ $prov->id }}">{{ $prov->name }}</option>
@@ -147,32 +147,32 @@
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-slate-500 mb-1">Plan Name <span class="text-red-500">*</span></label>
                     <input type="text" name="name" required placeholder="e.g. DStv Compact"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">VTPass ID <span class="text-red-500">*</span></label>
                     <input type="text" name="vtpass_id" required placeholder="e.g. compact"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 font-mono text-xs">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono text-xs">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">EasyAccess ID</label>
                     <input type="text" name="easyaccess_id" placeholder="e.g. 93"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 font-mono text-xs">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono text-xs">
                 </div>
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-slate-500 mb-1">Payscribe ID</label>
                     <input type="text" name="payscribe_id" placeholder="e.g. WDdqUUgrMVBtaFVOL0p2..."
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 font-mono text-xs">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono text-xs">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Amount (₦) <span class="text-red-500">*</span></label>
                     <input type="number" name="amount" required step="0.01" min="0"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Sort Order</label>
                     <input type="number" name="sort_order" value="0" min="0"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div class="col-span-2 flex items-center gap-2">
                     <input type="checkbox" name="enabled" value="1" id="add_enabled" checked class="rounded border-slate-300 text-green-500">
@@ -204,7 +204,7 @@
             <div class="grid grid-cols-2 gap-4">
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-slate-500 mb-1">Provider <span class="text-red-500">*</span></label>
-                    <select id="edit_cable_provider_id" name="cable_provider_id" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                    <select id="edit_cable_provider_id" name="cable_provider_id" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                         @foreach($providers as $prov)
                         <option value="{{ $prov->id }}">{{ $prov->name }}</option>
                         @endforeach
@@ -213,32 +213,32 @@
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-slate-500 mb-1">Plan Name <span class="text-red-500">*</span></label>
                     <input type="text" id="edit_name" name="name" required
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">VTPass ID <span class="text-red-500">*</span></label>
                     <input type="text" id="edit_vtpass_id" name="vtpass_id" required
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 font-mono text-xs">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono text-xs">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">EasyAccess ID</label>
                     <input type="text" id="edit_easyaccess_id" name="easyaccess_id"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 font-mono text-xs">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono text-xs">
                 </div>
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-slate-500 mb-1">Payscribe ID</label>
                     <input type="text" id="edit_payscribe_id" name="payscribe_id"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 font-mono text-xs">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono text-xs">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Amount (₦) <span class="text-red-500">*</span></label>
                     <input type="number" id="edit_amount" name="amount" required step="0.01" min="0"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Sort Order</label>
                     <input type="number" id="edit_sort_order" name="sort_order" min="0"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div class="col-span-2 flex items-center gap-2">
                     <input type="checkbox" id="edit_enabled" name="enabled" value="1" class="rounded border-slate-300 text-green-500">

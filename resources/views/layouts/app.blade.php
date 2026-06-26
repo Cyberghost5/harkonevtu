@@ -99,6 +99,15 @@
             background: rgba(156, 163, 175, 0.5);
         }
     </style>
+    {{-- Prevent dark-mode flash --}}
+    <script>
+        (function(){
+            var t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
     @yield('styles')
 </head>
 <body class="bg-vtu-light dark:bg-vtu-dark text-slate-800 dark:text-slate-200 transition-colors duration-300 min-h-screen flex flex-col gradient-bg custom-scrollbar">
@@ -279,7 +288,7 @@
         });
 
         // Determine initial theme
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
             themeToggleLightIcon.classList.remove('hidden');
         } else {
@@ -295,10 +304,10 @@
             // Toggle document class & save setting
             if (document.documentElement.classList.contains('dark')) {
                 document.documentElement.classList.remove('dark');
-                localStorage.setItem('color-theme', 'light');
+                localStorage.setItem('theme', 'light');
             } else {
                 document.documentElement.classList.add('dark');
-                localStorage.setItem('color-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
             }
         }
 

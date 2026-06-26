@@ -19,7 +19,7 @@
                 </div>
                 <div>
                     <p class="font-semibold text-slate-900 dark:text-white">{{ $user->name }}</p>
-                    <p class="text-xs text-slate-400">@{{ $user->username }}</p>
+                    <p class="text-xs text-slate-400">{{ $user->username }}</p>
                 </div>
             </div>
             <div class="space-y-2 text-sm">

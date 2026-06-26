@@ -517,7 +517,39 @@ class WalletFundingController extends Controller
                 // Regular card / gateway payment
                 $intent = Cache::get('funding_intent_' . $reference);
                 if ($intent) {
-                    try { $this->performCredit($reference, $intent); } catch (\RuntimeException) {}
+                    try { $this->performCredit($reference, $intent); } catch (\RuntimeException $e) {}
+                } else {
+                    // Fallback verification check directly from Paystack API
+                    $response = Http::withToken(config('services.paystack.secret_key'))
+                        ->timeout(15)
+                        ->get("https://api.paystack.co/transaction/verify/{$reference}");
+                    if ($response->successful() && $response->json('status') === true) {
+                        $vData = $response->json('data');
+                        if (($vData['status'] ?? '') === 'success') {
+                            $email = $vData['customer']['email'] ?? null;
+                            $user = \App\Models\User::where('email', $email)->first();
+                            if ($user) {
+                                $totalPaid = ($vData['amount'] ?? 0) / 100;
+                                $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
+                                $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
+                                if ($chargeType === 'percentage') {
+                                    $amount = round($totalPaid / (1 + ($chargeValue / 100)), 2);
+                                    $charge = round($totalPaid - $amount, 2);
+                                } else {
+                                    $amount = max(0.0, $totalPaid - $chargeValue);
+                                    $charge = $totalPaid - $amount;
+                                }
+                                $intent = [
+                                    'user_id' => $user->id,
+                                    'amount'  => $amount,
+                                    'charge'  => $charge,
+                                    'total'   => $totalPaid,
+                                    'gateway' => 'paystack',
+                                ];
+                                try { $this->performCredit($reference, $intent); } catch (\RuntimeException $e) {}
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -568,7 +600,42 @@ class WalletFundingController extends Controller
 
                 $intent = Cache::get('funding_intent_' . $reference);
                 if ($intent) {
-                    try { $this->performCredit($reference, $intent); } catch (\RuntimeException) {}
+                    try { $this->performCredit($reference, $intent); } catch (\RuntimeException $e) {}
+                } else {
+                    // Fallback verification check directly from Flutterwave API
+                    $transactionId = $data['id'] ?? null;
+                    if ($transactionId) {
+                        $response = Http::withToken(config('services.flutterwave.secret_key'))
+                            ->timeout(15)
+                            ->get("https://api.flutterwave.com/v3/transactions/{$transactionId}/verify");
+                        if ($response->successful() && $response->json('status') === 'success') {
+                            $vData = $response->json('data');
+                            if (($vData['status'] ?? '') === 'successful' && ($vData['currency'] ?? '') === 'NGN') {
+                                $email = $vData['customer']['email'] ?? null;
+                                $user = \App\Models\User::where('email', $email)->first();
+                                if ($user) {
+                                    $totalPaid = (float) ($vData['amount'] ?? 0);
+                                    $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
+                                    $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
+                                    if ($chargeType === 'percentage') {
+                                        $amount = round($totalPaid / (1 + ($chargeValue / 100)), 2);
+                                        $charge = round($totalPaid - $amount, 2);
+                                    } else {
+                                        $amount = max(0.0, $totalPaid - $chargeValue);
+                                        $charge = $totalPaid - $amount;
+                                    }
+                                    $intent = [
+                                        'user_id' => $user->id,
+                                        'amount'  => $amount,
+                                        'charge'  => $charge,
+                                        'total'   => $totalPaid,
+                                        'gateway' => 'flutterwave',
+                                    ];
+                                    try { $this->performCredit($reference, $intent); } catch (\RuntimeException $e) {}
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

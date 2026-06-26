@@ -226,14 +226,7 @@ class AuthController extends Controller
 
     private function sendLoginOtpEmail(User $user, string $otp): void
     {
-        config([
-            'mail.mailers.smtp.host'       => AppSetting::get('mail_host', config('mail.mailers.smtp.host')),
-            'mail.mailers.smtp.port'       => AppSetting::get('mail_port', config('mail.mailers.smtp.port')),
-            'mail.mailers.smtp.username'   => AppSetting::get('mail_username', config('mail.mailers.smtp.username')),
-            'mail.mailers.smtp.password'   => AppSetting::get('mail_password', config('mail.mailers.smtp.password')),
-            'mail.from.address'            => AppSetting::get('mail_from_address', config('mail.from.address')),
-            'mail.from.name'               => AppSetting::get('site_name', config('mail.from.name')),
-        ]);
+
 
         $siteName = AppSetting::get('site_name', config('app.name'));
 

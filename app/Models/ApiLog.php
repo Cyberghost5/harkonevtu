@@ -59,9 +59,15 @@ class ApiLog extends Model
     public static function record(array $data): self
     {
         $resp = $data['response'] ?? null;
-
         $reqHeaders  = $data['request_headers']  ?? null;
         $respHeaders = $data['response_headers'] ?? null;
+        $payload     = $data['payload'] ?? null;
+
+        // Scrub sensitive keys from headers, payload and response
+        $payload     = static::scrubSensitiveData($payload);
+        $reqHeaders  = static::scrubSensitiveData($reqHeaders);
+        $respHeaders = static::scrubSensitiveData($respHeaders);
+        $resp        = static::scrubSensitiveData($resp);
 
         return static::create([
             'user_id'          => $data['user_id']    ?? null,
@@ -70,7 +76,7 @@ class ApiLog extends Model
             'reference'        => $data['reference'],
             'endpoint'         => $data['endpoint'],
             'method'           => $data['method']     ?? 'POST',
-            'payload'          => $data['payload']    ?? null,
+            'payload'          => $payload,
             'request_headers'  => is_array($reqHeaders)  ? $reqHeaders  : null,
             'response'         => is_array($resp) ? $resp : ['raw' => $resp],
             'response_headers' => is_array($respHeaders) ? $respHeaders : null,
@@ -78,5 +84,32 @@ class ApiLog extends Model
             'duration_ms'      => $data['duration_ms'] ?? null,
             'success'          => $data['success']    ?? false,
         ]);
+    }
+
+    /**
+     * Recursively scrubs sensitive data keys from arrays.
+     */
+    private static function scrubSensitiveData(mixed $data): mixed
+    {
+        if (!is_array($data)) {
+            return $data;
+        }
+
+        $sensitiveKeys = [
+            'APIKey', 'apikey', 'api-key', 'api_key', 'api-token', 'api_token',
+            'Authorization', 'authorization', 'AuthorizationToken', 'authorizationtoken',
+            'token', 'Token', 'secret', 'Secret', 'secret_key', 'secret-key',
+            'public_key', 'public-key', 'x-api-key', 'verif-hash', 'password', 'pin', 'bvn'
+        ];
+
+        foreach ($data as $key => $value) {
+            if (in_array(strtolower((string) $key), array_map('strtolower', $sensitiveKeys), true)) {
+                $data[$key] = '[REDACTED]';
+            } elseif (is_array($value)) {
+                $data[$key] = static::scrubSensitiveData($value);
+            }
+        }
+
+        return $data;
     }
 }

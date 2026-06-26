@@ -77,15 +77,7 @@ class AdminSettingsController extends Controller
     {
         $to = AppSetting::get('admin_email') ?: auth()->user()->email;
 
-        // Dynamically apply saved SMTP settings
-        config([
-            'mail.mailers.smtp.host'       => AppSetting::get('mail_host', config('mail.mailers.smtp.host')),
-            'mail.mailers.smtp.port'       => AppSetting::get('mail_port', config('mail.mailers.smtp.port')),
-            'mail.mailers.smtp.username'   => AppSetting::get('mail_username', config('mail.mailers.smtp.username')),
-            'mail.mailers.smtp.password'   => AppSetting::get('mail_password', config('mail.mailers.smtp.password')),
-            'mail.from.address'            => AppSetting::get('mail_from_address', config('mail.from.address')),
-            'mail.from.name'               => AppSetting::get('site_name', config('mail.from.name')),
-        ]);
+
 
         try {
             Mail::raw('This is a test email from ' . AppSetting::get('site_name', 'PayPulse') . '. Your email configuration is working correctly.', function ($msg) use ($to) {
@@ -104,8 +96,6 @@ class AdminSettingsController extends Controller
         $keys = [
             'flutterwave_public_key','flutterwave_secret_key','flutterwave_encryption_key','flutterwave_bvn',
             'paystack_public_key','paystack_secret_key',
-            'payvessel_api_key','payvessel_secret_key','payvessel_business_id',
-            'monnify_secret_key','monnify_contract_no','monnify_api',
             'payscribe_secret_key','payscribe_public_key',
             'tx_charge_m2m','tx_charge_bank',
             'vtpass_username','vtpass_password','vtpass_api_key',
@@ -117,10 +107,8 @@ class AdminSettingsController extends Controller
             'merrybills_username','merrybills_password','merrybills_pin','merrybills_token',
             'clubkonnect_user_id','clubkonnect_api_key',
             'globacom_xapi_key','globacom_sponsor_id',
-            'qoreid_client_key','qoreid_secret_key',
             'termii_api_key',
             'bulksms_sender','bulksms_api_key','bulksms_amount_per_unit',
-            'openweather_api_key',
             'onesignal_app_id','onesignal_api_key',
             'airtime2cash_phone','airtime2cash_tx_charge','airtime2cash_max_per_payment','airtime2cash_min_per_payment',
             'referral_commission','referral_min_withdrawal','referral_min_total_spent',
@@ -156,13 +144,13 @@ class AdminSettingsController extends Controller
             'airtime_api','datacard_api','airtime_pin_api',
             'epins_api','electricity_api','cable_api','betting_api',
             'dealing_charge',
-            'normal_airtime_mtn','normal_airtime_airtel','normal_airtime_glo','normal_airtime_etisalat',
-            'agent_airtime_mtn','agent_airtime_airtel','agent_airtime_glo','agent_airtime_etisalat',
+            'airtime_off_percentage_mtn','airtime_off_percentage_airtel','airtime_off_percentage_glo','airtime_off_percentage_etisalat',
+            'airtime_agent_off_percentage_mtn','airtime_agent_off_percentage_airtel','airtime_agent_off_percentage_glo','airtime_agent_off_percentage_etisalat',
             'normal_pin_mtn','normal_pin_airtel','normal_pin_glo','normal_pin_etisalat',
             'agent_pin_mtn','agent_pin_airtel','agent_pin_glo','agent_pin_etisalat',
             // service enable/disable toggles
-            'data_service_status','airtime_service_status','electricity_service_status',
-            'cable_service_status','epins_service_status','betting_service_status',
+            'service_data','service_airtime','service_electricity',
+            'service_cable','service_epins','service_betting',
         ];
         $s = AppSetting::getMany($keys);
 

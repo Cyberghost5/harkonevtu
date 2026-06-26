@@ -160,11 +160,11 @@
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-slate-500 mb-1">Plan Name <span class="text-red-500">*</span></label>
                     <input type="text" name="plan_name" required placeholder="e.g. MTN 1GB Daily"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Data Type <span class="text-red-500">*</span></label>
-                    <select name="data_type" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                    <select name="data_type" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                         <option value="">- Select -</option>
                         <option value="sme">SME</option>
                         <option value="gifting">Gifting</option>
@@ -176,17 +176,17 @@
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Validity</label>
                     <input type="text" name="validity" placeholder="e.g. 30 days"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Amount (₦) <span class="text-red-500">*</span></label>
                     <input type="number" name="amount" required step="0.01" min="0"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Agent Amount (₦)</label>
                     <input type="number" name="amount_agent" step="0.01" min="0"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
 
                 {{-- API Provider IDs --}}
@@ -197,7 +197,7 @@
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">{{ $lbl }}</label>
                             <input type="text" name="{{ $field }}" placeholder="-"
-                                   class="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white font-mono focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                                   class="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white font-mono focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                         </div>
                         @endforeach
                     </div>
@@ -206,7 +206,7 @@
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Sort Order</label>
                     <input type="number" name="sort_order" value="0" min="0"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div class="flex items-end pb-1">
                     <label class="flex items-center gap-2 cursor-pointer">
@@ -242,11 +242,11 @@
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-slate-500 mb-1">Plan Name <span class="text-red-500">*</span></label>
                     <input type="text" id="edit_plan_name" name="plan_name" required
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Data Type <span class="text-red-500">*</span></label>
-                    <select id="edit_data_type" name="data_type" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                    <select id="edit_data_type" name="data_type" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                         <option value="sme">SME</option>
                         <option value="gifting">Gifting</option>
                         <option value="cg">Corp. Gifting</option>
@@ -257,17 +257,17 @@
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Validity</label>
                     <input type="text" id="edit_validity" name="validity"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Amount (₦) <span class="text-red-500">*</span></label>
                     <input type="number" id="edit_amount" name="amount" required step="0.01" min="0"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Agent Amount (₦)</label>
                     <input type="number" id="edit_amount_agent" name="amount_agent" step="0.01" min="0"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
 
                 <div class="col-span-2 pt-2">
@@ -277,7 +277,7 @@
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">{{ $lbl }}</label>
                             <input type="text" id="edit_{{ $field }}" name="{{ $field }}"
-                                   class="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white font-mono focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                                   class="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white font-mono focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                         </div>
                         @endforeach
                     </div>
@@ -286,7 +286,7 @@
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Sort Order</label>
                     <input type="number" id="edit_sort_order" name="sort_order" min="0"
-                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                           class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
                 <div class="flex items-end pb-1">
                     <label class="flex items-center gap-2 cursor-pointer">

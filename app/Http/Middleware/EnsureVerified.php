@@ -25,6 +25,20 @@ class EnsureVerified
             return redirect()->route('verification.notice');
         }
 
+        // If phone/OTP verification is enabled, enforce it
+        if (AppSetting::get('otp_verification', '0') === '1') {
+            if (!$user->hasVerifiedPhone()) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'message' => 'Your phone number is not verified.',
+                        'requires_phone_verification' => true
+                    ], 403);
+                }
+                return redirect()->route('verification.phone')
+                    ->with('info', 'Please verify your phone number to continue.');
+            }
+        }
+
         return $next($request);
     }
 }

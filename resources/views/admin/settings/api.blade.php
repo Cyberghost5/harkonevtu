@@ -44,12 +44,12 @@
                 <p class="text-xs text-slate-400 mb-5">Enable or disable each service platform-wide</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach([
-                        'data_service_status'        => ['label' => 'Data',        'icon' => 'M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0'],
-                        'airtime_service_status'     => ['label' => 'Airtime',     'icon' => 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'],
-                        'electricity_service_status' => ['label' => 'Electricity', 'icon' => 'M13 10V3L4 14h7v7l9-11h-7z'],
-                        'cable_service_status'       => ['label' => 'Cable TV',    'icon' => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
-                        'epins_service_status'       => ['label' => 'Exam Pins',   'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-                        'betting_service_status'     => ['label' => 'Betting',     'icon' => 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z'],
+                        'service_data'               => ['label' => 'Data',        'icon' => 'M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0'],
+                        'service_airtime'            => ['label' => 'Airtime',     'icon' => 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'],
+                        'service_electricity'        => ['label' => 'Electricity', 'icon' => 'M13 10V3L4 14h7v7l9-11h-7z'],
+                        'service_cable'              => ['label' => 'Cable TV',    'icon' => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+                        'service_epins'              => ['label' => 'Exam Pins',   'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                        'service_betting'            => ['label' => 'Betting',     'icon' => 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z'],
                     ] as $key => $def)
                     @php $val = $s[$key] ?? '1'; @endphp
                     <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -92,7 +92,7 @@
                     @foreach(['data_api_mtn'=>'MTN Data','data_api_airtel'=>'Airtel Data','data_api_glo'=>'Glo Data','data_api_etisalat'=>'9Mobile Data'] as $key=>$label)
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">{{ $label }}</label>
-                        <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                        <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                             <option value="">- Select Provider -</option>
                             @foreach($dataProviders as $p)
                             <option value="{{ $p }}" {{ ($s[$key] ?? '') === $p ? 'selected' : '' }}>
@@ -133,7 +133,7 @@
                     @foreach($netFields as $key => $label)
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">{{ $label }}</label>
-                        <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                        <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                             @foreach($net_opts as $o)
                             <option value="{{ $o }}" {{ ($s[$key] ?? '') === $o ? 'selected' : '' }}>{{ $o ?: '- Select -' }}</option>
                             @endforeach
@@ -151,7 +151,7 @@
                     @foreach(['airtime_net_mtn'=>'MTN','airtime_net_airtel'=>'Airtel','airtime_net_glo'=>'Glo','airtime_net_etisalat'=>'9Mobile'] as $key=>$label)
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">{{ $label }}</label>
-                        <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                        <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                             @foreach($net_opts as $o)
                             <option value="{{ $o }}" {{ ($s[$key] ?? '') === $o ? 'selected' : '' }}>{{ $o ?: '- Select -' }}</option>
                             @endforeach
@@ -173,7 +173,7 @@
                     {{-- Airtime — only shows its own integrated providers --}}
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">API for Airtime</label>
-                        <select name="airtime_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                        <select name="airtime_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                             <option value="">- Select Provider -</option>
                             @foreach($airtimeProviders as $p)
                             <option value="{{ $p }}" {{ ($s['airtime_api'] ?? '') === $p ? 'selected' : '' }}>
@@ -194,7 +194,7 @@
                     ] as $key => $label)
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">API for {{ $label }}</label>
-                        <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                        <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                             @foreach($providerOpts as $p)
                             <option value="{{ $p }}" {{ ($s[$key] ?? '') === $p ? 'selected' : '' }}>
                                 {{ $p ? ucfirst($p) : '- Select Provider -' }}
@@ -207,7 +207,7 @@
                     {{-- Electricity — only shows its own integrated providers --}}
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">API for Electricity</label>
-                        <select name="electricity_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                        <select name="electricity_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                             <option value="">- Select Provider -</option>
                             @foreach($electricityProviders as $p)
                             <option value="{{ $p }}" {{ ($s['electricity_api'] ?? '') === $p ? 'selected' : '' }}>
@@ -223,7 +223,7 @@
                     {{-- Cable TV — only shows its own integrated providers --}}
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">API for Cable TV</label>
-                        <select name="cable_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                        <select name="cable_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                             <option value="">- Select Provider -</option>
                             @foreach($cableProviders as $p)
                             <option value="{{ $p }}" {{ ($s['cable_api'] ?? '') === $p ? 'selected' : '' }}>
@@ -239,7 +239,7 @@
                     {{-- Exam Pins — only shows its own integrated providers --}}
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">API for Exam Pins (ePins)</label>
-                        <select name="epins_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                        <select name="epins_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                             <option value="">- Select Provider -</option>
                             @foreach($epinsProviders as $p)
                             <option value="{{ $p }}" {{ ($s['epins_api'] ?? '') === $p ? 'selected' : '' }}>
@@ -257,7 +257,7 @@
                             Dealing Charge <span class="text-slate-400">(flat fee, ₦)</span>
                         </label>
                         <input type="text" name="dealing_charge" value="{{ $s['dealing_charge'] ?? '100' }}"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
                 @endif
@@ -271,12 +271,12 @@
                     <div>
                         <p class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Normal Users</p>
                         <div class="space-y-3">
-                            @foreach(['normal_airtime_mtn'=>'MTN','normal_airtime_airtel'=>'Airtel','normal_airtime_glo'=>'Glo','normal_airtime_etisalat'=>'9Mobile'] as $key=>$net)
+                            @foreach(['airtime_off_percentage_mtn'=>'MTN','airtime_off_percentage_airtel'=>'Airtel','airtime_off_percentage_glo'=>'Glo','airtime_off_percentage_etisalat'=>'9Mobile'] as $key=>$net)
                             <div class="flex items-center gap-3">
                                 <span class="text-xs text-slate-500 w-16 flex-shrink-0">{{ $net }}</span>
                                 <div class="relative flex-1">
                                     <input type="text" name="{{ $key }}" value="{{ $s[$key] ?? '0' }}"
-                                           class="w-full pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                                           class="w-full pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
                                 </div>
                             </div>
@@ -286,12 +286,12 @@
                     <div>
                         <p class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Agent Users</p>
                         <div class="space-y-3">
-                            @foreach(['agent_airtime_mtn'=>'MTN','agent_airtime_airtel'=>'Airtel','agent_airtime_glo'=>'Glo','agent_airtime_etisalat'=>'9Mobile'] as $key=>$net)
+                            @foreach(['airtime_agent_off_percentage_mtn'=>'MTN','airtime_agent_off_percentage_airtel'=>'Airtel','airtime_agent_off_percentage_glo'=>'Glo','airtime_agent_off_percentage_etisalat'=>'9Mobile'] as $key=>$net)
                             <div class="flex items-center gap-3">
                                 <span class="text-xs text-slate-500 w-16 flex-shrink-0">{{ $net }}</span>
                                 <div class="relative flex-1">
                                     <input type="text" name="{{ $key }}" value="{{ $s[$key] ?? '0' }}"
-                                           class="w-full pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                                           class="w-full pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
                                 </div>
                             </div>
@@ -314,7 +314,7 @@
                                 <span class="text-xs text-slate-500 w-16 flex-shrink-0">{{ $net }}</span>
                                 <div class="relative flex-1">
                                     <input type="text" name="{{ $key }}" value="{{ $s[$key] ?? '0' }}"
-                                           class="w-full pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                                           class="w-full pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
                                 </div>
                             </div>
@@ -329,7 +329,7 @@
                                 <span class="text-xs text-slate-500 w-16 flex-shrink-0">{{ $net }}</span>
                                 <div class="relative flex-1">
                                     <input type="text" name="{{ $key }}" value="{{ $s[$key] ?? '0' }}"
-                                           class="w-full pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                                           class="w-full pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
                                 </div>
                             </div>

@@ -61,7 +61,7 @@
                             </div>
                             <div>
                                 <p class="font-medium text-slate-900 dark:text-white text-xs">{{ $user->name }}</p>
-                                <p class="text-[10px] text-slate-400">@{{ $user->username }}</p>
+                                <p class="text-[10px] text-slate-400">{{ $user->username }}</p>
                             </div>
                         </div>
                     </td>

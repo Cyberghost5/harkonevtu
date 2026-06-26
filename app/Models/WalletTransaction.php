@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WalletTransaction extends Model
 {
+    protected static function booted(): void
+    {
+        static::observe(\App\Observers\WalletTransactionObserver::class);
+    }
+
     protected $fillable = [
         'user_id',
         'wallet_id',

@@ -126,7 +126,11 @@ class ElectricityController extends Controller
         $walletTx  = null;
 
         try {
-            $walletTx = DB::transaction(function () use ($wallet, $amount, $disco, $meterNumber, $meterType, $reference) {
+            $walletTx = DB::transaction(function () use ($user, $amount, $disco, $meterNumber, $meterType, $reference) {
+                $wallet = \App\Models\Wallet::where('user_id', $user->id)->lockForUpdate()->firstOrFail();
+                if (!$wallet->hasSufficientBalance($amount)) {
+                    throw new \Exception('Insufficient wallet balance. Please fund your wallet.');
+                }
                 return $wallet->debit(
                     $amount,
                     $disco->name . ' (' . ucfirst($meterType) . ') – ' . $meterNumber,
@@ -151,7 +155,8 @@ class ElectricityController extends Controller
         // ── 6. Refund on failure ─────────────────────────────────────────────
         if (!$apiSuccess) {
             try {
-                DB::transaction(function () use ($wallet, $amount, $reference, $disco, $meterNumber) {
+                DB::transaction(function () use ($user, $amount, $reference, $disco, $meterNumber) {
+                    $wallet = \App\Models\Wallet::where('user_id', $user->id)->lockForUpdate()->firstOrFail();
                     $wallet->credit(
                         $amount,
                         'Refund: ' . $disco->name . ' electricity failed – ' . $meterNumber,
@@ -325,7 +330,7 @@ class ElectricityController extends Controller
         $result     = null;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . config('services.payscribe.public_key'),
+            'Authorization' => 'Bearer ' . config('services.payscribe.secret_key'),
             'Content-Type'  => 'text/plain',
         ];
         $responseHeaders = null;
@@ -568,7 +573,7 @@ class ElectricityController extends Controller
         $customerName = null;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . config('services.payscribe.public_key'),
+            'Authorization' => 'Bearer ' . config('services.payscribe.secret_key'),
             'Accept'        => 'application/json',
             'Content-Type'  => 'application/json',
         ];

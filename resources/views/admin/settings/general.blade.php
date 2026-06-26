@@ -24,12 +24,12 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Site Name</label>
                     <input type="text" name="site_name" value="{{ $s['site_name'] ?? '' }}"
-                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Site URL</label>
                     <input type="text" name="site_url" value="{{ $s['site_url'] ?? '' }}"
-                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                 </div>
             </div>
 
@@ -37,14 +37,14 @@
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Site Description</label>
                 <textarea name="site_description" rows="3"
-                          class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors resize-none">{{ $s['site_description'] ?? '' }}</textarea>
+                          class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors resize-none">{{ $s['site_description'] ?? '' }}</textarea>
             </div>
 
             {{-- Site Keywords --}}
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Site Keywords</label>
                 <textarea name="site_keywords" rows="3"
-                          class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors resize-none">{{ $s['site_keywords'] ?? '' }}</textarea>
+                          class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors resize-none">{{ $s['site_keywords'] ?? '' }}</textarea>
             </div>
 
             {{-- Location + Copyright --}}
@@ -52,12 +52,12 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Location</label>
                     <input type="text" name="location" value="{{ $s['location'] ?? '' }}"
-                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Copyright</label>
                     <input type="text" name="copyright" value="{{ $s['copyright'] ?? '' }}"
-                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                 </div>
             </div>
 
@@ -66,7 +66,7 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Admin Email</label>
                     <input type="email" name="admin_email" value="{{ $s['admin_email'] ?? '' }}"
-                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Favicon</label>
@@ -130,13 +130,13 @@
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="radio" name="email_verification" value="0"
                                    {{ ($s['email_verification'] ?? '1') == '0' ? 'checked' : '' }}
-                                   class="w-4 h-4 accent-green-600">
+                                   class="w-4 h-4" style="accent-color:{{ $themeColor }}">
                             <span class="text-sm text-slate-600">Off</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="radio" name="email_verification" value="1"
                                    {{ ($s['email_verification'] ?? '1') == '1' ? 'checked' : '' }}
-                                   class="w-4 h-4 accent-green-600">
+                                   class="w-4 h-4" style="accent-color:{{ $themeColor }}">
                             <span class="text-sm text-slate-600">On</span>
                         </label>
                     </div>
@@ -147,13 +147,13 @@
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="radio" name="otp_verification" value="0"
                                    {{ ($s['otp_verification'] ?? '0') == '0' ? 'checked' : '' }}
-                                   class="w-4 h-4 accent-green-600">
+                                   class="w-4 h-4" style="accent-color:{{ $themeColor }}">
                             <span class="text-sm text-slate-600">Off</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="radio" name="otp_verification" value="1"
                                    {{ ($s['otp_verification'] ?? '0') == '1' ? 'checked' : '' }}
-                                   class="w-4 h-4 accent-green-600">
+                                   class="w-4 h-4" style="accent-color:{{ $themeColor }}">
                             <span class="text-sm text-slate-600">On</span>
                         </label>
                     </div>
@@ -170,7 +170,7 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">App Version</label>
                     <input type="text" name="app_version" value="{{ $s['app_version'] ?? '1.0.0' }}"
-                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                 </div>
             </div>
 
@@ -182,31 +182,31 @@
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">WhatsApp Number</label>
                         <input type="text" name="support_whatsapp" value="{{ $s['support_whatsapp'] ?? '' }}"
                                placeholder="e.g. 2348012345678"
-                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Support Phone</label>
                         <input type="text" name="support_phone" value="{{ $s['support_phone'] ?? '' }}"
                                placeholder="e.g. 08012345678"
-                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Support Email</label>
                         <input type="email" name="support_email" value="{{ $s['support_email'] ?? '' }}"
                                placeholder="support@yourdomain.com"
-                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Support Hours</label>
                         <input type="text" name="support_hours" value="{{ $s['support_hours'] ?? '8am – 6pm' }}"
                                placeholder="e.g. 8am – 6pm"
-                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Ticket URL <span class="text-xs text-slate-400">(optional)</span></label>
                         <input type="url" name="support_ticket_url" value="{{ $s['support_ticket_url'] ?? '' }}"
                                placeholder="https://"
-                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                     </div>
                 </div>
             </div>

@@ -17,6 +17,19 @@ class ServiceTransactionObserver
      */
     public function created(ServiceTransaction $transaction): void
     {
+        // Dispatch push notification to user on success
+        if ($transaction->status === 'success') {
+            $formattedService = match($transaction->service_type) {
+                'epin' => 'Exam Pin',
+                'cable' => 'Cable TV',
+                default => ucfirst($transaction->service_type)
+            };
+            $title = $formattedService . ' Purchase Success';
+            $message = "Your purchase of " . $formattedService . " (₦" . number_format((float) $transaction->amount, 2) . ") for " . $transaction->recipient . " was successful.";
+            
+            \App\Services\OneSignalService::sendNotificationToUser((string) $transaction->user_id, $title, $message);
+        }
+
         $user = $transaction->user ?? User::find($transaction->user_id);
 
         if (!$user || !$user->referred_by || $user->referral_commission_paid) {

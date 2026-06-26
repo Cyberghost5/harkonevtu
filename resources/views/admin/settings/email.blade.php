@@ -22,14 +22,14 @@
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Host</label>
                 <input type="text" name="mail_host" value="{{ $s['mail_host'] ?? '' }}"
-                       class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                       class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
             </div>
 
             {{-- Username --}}
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
                 <input type="text" name="mail_username" value="{{ $s['mail_username'] ?? '' }}"
-                       class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                       class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
             </div>
 
             {{-- Password --}}
@@ -37,7 +37,7 @@
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
                 <div class="relative">
                     <input type="password" id="mail-password" name="mail_password" value="{{ $s['mail_password'] ?? '' }}"
-                           class="w-full px-3 py-2.5 pr-10 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                           class="w-full px-3 py-2.5 pr-10 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
                     <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
                         <svg id="eye-icon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -51,21 +51,21 @@
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Port No.</label>
                 <input type="text" name="mail_port" value="{{ $s['mail_port'] ?? '465' }}"
-                       class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                       class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
             </div>
 
             {{-- Set From --}}
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Set From</label>
                 <input type="email" name="mail_from_address" value="{{ $s['mail_from_address'] ?? '' }}"
-                       class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                       class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
             </div>
 
             {{-- Set Reply To --}}
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Set Reply To</label>
                 <input type="email" name="mail_reply_to" value="{{ $s['mail_reply_to'] ?? '' }}"
-                       class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-colors">
+                       class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
             </div>
 
             {{-- Buttons --}}

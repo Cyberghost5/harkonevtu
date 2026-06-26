@@ -90,7 +90,11 @@ class ExamPinController extends Controller
         $walletTx  = null;
 
         try {
-            $walletTx = DB::transaction(function () use ($wallet, $amount, $examType, $quantity, $reference) {
+            $walletTx = DB::transaction(function () use ($user, $amount, $examType, $quantity, $reference) {
+                $wallet = \App\Models\Wallet::where('user_id', $user->id)->lockForUpdate()->firstOrFail();
+                if (!$wallet->hasSufficientBalance($amount)) {
+                    throw new \Exception('Insufficient wallet balance. Please fund your wallet.');
+                }
                 return $wallet->debit(
                     $amount,
                     $examType->name . ' × ' . $quantity,
@@ -113,7 +117,8 @@ class ExamPinController extends Controller
         // ── 5. Refund on failure ─────────────────────────────────────────────
         if (!$apiSuccess) {
             try {
-                DB::transaction(function () use ($wallet, $amount, $reference, $examType, $quantity) {
+                DB::transaction(function () use ($user, $amount, $reference, $examType, $quantity) {
+                    $wallet = \App\Models\Wallet::where('user_id', $user->id)->lockForUpdate()->firstOrFail();
                     $wallet->credit(
                         $amount,
                         'Refund: ' . $examType->name . ' × ' . $quantity . ' failed',

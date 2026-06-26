@@ -102,25 +102,25 @@
             <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1">Bank Name <span class="text-red-500">*</span></label>
                 <input type="text" name="bank_name" required
-                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
+                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30"
                        placeholder="e.g. Zenith Bank">
             </div>
             <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1">Account Number <span class="text-red-500">*</span></label>
                 <input type="text" name="account_number" required maxlength="20"
-                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 font-mono"
+                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono"
                        placeholder="0123456789">
             </div>
             <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1">Name of Account <span class="text-red-500">*</span></label>
                 <input type="text" name="account_name" required
-                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
+                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30"
                        placeholder="e.g. PayPulse Limited">
             </div>
             <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1">Short Code</label>
                 <input type="text" name="short_code" maxlength="20"
-                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
+                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30"
                        placeholder="e.g. ZENITH">
             </div>
             <div class="pt-2 flex justify-end gap-3">
@@ -152,22 +152,22 @@
             <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1">Bank Name <span class="text-red-500">*</span></label>
                 <input type="text" id="edit_bank_name" name="bank_name" required
-                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
             </div>
             <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1">Account Number <span class="text-red-500">*</span></label>
                 <input type="text" id="edit_account_number" name="account_number" required maxlength="20"
-                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 font-mono">
+                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono">
             </div>
             <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1">Name of Account <span class="text-red-500">*</span></label>
                 <input type="text" id="edit_account_name" name="account_name" required
-                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
             </div>
             <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1">Short Code</label>
                 <input type="text" id="edit_short_code" name="short_code" maxlength="20"
-                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500">
+                       class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
             </div>
             <div class="pt-2 flex justify-end gap-3">
                 <button type="button" onclick="closeEditModal()"
