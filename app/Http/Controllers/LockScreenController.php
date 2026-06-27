@@ -86,7 +86,7 @@ class LockScreenController extends Controller
             $getArgs = $webAuthn->getGetArgs($credentialIds, 30, true, true, true, true, true, 'preferred');
 
             // Store challenge in session
-            session(['webauthn_challenge' => $webAuthn->getChallenge()]);
+            session(['webauthn_challenge' => $webAuthn->getChallenge()->getHex()]);
 
             return response()->json($getArgs);
         } catch (\Exception $e) {
@@ -122,11 +122,13 @@ class LockScreenController extends Controller
             }
 
             $publicKey = base64_decode($credential->public_key);
-            $challenge = session('webauthn_challenge');
+            $challengeHex = session('webauthn_challenge');
 
-            if (!$challenge) {
+            if (!$challengeHex) {
                 return response()->json(['error' => 'Challenge not found in session.'], 400);
             }
+
+            $challenge = ByteBuffer::fromHex($challengeHex);
 
             // Verify assertion
             $success = $webAuthn->processGet(

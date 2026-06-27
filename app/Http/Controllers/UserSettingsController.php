@@ -311,7 +311,7 @@ class UserSettingsController extends Controller
                 $excludeIds
             );
             
-            session(['webauthn_challenge' => $webAuthn->getChallenge()]);
+            session(['webauthn_challenge' => $webAuthn->getChallenge()->getHex()]);
             
             return response()->json($createArgs);
         } catch (\Exception $e) {
@@ -331,11 +331,13 @@ class UserSettingsController extends Controller
             $clientDataJSON = base64_decode(strtr($request->input('clientDataJSON'), '-_', '+/'));
             $attestationObject = base64_decode(strtr($request->input('attestationObject'), '-_', '+/'));
             
-            $challenge = session('webauthn_challenge');
+            $challengeHex = session('webauthn_challenge');
             
-            if (!$challenge) {
+            if (!$challengeHex) {
                 throw new \Exception('Registration challenge not found in session.');
             }
+            
+            $challenge = \lbuchs\WebAuthn\Binary\ByteBuffer::fromHex($challengeHex);
             
             $data = $webAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, false, true, false, false);
             
