@@ -157,7 +157,9 @@ class LockScreenController extends Controller
 
             return response()->json(['error' => 'Authentication failed.'], 400);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            \Illuminate\Support\Facades\Log::error('Biometric login verify error', ['exception' => $e]);
+            $msg = mb_convert_encoding($e->getMessage(), 'UTF-8', 'UTF-8');
+            return response()->json(['error' => $msg], 400);
         }
     }
 }
