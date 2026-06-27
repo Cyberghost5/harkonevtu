@@ -51,11 +51,11 @@
         @keyframes pulse-glow {
             0%, 100% {
                 transform: scale(1);
-                box-shadow: 0 0 0 0 '{{ $themeColor }}'66;
+                box-shadow: 0 0 0 0 {{ $themeColor }}66;
             }
             50% {
                 transform: scale(1.03);
-                box-shadow: 0 0 20px 8px '{{ $themeSecondary }}'33;
+                box-shadow: 0 0 20px 8px {{ $themeSecondary }}33;
             }
         }
     </style>
