@@ -754,5 +754,50 @@
     <script>setTimeout(function(){ var t = document.getElementById('toast'); if(t) t.remove(); }, 4000);</script>
     @endif
 
+    {{-- OneSignal Web Push Integration --}}
+    @php
+        $onesignalAppId = \App\Models\AppSetting::get('onesignal_app_id');
+    @endphp
+    @if($onesignalAppId)
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+                appId: "{{ $onesignalAppId }}",
+                allowLocalhostAsSecureOrigin: true,
+            });
+            await OneSignal.login("{{ auth()->id() }}");
+        });
+    </script>
+    @endif
+
+    @auth
+    <script>
+        (function() {
+            let idleTimer;
+            const idleTimeout = {{ (int) \App\Models\AppSetting::get('session_idle_timeout', 5) }} * 60 * 1000;
+            
+            function resetIdleTimer() {
+                clearTimeout(idleTimer);
+                idleTimer = setTimeout(lockSession, idleTimeout);
+            }
+            
+            function lockSession() {
+                const currentPath = window.location.pathname;
+                if (currentPath.includes('/lockscreen') || currentPath.includes('/login') || currentPath.includes('/register')) {
+                    return;
+                }
+                window.location.href = '/lockscreen';
+            }
+            
+            ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
+                document.addEventListener(evt, resetIdleTimer, true);
+            });
+            
+            resetIdleTimer();
+        })();
+    </script>
+    @endauth
 </body>
 </html>

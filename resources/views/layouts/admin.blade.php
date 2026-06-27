@@ -466,5 +466,33 @@
         });
     </script>
     @yield('scripts')
+
+    @auth
+    <script>
+        (function() {
+            let idleTimer;
+            const idleTimeout = {{ (int) \App\Models\AppSetting::get('session_idle_timeout', 5) }} * 60 * 1000;
+            
+            function resetIdleTimer() {
+                clearTimeout(idleTimer);
+                idleTimer = setTimeout(lockSession, idleTimeout);
+            }
+            
+            function lockSession() {
+                const currentPath = window.location.pathname;
+                if (currentPath.includes('/lockscreen') || currentPath.includes('/login') || currentPath.includes('/register')) {
+                    return;
+                }
+                window.location.href = '/lockscreen';
+            }
+            
+            ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
+                document.addEventListener(evt, resetIdleTimer, true);
+            });
+            
+            resetIdleTimer();
+        })();
+    </script>
+    @endauth
 </body>
 </html>

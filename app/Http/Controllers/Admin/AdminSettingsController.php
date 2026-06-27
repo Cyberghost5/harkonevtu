@@ -21,6 +21,8 @@ class AdminSettingsController extends Controller
             'email_verification','otp_verification',
             'theme_color','app_version',
             'support_whatsapp','support_phone','support_email','support_hours','support_ticket_url',
+            'agent_upgrade_fee',
+            'session_idle_timeout',
         ];
         $s = AppSetting::getMany($keys);
         return view('admin.settings.general', compact('s'));
@@ -34,6 +36,8 @@ class AdminSettingsController extends Controller
             'email_verification','otp_verification',
             'theme_color','app_version',
             'support_whatsapp','support_phone','support_email','support_hours','support_ticket_url',
+            'agent_upgrade_fee',
+            'session_idle_timeout',
         ];
 
         foreach ($textFields as $key) {

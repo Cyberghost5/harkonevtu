@@ -11,7 +11,10 @@
         'rejected'  => 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',
     ];
     $kycBadge = $kycColors[$user->kyc_status ?? 'pending'] ?? $kycColors['pending'];
-    $tabs = ['profile' => 'Profile', 'account-details' => 'Account Details', 'account' => 'Change Password', 'transactions' => 'Change PIN', 'api' => 'API'];
+    $tabs = ['profile' => 'Profile', 'account-details' => 'Account Details', 'account' => 'Change Password', 'transactions' => 'Change PIN', 'security' => 'Biometric Login', 'api' => 'API'];
+    if (!$user->isAgent()) {
+        $tabs['upgrade-agent'] = 'Upgrade to Agent';
+    }
 @endphp
 
 <div x-data="{ tab: @js($tab) }" class="max-w-7xl mx-auto">
@@ -333,6 +336,168 @@
                     </form>
                 </div>
 
+                {{-- ── Biometric Login Tab ───────────────────────────────── --}}
+                <div x-show="tab === 'security'" x-cloak>
+                    <h3 class="text-base font-bold text-slate-800 dark:text-white mb-1">Biometric Fingerprint Authentication</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">Enable secure passwordless login or unlock using your device's fingerprint scanner or Touch ID.</p>
+                    
+                    {{-- Biometrics Support Warning --}}
+                    <div id="biometric-unsupported" class="hidden mb-5 p-4 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 text-sm">
+                        Your browser or device does not support WebAuthn biometric authentication, or you are not using a secure (HTTPS/localhost) context.
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                            <h4 class="text-sm font-semibold text-slate-800 dark:text-white mb-2">Registered Biometric Devices</h4>
+                            
+                            @if($user->webauthnCredentials->isEmpty())
+                                <p class="text-sm text-slate-500 dark:text-slate-400">No biometric devices registered yet. Add one below to enable fingerprint login.</p>
+                            @else
+                                <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    @foreach($user->webauthnCredentials as $credential)
+                                        <div class="flex items-center justify-between py-3">
+                                            <div class="flex items-center gap-3">
+                                                <div class="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11a5 5 0 00-10 0c0 .768.111 1.51.319 2.214m12.438-10.462A9.947 9.947 0 0114 11c0 1.259-.234 2.463-.66 3.575m0 0a3 3 0 10-4.47-4.47m3.44 2.214a13.916 13.916 0 01-2.18 7.74" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm font-medium text-slate-800 dark:text-white">{{ $credential->name ?? 'Biometric Device' }}</p>
+                                                    <p class="text-xs text-slate-400 dark:text-slate-500">Registered: {{ $credential->created_at->format('M d, Y h:i A') }}</p>
+                                                </div>
+                                            </div>
+                                            <form method="POST" action="{{ route('settings.biometrics.delete', $credential->id) }}" onsubmit="return confirm('Are you sure you want to remove this biometric device?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-xs text-rose-500 hover:text-rose-600 font-semibold bg-transparent border-0 cursor-pointer">
+                                                    Remove
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Register New Device Button --}}
+                        <div id="biometric-actions">
+                            <button type="button" onclick="registerBiometrics()" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white rounded-xl transition-opacity hover:opacity-90 bg-slate-900 dark:bg-white dark:text-slate-900">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Register Fingerprint
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- JavaScript biometrics registration flow --}}
+                <script>
+                    if (!window.PublicKeyCredential) {
+                        const warning = document.getElementById('biometric-unsupported');
+                        if (warning) warning.classList.remove('hidden');
+                        const actions = document.getElementById('biometric-actions');
+                        if (actions) actions.classList.add('hidden');
+                    }
+
+                    function bufferToBase64url(buffer) {
+                        const bytes = new Uint8Array(buffer);
+                        let binary = '';
+                        for (let i = 0; i < bytes.byteLength; i++) {
+                            binary += String.fromCharCode(bytes[i]);
+                        }
+                        return btoa(binary)
+                            .replace(/\+/g, '-')
+                            .replace(/\//g, '_')
+                            .replace(/=/g, '');
+                    }
+
+                    function base64urlToBuffer(base64url) {
+                        let base64 = base64url
+                            .replace(/-/g, '+')
+                            .replace(/_/g, '/');
+                        while (base64.length % 4) {
+                            base64 += '=';
+                        }
+                        const binary = atob(base64);
+                        const buffer = new ArrayBuffer(binary.length);
+                        const bytes = new Uint8Array(buffer);
+                        for (let i = 0; i < binary.length; i++) {
+                            bytes[i] = binary.charCodeAt(i);
+                        }
+                        return buffer;
+                    }
+
+                    async function registerBiometrics() {
+                        try {
+                            const name = prompt("Enter a label for this biometric device (e.g. My Phone, Office Laptop):", "Biometric Device");
+                            if (!name) return;
+
+                            const response = await fetch('/settings/biometrics/register/options', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                }
+                            });
+
+                            const data = await response.json();
+                            if (data.error) {
+                                throw new Error(data.error);
+                            }
+
+                            const options = data.publicKey;
+                            options.challenge = base64urlToBuffer(options.challenge);
+                            options.user.id = base64urlToBuffer(options.user.id);
+                            
+                            if (options.excludeCredentials) {
+                                options.excludeCredentials = options.excludeCredentials.map(cred => {
+                                    cred.id = base64urlToBuffer(cred.id);
+                                    return cred;
+                                });
+                            }
+
+                            const credential = await navigator.credentials.create({
+                                publicKey: options
+                            });
+
+                            if (!credential) {
+                                throw new Error('Biometric registration failed or was cancelled.');
+                            }
+
+                            const attestation = {
+                                name: name,
+                                clientDataJSON: bufferToBase64url(credential.response.clientDataJSON),
+                                attestationObject: bufferToBase64url(credential.response.attestationObject)
+                            };
+
+                            const verifyResponse = await fetch('/settings/biometrics/register/verify', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                },
+                                body: JSON.stringify(attestation)
+                            });
+
+                            const verifyData = await verifyResponse.json();
+                            if (verifyData.success) {
+                                alert('Biometric fingerprint registered successfully!');
+                                window.location.reload();
+                            } else {
+                                throw new Error(verifyData.error || 'Verification failed.');
+                            }
+
+                        } catch (err) {
+                            console.error(err);
+                            if (err.name !== 'NotAllowedError') {
+                                alert(err.message || 'Error registering biometric device.');
+                            }
+                        }
+                    }
+                </script>
+
                 {{-- ── API Tab ────────────────────────────────────────────── --}}
                 <div x-show="tab === 'api'" x-cloak>
                     <h3 class="text-base font-bold text-slate-800 dark:text-white mb-1">API Access</h3>
@@ -371,6 +536,54 @@
                         @endif
                     </div>
                 </div>
+
+                {{-- ── Upgrade to Agent Tab ───────────────────────────────── --}}
+                @if(!$user->isAgent())
+                <div x-show="tab === 'upgrade-agent'" x-cloak>
+                    <h3 class="text-base font-bold text-slate-800 dark:text-white mb-2">Upgrade to Agent</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">
+                        Upgrade your account to Agent status to enjoy premium discounted pricing on airtime, data, and all other services.
+                    </p>
+
+                    @php
+                        $upgradeFee = (float) \App\Models\AppSetting::get('agent_upgrade_fee', 5000);
+                        $hasBalance = $wallet && $wallet->balance >= $upgradeFee;
+                    @endphp
+
+                    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 bg-slate-50 dark:bg-slate-900/50 space-y-4 max-w-md mb-5">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-slate-500 dark:text-slate-400">Upgrade Cost:</span>
+                            <span class="font-bold text-slate-800 dark:text-white">₦{{ number_format($upgradeFee, 2) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-slate-500 dark:text-slate-400">Your Current Balance:</span>
+                            <span class="font-bold {{ $hasBalance ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500' }}">
+                                ₦{{ number_format((float) ($wallet?->balance ?? 0), 2) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    @if($hasBalance)
+                    <form method="POST" action="{{ route('settings.upgrade-agent') }}" onsubmit="return confirm('Are you sure you want to upgrade to Agent status? ₦{{ number_format($upgradeFee, 2) }} will be deducted from your wallet.')">
+                        @csrf
+                        <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white rounded-xl transition-opacity hover:opacity-90" style="background: {{ $themeColor }}">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            Upgrade to Agent Now
+                        </button>
+                    </form>
+                    @else
+                    <div class="rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 p-4 max-w-md">
+                        <div class="flex gap-2">
+                            <svg class="h-5 w-5 text-rose-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            <div class="text-xs text-rose-700 dark:text-rose-400">
+                                <p class="font-bold">Insufficient Balance</p>
+                                <p class="mt-0.5">You need at least ₦{{ number_format($upgradeFee, 2) }} in your wallet to upgrade to Agent status. Please fund your wallet first.</p>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+                @endif
 
             </div>{{-- /p-6 --}}
         </div>{{-- /right card --}}

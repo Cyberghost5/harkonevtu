@@ -1,4 +1,4 @@
-﻿@extends('layouts.dashboard')
+@extends('layouts.dashboard')
 
 @section('title', 'Dashboard')
 
@@ -188,7 +188,7 @@
             </p>
         </div>
         <div class="flex-shrink-0">
-            <a href="#"
+            <a href="{{ route('settings', ['tab' => 'upgrade-agent']) }}"
                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-amber-700 font-semibold text-sm hover:bg-amber-50 transition-all duration-150 shadow-md">
                 Upgrade to Agent
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -251,4 +251,115 @@ class UserSettingsController extends Controller
         return redirect()->route('login')
             ->with('success', 'Your account has been deleted.');
     }
+
+    // ─── Upgrade User to Agent ───────────────────────────────────────────────
+
+    public function upgradeToAgent(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->isAgent()) {
+            return back()->with('error', 'You are already an Agent.');
+        }
+
+        $wallet = $user->wallet;
+        if (!$wallet) {
+            return back()->with('error', 'Wallet not found.');
+        }
+
+        $fee = (float) AppSetting::get('agent_upgrade_fee', 5000);
+
+        if ($wallet->balance < $fee) {
+            return back()->with('error', 'Insufficient wallet balance for agent upgrade.');
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($wallet, $fee, $user) {
+            // Debit wallet
+            $wallet->debit($fee, 'Agent status upgrade fee', 'AGT-UPG-' . strtoupper(uniqid()));
+
+            // Update user_type
+            $user->update(['user_type' => 'agent']);
+        });
+
+        return redirect()->route('settings', ['tab' => 'profile'])
+            ->with('success', 'Congratulations! Your account has been upgraded to Agent.');
+    }
+
+    // ─── WebAuthn Biometric Registration ──────────────────────────────────────
+
+    public function biometricRegisterOptions(Request $request)
+    {
+        try {
+            $user = $request->user();
+            $rpName = AppSetting::get('site_name', 'KlassPay');
+            $rpId = $request->getHost();
+            
+            $webAuthn = new \lbuchs\WebAuthn\WebAuthn($rpName, $rpId, null, true);
+            
+            $excludeIds = $user->webauthnCredentials->pluck('credential_id')->map(function ($id) {
+                return \lbuchs\WebAuthn\Binary\ByteBuffer::fromBase64Url($id);
+            })->all();
+            
+            $createArgs = $webAuthn->getCreateArgs(
+                (string)$user->id,
+                $user->email,
+                $user->name,
+                30,
+                false,
+                'preferred',
+                false,
+                $excludeIds
+            );
+            
+            session(['webauthn_challenge' => $webAuthn->getChallenge()]);
+            
+            return response()->json($createArgs);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function biometricRegisterVerify(Request $request)
+    {
+        try {
+            $user = $request->user();
+            $rpName = AppSetting::get('site_name', 'KlassPay');
+            $rpId = $request->getHost();
+            
+            $webAuthn = new \lbuchs\WebAuthn\WebAuthn($rpName, $rpId, null, true);
+            
+            $clientDataJSON = base64_decode(strtr($request->input('clientDataJSON'), '-_', '+/'));
+            $attestationObject = base64_decode(strtr($request->input('attestationObject'), '-_', '+/'));
+            
+            $challenge = session('webauthn_challenge');
+            
+            if (!$challenge) {
+                throw new \Exception('Registration challenge not found in session.');
+            }
+            
+            $data = $webAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, false, true, false, false);
+            
+            $user->webauthnCredentials()->create([
+                'name' => $request->input('name', 'Biometric Device'),
+                'credential_id' => $data->credentialId,
+                'public_key' => $data->credentialPublicKey,
+                'sign_count' => $data->signatureCounter ?? 0,
+            ]);
+            
+            session()->forget('webauthn_challenge');
+            
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function biometricDelete(Request $request, $id)
+    {
+        $credential = $request->user()->webauthnCredentials()->findOrFail($id);
+        $credential->delete();
+        
+        return redirect()->route('settings', ['tab' => 'security'])
+            ->with('success', 'Biometric credential deleted successfully.');
+    }
 }

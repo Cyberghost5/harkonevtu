@@ -2,7 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\ApiLog;
 use App\Models\AppSetting;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -30,24 +34,53 @@ class OneSignalService
             return false;
         }
 
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . $apiKey,
-                'Content-Type'  => 'application/json; charset=utf-8',
-            ])->post('https://onesignal.com/api/v1/notifications', [
-                'app_id' => $appId,
-                'headings' => ['en' => $title],
-                'contents' => ['en' => $message],
-                'include_aliases' => [
-                    'external_id' => [$userId],
-                ],
-                'target_channel' => 'push',
-            ]);
+        $requestHeaders = [
+            'Authorization' => 'Key ' . $apiKey,
+            'Content-Type'  => 'application/json;',
+        ];
 
+        $payload = [
+            'app_id' => $appId,
+            'headings' => ['en' => $title],
+            'contents' => ['en' => $message],
+            'include_aliases' => [
+                'external_id' => [$userId],
+            ],
+            'target_channel' => 'push',
+        ];
+        $start = hrtime(true);
+        try {
+            $response = Http::withHeaders($requestHeaders)->post('https://api.onesignal.com/notifications?c=push', $payload);
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
             if ($response->failed()) {
+                ApiLog::record([
+                    'user_id'     => $userId,
+                    'service'    => 'notification',
+                    'provider'    => 'one_signal',
+                    'reference'    => 'one_signal',
+                    'endpoint'    => 'https://api.onesignal.com/notifications?c=push',
+                    'method'     => 'POST',
+                    'payload'     => $payload,
+                    'request_headers' => $requestHeaders,
+                    'response'    => $response->json(),
+                    'http_status' => $response->status(),
+                    'response_headers' => $response->headers(),
+                    'duration_ms'    => $duration,
+                    'success' => 0,
+                ]);
                 Log::error('OneSignal notification delivery failed', [
                     'status' => $response->status(),
                     'response' => $response->json(),
+                    'headers' => $response->headers(),
+                    'payload' => [
+                        'app_id' => $appId,
+                        'headings' => ['en' => $title],
+                        'contents' => ['en' => $message],
+                        'include_aliases' => [
+                            'external_id' => [$userId],
+                        ],
+                        'target_channel' => 'push',
+                    ],
                 ]);
                 return false;
             }

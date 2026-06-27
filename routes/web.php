@@ -22,6 +22,7 @@ use App\Http\Controllers\PricingController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\UserSettingsController;
+use App\Http\Controllers\LockScreenController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -70,7 +71,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // ── Protected routes (auth + verified + PIN set) ──────────────────────────────
-Route::middleware(['auth', 'ensure.verified', 'ensure.pin'])->group(function () {
+Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // PIN confirmation AJAX
@@ -138,18 +139,32 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin'])->group(function () 
     // ── User Settings ──────────────────────────────────────────────────────
     Route::get('/settings',                         [UserSettingsController::class, 'index'])->name('settings');
     Route::put('/settings/profile',                 [UserSettingsController::class, 'updateProfile'])->name('settings.profile.update');
-    Route::post('/settings/notification',           [UserSettingsController::class, 'updateNotification'])->name('settings.notification');
+    Route::match(['post', 'put'], '/settings/notification', [UserSettingsController::class, 'updateNotification'])->name('settings.notification');
+    Route::post('/settings/upgrade-agent',          [UserSettingsController::class, 'upgradeToAgent'])->name('settings.upgrade-agent');
     Route::put('/settings/password',                [UserSettingsController::class, 'changePassword'])->name('settings.password.change');
     Route::put('/settings/pin/change',              [UserSettingsController::class, 'changePin'])->name('settings.pin.change');
     Route::post('/settings/pin/reset-request',      [UserSettingsController::class, 'requestPinReset'])->name('settings.pin.reset.request');
     Route::put('/settings/bank',                    [UserSettingsController::class, 'updateBankDetails'])->name('settings.bank.update');
     Route::post('/settings/api/generate',           [UserSettingsController::class, 'generateApiToken'])->name('settings.api.generate');
     Route::delete('/settings/delete',               [UserSettingsController::class, 'deleteAccount'])->name('settings.delete');
+
+    // Biometrics Setup
+    Route::post('/settings/biometrics/register/options', [UserSettingsController::class, 'biometricRegisterOptions'])->name('settings.biometrics.register.options');
+    Route::post('/settings/biometrics/register/verify',  [UserSettingsController::class, 'biometricRegisterVerify'])->name('settings.biometrics.register.verify');
+    Route::delete('/settings/biometrics/{id}',           [UserSettingsController::class, 'biometricDelete'])->name('settings.biometrics.delete');
 });
 
 // ── PIN Reset (no auth needed - accessed via email link) ──────────────────────
 Route::get('/settings/pin/reset/{token}',  [UserSettingsController::class, 'showPinReset'])->name('settings.pin.reset.form');
 Route::post('/settings/pin/reset/{token}', [UserSettingsController::class, 'resetPin'])->name('settings.pin.reset.submit');
+
+// ── Lock Screen Routes ────────────────────────────────────────────────────────
+Route::middleware(['auth'])->group(function () {
+    Route::get('/lockscreen',                       [LockScreenController::class, 'show'])->name('lockscreen');
+    Route::post('/lockscreen/unlock-password',      [LockScreenController::class, 'unlockPassword'])->name('lockscreen.unlock');
+    Route::post('/lockscreen/fingerprint/options',  [LockScreenController::class, 'fingerprintOptions'])->name('lockscreen.biometric.options');
+    Route::post('/lockscreen/fingerprint/verify',   [LockScreenController::class, 'fingerprintVerify'])->name('lockscreen.biometric.verify');
+});
 
 // ── Payment Webhooks (no auth, no CSRF) ──────────────────────────────────────
 Route::withoutMiddleware(['web'])->group(function () {
@@ -158,7 +173,7 @@ Route::withoutMiddleware(['web'])->group(function () {
 });
 
 // ── Admin Panel ───────────────────────────────────────────────────────────────
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not_locked'])->group(function () {
     Route::get('/',                    [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // Users
