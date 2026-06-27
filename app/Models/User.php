@@ -45,6 +45,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(WebauthnCredential::class);
     }
 
+    public function airtimeToCashRequests(): HasMany
+    {
+        return $this->hasMany(AirtimeToCashRequest::class);
+    }
+
     // ─── PIN Helpers ──────────────────────────────────────────────────────────
 
     public function hasPinSet(): bool

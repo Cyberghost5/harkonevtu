@@ -121,6 +121,9 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked']
 
         Route::get('/epins',           [ExamPinController::class, 'index'])->name('epins');
         Route::post('/epins/purchase', [ExamPinController::class, 'purchase'])->name('epins.purchase');
+
+        Route::get('/airtime-to-cash',         [\App\Http\Controllers\AirtimeToCashController::class, 'index'])->name('airtime-to-cash');
+        Route::post('/airtime-to-cash/submit', [\App\Http\Controllers\AirtimeToCashController::class, 'submit'])->name('airtime-to-cash.submit');
     });
 
     // ── Referral ──────────────────────────────────────────────────────────────
@@ -190,6 +193,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::get('/funding',             [AdminFundingController::class, 'index'])->name('funding.index');
     Route::post('/funding/{id}/approve', [AdminFundingController::class, 'approve'])->name('funding.approve');
     Route::post('/funding/{id}/reject',  [AdminFundingController::class, 'reject'])->name('funding.reject');
+
+    // Airtime to Cash Requests
+    Route::get('/airtime-to-cash',             [\App\Http\Controllers\Admin\AdminAirtimeToCashController::class, 'index'])->name('airtime-to-cash.index');
+    Route::post('/airtime-to-cash/{id}/approve', [\App\Http\Controllers\Admin\AdminAirtimeToCashController::class, 'approve'])->name('airtime-to-cash.approve');
+    Route::post('/airtime-to-cash/{id}/reject',  [\App\Http\Controllers\Admin\AdminAirtimeToCashController::class, 'reject'])->name('airtime-to-cash.reject');
 
     // API Logs
     Route::get('/api-logs',            [AdminApiLogController::class, 'index'])->name('api-logs.index');

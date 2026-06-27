@@ -191,6 +191,18 @@
                     Coupons
                 </a>
 
+                @php $a = request()->routeIs('admin.airtime-to-cash.*'); $pa = \App\Models\AirtimeToCashRequest::where('status','pending')->count(); @endphp
+                <a href="{{ route('admin.airtime-to-cash.index') }}"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+                   style="{{ $a ? 'background:'.$themeColor.';color:#fff' : 'color:rgba(255,255,255,0.7)' }}"
+                   @unless($a) onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff';" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.7)';" @endunless>
+                    <div class="flex items-center gap-3">
+                        <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        Airtime to Cash
+                    </div>
+                    @if($pa > 0)<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style="background:rgba(245,158,11,0.3);color:#fcd34d">{{ $pa }}</span>@endif
+                </a>
+
                 <p class="px-3 pt-3 pb-1.5 text-[9px] font-bold uppercase tracking-widest" style="color:rgba(255,255,255,0.3)">System</p>
 
                 @php $a = request()->routeIs('admin.api-logs.*'); @endphp
