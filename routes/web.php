@@ -128,6 +128,10 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked']
         Route::get('/print-pins',            [\App\Http\Controllers\VoucherPrintingController::class, 'index'])->name('print-pins');
         Route::post('/print-pins/generate',  [\App\Http\Controllers\VoucherPrintingController::class, 'generate'])->name('print-pins.generate');
         Route::get('/print-pins/print',      [\App\Http\Controllers\VoucherPrintingController::class, 'printVouchers'])->name('print-pins.print');
+
+        Route::get('/betting',            [\App\Http\Controllers\BettingController::class, 'index'])->name('betting');
+        Route::post('/betting/validate',  [\App\Http\Controllers\BettingController::class, 'validateCustomer'])->name('betting.validate');
+        Route::post('/betting/purchase',  [\App\Http\Controllers\BettingController::class, 'purchase'])->name('betting.purchase');
     });
 
     // ── Referral ──────────────────────────────────────────────────────────────

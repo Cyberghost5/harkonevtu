@@ -149,6 +149,7 @@ class AdminSettingsController extends Controller
             'airtime_api','datacard_api','airtime_pin_api',
             'epins_api','electricity_api','cable_api','betting_api',
             'dealing_charge',
+            'betting_charge','betting_min_amount','betting_daily_limit',
             'airtime_off_percentage_mtn','airtime_off_percentage_airtel','airtime_off_percentage_glo','airtime_off_percentage_etisalat',
             'airtime_agent_off_percentage_mtn','airtime_agent_off_percentage_airtel','airtime_agent_off_percentage_glo','airtime_agent_off_percentage_etisalat',
             'normal_pin_mtn','normal_pin_airtel','normal_pin_glo','normal_pin_etisalat',

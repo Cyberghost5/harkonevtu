@@ -259,6 +259,30 @@
                         <input type="text" name="dealing_charge" value="{{ $s['dealing_charge'] ?? '100' }}"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">
+                            Betting Convenience Charge <span class="text-slate-400">(flat fee, ₦)</span>
+                        </label>
+                        <input type="text" name="betting_charge" value="{{ $s['betting_charge'] ?? '50' }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">
+                            Betting Minimum Amount <span class="text-slate-400">(₦)</span>
+                        </label>
+                        <input type="text" name="betting_min_amount" value="{{ $s['betting_min_amount'] ?? '100' }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">
+                            Betting Daily Limit <span class="text-slate-400">(₦)</span>
+                        </label>
+                        <input type="text" name="betting_daily_limit" value="{{ $s['betting_daily_limit'] ?? '30000' }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
                 </div>
                 @endif
             </div>
