@@ -37,7 +37,7 @@
             background: rgba(255, 255, 255, 0.45);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            border: 1px solid hsla(0, 0%, 100%, 0.25);
         }
         .dark .glass {
             background: rgba(15, 23, 42, 0.45);
@@ -51,11 +51,11 @@
         @keyframes pulse-glow {
             0%, 100% {
                 transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+                box-shadow: 0 0 0 0 '{{ $themeColor }}'66;
             }
             50% {
                 transform: scale(1.03);
-                box-shadow: 0 0 20px 8px rgba(79, 70, 229, 0.2);
+                box-shadow: 0 0 20px 8px '{{ $themeSecondary }}'33;
             }
         }
     </style>
