@@ -97,15 +97,19 @@ class BettingTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->post(route('services.betting.purchase'), [
+        $response = $this->postJson(route('services.betting.purchase'), [
             'platform' => 'bet9ja',
             'customer_id' => '1234567',
             'customer_name' => 'John Doe',
             'amount' => '500',
-            'pin' => '9999', // wrong pin
+            'transaction_pin' => '9999', // wrong pin
         ]);
 
-        $response->assertSessionHas('error', 'Transaction PIN is incorrect.');
+        $response->assertStatus(422);
+        $response->assertJson([
+            'success' => false,
+            'message' => 'Incorrect transaction PIN. Please try again.',
+        ]);
         $this->assertEquals(5000.00, $user->wallet->balance); // Unchanged
     }
 
@@ -119,15 +123,16 @@ class BettingTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->post(route('services.betting.purchase'), [
+        $response = $this->postJson(route('services.betting.purchase'), [
             'platform' => 'bet9ja',
             'customer_id' => '1234567',
             'customer_name' => 'John Doe',
             'amount' => '50', // less than min 100
-            'pin' => '1234',
+            'transaction_pin' => '1234',
         ]);
 
-        $response->assertSessionHasErrors(['amount']);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['amount']);
     }
 
     public function test_daily_betting_aggregate_limit(): void
@@ -152,16 +157,19 @@ class BettingTest extends TestCase
         $this->actingAs($user);
 
         // Attempting to fund ₦2,000 (total today would be 31,000 > 30,000 limit)
-        $response = $this->post(route('services.betting.purchase'), [
+        $response = $this->postJson(route('services.betting.purchase'), [
             'platform' => 'bet9ja',
             'customer_id' => '1234567',
             'customer_name' => 'John Doe',
             'amount' => '2000',
-            'pin' => '1234',
+            'transaction_pin' => '1234',
         ]);
 
-        $response->assertSessionHas('error');
-        $this->assertTrue(str_contains(session('error'), 'Daily betting limit is ₦30,000.00'));
+        $response->assertStatus(422);
+        $response->assertJson([
+            'success' => false,
+        ]);
+        $this->assertTrue(str_contains($response->json('message'), 'Daily betting limit is ₦30,000.00'));
     }
 
     public function test_successful_betting_purchase(): void
@@ -188,16 +196,20 @@ class BettingTest extends TestCase
             ], 200)
         ]);
 
-        $response = $this->post(route('services.betting.purchase'), [
+        $response = $this->postJson(route('services.betting.purchase'), [
             'platform' => 'bet9ja',
             'customer_id' => '1234567',
             'customer_name' => 'John Doe',
             'amount' => '1000',
-            'pin' => '1234',
+            'transaction_pin' => '1234',
         ]);
 
-        $response->assertRedirect(route('services.betting'));
-        $response->assertSessionHas('success', 'Betting wallet funded successfully!');
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'message' => 'Betting wallet funded successfully!',
+            'balance' => '₦3,950.00',
+        ]);
 
         // Wallet debited: 1000 + 50 charge = 1050
         $this->assertEquals(3950.00, $wallet->fresh()->balance);

@@ -27,7 +27,7 @@ class BettingController extends Controller
         $user = auth()->user();
         $platforms = BettingPlatform::active()->get();
 
-        $recentTx = ServiceTransaction::where('user_id', $user->id)
+        $history = ServiceTransaction::where('user_id', $user->id)
             ->where('service_type', 'betting')
             ->latest()
             ->paginate(10);
@@ -36,7 +36,7 @@ class BettingController extends Controller
         $minAmount = (float) AppSetting::get('betting_min_amount', '100');
         $dailyLimit = (float) AppSetting::get('betting_daily_limit', '30000');
 
-        return view('services.betting', compact('platforms', 'recentTx', 'charge', 'minAmount', 'dailyLimit'));
+        return view('services.betting', compact('platforms', 'history', 'charge', 'minAmount', 'dailyLimit'));
     }
 
     public function validateCustomer(Request $request): JsonResponse
@@ -89,10 +89,10 @@ class BettingController extends Controller
         }
     }
 
-    public function purchase(Request $request): RedirectResponse
+    public function purchase(Request $request): JsonResponse
     {
         if (AppSetting::get('service_betting') !== '1') {
-            return back()->with('error', 'Betting funding service is currently disabled.');
+            return response()->json(['success' => false, 'message' => 'Betting funding service is currently disabled.'], 503);
         }
 
         $minAmount = (float) AppSetting::get('betting_min_amount', '100');
@@ -100,23 +100,27 @@ class BettingController extends Controller
         $dailyLimit = (float) AppSetting::get('betting_daily_limit', '30000');
 
         $request->validate([
-            'platform'      => ['required', 'string', 'exists:betting_platforms,slug'],
-            'customer_id'   => ['required', 'string'],
-            'customer_name' => ['required', 'string'],
-            'amount'        => ['required', 'numeric', 'min:' . $minAmount],
-            'pin'           => ['required', 'string', 'size:4'],
+            'platform'        => ['required', 'string', 'exists:betting_platforms,slug'],
+            'customer_id'     => ['required', 'string'],
+            'customer_name'   => ['required', 'string'],
+            'amount'          => ['required', 'numeric', 'min:' . $minAmount],
+            'transaction_pin' => ['required', 'digits:4'],
         ]);
 
         $user = auth()->user();
 
         // 1. Verify PIN
-        if (!Hash::check($request->pin, $user->transaction_pin)) {
-            return back()->withInput()->with('error', 'Transaction PIN is incorrect.');
+        if (!$user->verifyPin($request->transaction_pin)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Incorrect transaction PIN. Please try again.',
+                'pin_error' => true,
+            ], 422);
         }
 
         $platform = BettingPlatform::where('slug', $request->platform)->active()->first();
         if (!$platform) {
-            return back()->withInput()->with('error', 'Selected betting platform is currently disabled.');
+            return response()->json(['success' => false, 'message' => 'Selected betting platform is currently disabled.'], 422);
         }
 
         $amount = (float) $request->amount;
@@ -124,7 +128,7 @@ class BettingController extends Controller
 
         // 2. Check Sufficient Balance
         if (!$user->wallet || !$user->wallet->hasSufficientBalance($totalCost)) {
-            return back()->withInput()->with('error', 'Insufficient wallet balance for this transaction.');
+            return response()->json(['success' => false, 'message' => 'Insufficient wallet balance for this transaction.'], 422);
         }
 
         // 3. Verify Daily Limit
@@ -135,12 +139,15 @@ class BettingController extends Controller
             ->sum('amount');
 
         if ($todaySpent + $amount > $dailyLimit) {
-            return back()->withInput()->with('error', "Transaction declined: Daily betting limit is ₦" . number_format($dailyLimit, 2) . ". You have spent ₦" . number_format($todaySpent, 2) . " today.");
+            return response()->json([
+                'success' => false,
+                'message' => "Transaction declined: Daily betting limit is ₦" . number_format($dailyLimit, 2) . ". You have spent ₦" . number_format($todaySpent, 2) . " today."
+            ], 422);
         }
 
         $payscribeKey = AppSetting::get('payscribe_secret_key');
         if (!$payscribeKey) {
-            return back()->withInput()->with('error', 'API integration keys are not set by the Administrator.');
+            return response()->json(['success' => false, 'message' => 'API integration keys are not set by the Administrator.'], 422);
         }
 
         $ref = 'BET-' . strtoupper(Str::random(12));
@@ -169,7 +176,7 @@ class BettingController extends Controller
                 'reference'   => $ref,
                 'endpoint'    => 'https://api.payscribe.ng/api/v1/betting/vend',
                 'method'      => 'POST',
-                'payload'     => $request->except(['pin']),
+                'payload'     => $request->except(['transaction_pin']),
                 'response'    => $res,
                 'http_status' => $response->status(),
                 'success'     => ($response->successful() && !empty($res['status']) && $res['status'] === true),
@@ -199,14 +206,27 @@ class BettingController extends Controller
                     ]);
                 });
 
-                return redirect()->route('services.betting')->with('success', 'Betting wallet funded successfully!');
+                $newBalanceFormatted = '₦' . number_format($user->wallet->fresh()->balance, 2);
+
+                return response()->json([
+                    'success'   => true,
+                    'message'   => 'Betting wallet funded successfully!',
+                    'balance'   => $newBalanceFormatted,
+                    'reference' => $ref,
+                ]);
             } else {
                 $errMsg = $res['message']['description'] ?? ($res['description'] ?? 'Provider failed to fund betting wallet.');
-                return back()->withInput()->with('error', 'Service Error: ' . $errMsg);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Service Error: ' . $errMsg
+                ], 422);
             }
         } catch (\Exception $e) {
             Log::error('Betting vend error: ' . $e->getMessage());
-            return back()->withInput()->with('error', 'An error occurred during betting wallet funding. Please try again.');
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during betting wallet funding. Please try again.'
+            ], 500);
         }
     }
 }
