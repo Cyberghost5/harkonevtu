@@ -100,6 +100,7 @@ class AdminSettingsController extends Controller
         $keys = [
             'flutterwave_public_key','flutterwave_secret_key','flutterwave_encryption_key','flutterwave_bvn',
             'paystack_public_key','paystack_secret_key',
+            'monnify_api_key','monnify_secret_key','monnify_contract_no','monnify_mode',
             'payscribe_secret_key','payscribe_public_key',
             'tx_charge_m2m','tx_charge_bank',
             'vtpass_username','vtpass_password','vtpass_api_key',

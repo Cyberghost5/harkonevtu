@@ -74,6 +74,39 @@
                 </div>
             </div>
 
+            {{-- ── Monnify ──────────────────────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-lg font-bold text-slate-800 mb-4">
+                    Monnify
+                    <span class="text-sm font-normal text-slate-400 ml-1">from
+                        <a href="https://dashboard.monnify.com" target="_blank" class="text-blue-500 hover:underline">Monnify</a>
+                    </span>
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
+                        <input type="text" name="monnify_api_key" value="{{ $s['monnify_api_key'] ?? '' }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Secret Key</label>
+                        <input type="text" name="monnify_secret_key" value="{{ $s['monnify_secret_key'] ?? '' }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Contract Code</label>
+                        <input type="text" name="monnify_contract_no" value="{{ $s['monnify_contract_no'] ?? '' }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Mode</label>
+                        <select name="monnify_mode" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <option value="sandbox" {{ ($s['monnify_mode'] ?? 'sandbox') === 'sandbox' ? 'selected' : '' }}>Sandbox</option>
+                            <option value="production" {{ ($s['monnify_mode'] ?? 'sandbox') === 'production' ? 'selected' : '' }}>Production</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
             {{-- ── Payscribe ─────────────────────────────────────────────── --}}
             <div class="px-6 py-6">

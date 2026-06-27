@@ -176,6 +176,42 @@ class WalletFundingController extends Controller
             $errors[] = 'Flutterwave: ' . $e->getMessage();
         }
 
+        // ── Monnify DVA ──────────────────────────────────────────────────────
+        try {
+            $monnifyApiKey = AppSetting::get('monnify_api_key');
+            if ($monnifyApiKey) {
+                // Check if we already have monnify accounts
+                $existing = VirtualAccount::where('user_id', $user->id)
+                    ->where('provider', 'monnify')
+                    ->get();
+
+                if ($existing->isNotEmpty()) {
+                    foreach ($existing as $acc) {
+                        $results[] = $acc->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
+                    }
+                } else {
+                    $data = \App\Services\MonnifyService::generateReservedAccounts($user);
+                    if (!empty($data['accounts'])) {
+                        foreach ($data['accounts'] as $acc) {
+                            $va = VirtualAccount::create([
+                                'user_id'        => $user->id,
+                                'provider'       => 'monnify',
+                                'bank_name'      => $acc['bankName'],
+                                'bank_code'      => $acc['bankCode'],
+                                'account_number' => $acc['accountNumber'],
+                                'account_name'   => $acc['accountName'] ?? $user->name,
+                                'metadata'       => $data,
+                            ]);
+                            $results[] = $va->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Monnify DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+            $errors[] = 'Monnify: ' . $e->getMessage();
+        }
+
         if (empty($results)) {
             return response()->json([
                 'success' => false,
@@ -635,6 +671,63 @@ class WalletFundingController extends Controller
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        return response('ok');
+    }
+
+    /**
+     * Monnify webhook - handle reserved account incoming transfer notifications.
+     */
+    public function monnifyWebhook(Request $request): \Illuminate\Http\Response
+    {
+        $signature = $request->header('monnify-signature');
+        $payload   = $request->getContent();
+        $secretKey = AppSetting::get('monnify_secret_key');
+
+        if (!$secretKey || !hash_equals(
+            hash_hmac('sha512', $payload, $secretKey),
+            (string) $signature
+        )) {
+            abort(401);
+        }
+
+        $eventType = $request->json('eventType');
+        $eventData = $request->json('eventData');
+
+        if ($eventType === 'SUCCESSFUL_TRANSACTION') {
+            $reference = $eventData['transactionReference'] ?? null;
+            if (!$reference) return response('ok');
+
+            // Already processed
+            if (WalletTransaction::where('reference', $reference)->exists()) {
+                return response('ok');
+            }
+
+            $destAccount = $eventData['destinationAccountInformation'] ?? null;
+            $accountNumber = $destAccount['accountNumber'] ?? null;
+
+            if ($accountNumber) {
+                $va = VirtualAccount::where('account_number', $accountNumber)
+                    ->where('provider', 'monnify')
+                    ->first();
+
+                if ($va) {
+                    $amountPaid = (float) ($eventData['amountPaid'] ?? 0);
+                    $dvaIntent = [
+                        'user_id' => $va->user_id,
+                        'amount'  => $amountPaid,
+                        'charge'  => 0,
+                        'total'   => $amountPaid,
+                        'gateway' => 'monnify_dva',
+                    ];
+                    try {
+                        $this->performCredit($reference, $dvaIntent);
+                    } catch (\RuntimeException $e) {
+                        Log::error('Monnify webhook processing failed', ['error' => $e->getMessage()]);
                     }
                 }
             }
