@@ -121,13 +121,18 @@ class VerificationController extends Controller
         // Always log the OTP locally for reference/fallback
         Log::info('[PayPulse OTP] Phone: ' . $user->phone . ' | OTP: ' . $otp);
 
-        $apiKey = AppSetting::get('bulksms_api_key');
+        $termiiApiKey = AppSetting::get('termii_api_key');
+        $bulkSmsApiKey = AppSetting::get('bulksms_api_key');
         $sender = AppSetting::get('bulksms_sender') ?: AppSetting::get('site_name', 'PayPulse');
         if (strlen($sender) > 11) {
             $sender = substr($sender, 0, 11);
         }
 
-        if ($apiKey) {
+        $message = "Your " . AppSetting::get('site_name', 'PayPulse') . " verification code is: " . $otp;
+
+        if ($termiiApiKey) {
+            \App\Services\TermiiService::sendSms($user->phone, $message);
+        } elseif ($bulkSmsApiKey) {
             $phone = $user->phone;
             // Format phone to international (e.g. 23480...)
             if (str_starts_with($phone, '0')) {
@@ -136,11 +141,9 @@ class VerificationController extends Controller
                 $phone = substr($phone, 1);
             }
 
-            $message = "Your " . AppSetting::get('site_name', 'PayPulse') . " verification code is: " . $otp;
-
             try {
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Authorization' => 'Bearer ' . $bulkSmsApiKey,
                     'Content-Type'  => 'application/json',
                     'Accept'        => 'application/json',
                 ])->post('https://www.bulksmsnigeria.com/api/v2/sms', [
@@ -161,7 +164,7 @@ class VerificationController extends Controller
                 ]);
             }
         } else {
-            Log::warning('BulkSMS API key not set. Logged OTP: ' . $otp);
+            Log::warning('No SMS API key set (Termii or BulkSMS). Logged OTP: ' . $otp);
         }
     }
 }

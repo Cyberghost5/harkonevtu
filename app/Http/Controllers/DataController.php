@@ -44,8 +44,12 @@ class DataController extends Controller
 
     // ─── Pages ────────────────────────────────────────────────────────────────
 
-    public function index(): View
+    public function index(): mixed
     {
+        if (AppSetting::get('service_data', '1') !== '1') {
+            return redirect()->route('dashboard')->with('error', 'Data service is temporarily unavailable.');
+        }
+
         $user     = auth()->user();
         $networks = NetworkAirtime::active()->get();
 
@@ -79,6 +83,10 @@ class DataController extends Controller
 
     public function getPlans(Request $request): JsonResponse
     {
+        if (AppSetting::get('service_data', '1') !== '1') {
+            return response()->json(['success' => false, 'message' => 'Data service is temporarily unavailable.'], 503);
+        }
+
         $request->validate([
             'network_key' => ['required', 'string'],
             'data_type'   => ['required', 'string'],
@@ -109,7 +117,7 @@ class DataController extends Controller
 
     public function purchase(Request $request): JsonResponse
     {
-        if (!AppSetting::get('service_data', '1')) {
+        if (AppSetting::get('service_data', '1') !== '1') {
             return response()->json(['success' => false, 'message' => 'Data service is temporarily unavailable.'], 503);
         }
 

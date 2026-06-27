@@ -308,6 +308,41 @@ class AdminSettingsTest extends TestCase
                 $request['target_channel'] === 'push';
         });
     }
+
+    public function test_service_page_redirection_when_disabled(): void
+    {
+        $user = User::factory()->create([
+            'is_admin' => false,
+            'is_active' => true,
+            'phone_verified_at' => now(),
+            'transaction_pin' => bcrypt('1234'),
+        ]);
+        $user->wallet()->create(['balance' => 1000]);
+
+        $this->actingAs($user);
+
+        // Turn all services off
+        AppSetting::set('service_airtime', '0');
+        AppSetting::set('service_data', '0');
+        AppSetting::set('service_electricity', '0');
+        AppSetting::set('service_cable', '0');
+        AppSetting::set('service_epins', '0');
+
+        // Access index routes, expect redirect to dashboard with error
+        $routes = [
+            'services.airtime',
+            'services.data',
+            'services.electricity',
+            'services.cable',
+            'services.epins',
+        ];
+
+        foreach ($routes as $route) {
+            $response = $this->get(route($route));
+            $response->assertRedirect(route('dashboard'));
+            $response->assertSessionHas('error');
+        }
+    }
 }
 
 

@@ -19,8 +19,12 @@ class CableController extends Controller
 {
     // ─── Page ─────────────────────────────────────────────────────────────────
 
-    public function index(): View
+    public function index(): mixed
     {
+        if (AppSetting::get('service_cable', '1') !== '1') {
+            return redirect()->route('dashboard')->with('error', 'Cable TV service is temporarily unavailable.');
+        }
+
         $user      = auth()->user();
         $providers = CableProvider::active()->with('plans')->get();
 
@@ -36,6 +40,10 @@ class CableController extends Controller
 
     public function getPlans(Request $request): JsonResponse
     {
+        if (AppSetting::get('service_cable', '1') !== '1') {
+            return response()->json(['success' => false, 'message' => 'Cable TV service is temporarily unavailable.'], 503);
+        }
+
         $request->validate([
             'provider_id' => ['required', 'integer', 'exists:cable_providers,id'],
         ]);
@@ -51,6 +59,10 @@ class CableController extends Controller
 
     public function validateCard(Request $request): JsonResponse
     {
+        if (AppSetting::get('service_cable', '1') !== '1') {
+            return response()->json(['success' => false, 'message' => 'Cable TV service is temporarily unavailable.'], 503);
+        }
+
         $request->validate([
             'provider_id' => ['required', 'integer', 'exists:cable_providers,id'],
             'plan_id'     => ['required', 'integer', 'exists:cable_plans,id'],

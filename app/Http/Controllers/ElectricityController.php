@@ -18,8 +18,12 @@ class ElectricityController extends Controller
 {
     // ─── Pages ────────────────────────────────────────────────────────────────
 
-    public function index(): View
+    public function index(): mixed
     {
+        if (AppSetting::get('service_electricity', '1') !== '1') {
+            return redirect()->route('dashboard')->with('error', 'Electricity service is temporarily unavailable.');
+        }
+
         $user   = auth()->user();
         $discos = ElectricityDisco::active()->get();
 
@@ -35,6 +39,10 @@ class ElectricityController extends Controller
 
     public function validateMeter(Request $request): JsonResponse
     {
+        if (AppSetting::get('service_electricity', '1') !== '1') {
+            return response()->json(['success' => false, 'message' => 'Electricity service is temporarily unavailable.'], 503);
+        }
+
         $request->validate([
             'disco_id'   => ['required', 'integer', 'exists:electricity_discos,id'],
             'meter_type' => ['required', 'in:prepaid,postpaid'],

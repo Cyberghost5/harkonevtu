@@ -18,8 +18,12 @@ class ExamPinController extends Controller
 {
     // ─── Page ─────────────────────────────────────────────────────────────────
 
-    public function index(): View
+    public function index(): mixed
     {
+        if (AppSetting::get('service_epins', '1') !== '1') {
+            return redirect()->route('dashboard')->with('error', 'Exam Pins service is temporarily unavailable.');
+        }
+
         $user      = auth()->user();
         $examTypes = ExamPinType::active()->orderBy('amount', 'desc')->get();
 

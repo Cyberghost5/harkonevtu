@@ -17,8 +17,12 @@ use Illuminate\View\View;
 
 class AirtimeController extends Controller
 {
-    public function index(): View
+    public function index(): mixed
     {
+        if (AppSetting::get('service_airtime', '1') !== '1') {
+            return redirect()->route('dashboard')->with('error', 'Airtime service is temporarily unavailable.');
+        }
+
         $user     = auth()->user();
         $networks = NetworkAirtime::active()->get();
         $history  = ServiceTransaction::where('user_id', $user->id)
@@ -34,7 +38,7 @@ class AirtimeController extends Controller
     public function purchase(Request $request): JsonResponse
     {
         // Check service is enabled
-        if (!AppSetting::get('service_airtime', '1')) {
+        if (AppSetting::get('service_airtime', '1') !== '1') {
             return response()->json(['success' => false, 'message' => 'Airtime service is temporarily unavailable.'], 503);
         }
 
