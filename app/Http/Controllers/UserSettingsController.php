@@ -343,7 +343,7 @@ class UserSettingsController extends Controller
             
             $user->webauthnCredentials()->create([
                 'name' => $request->input('name', 'Biometric Device'),
-                'credential_id' => $data->credentialId,
+                'credential_id' => rtrim(strtr(base64_encode($data->credentialId), '+/', '-_'), '='),
                 'public_key' => $data->credentialPublicKey,
                 'sign_count' => $data->signatureCounter ?? 0,
             ]);
