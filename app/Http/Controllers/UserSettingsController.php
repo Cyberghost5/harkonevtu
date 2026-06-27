@@ -354,7 +354,7 @@ class UserSettingsController extends Controller
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Biometric registration verify error', ['exception' => $e]);
             $msg = mb_convert_encoding($e->getMessage(), 'UTF-8', 'UTF-8');
-            return response()->json(['error' => $msg], 400); 
+            return response()->json(['error' => $msg], 400);
         }
     }
 
