@@ -50,7 +50,7 @@ class BettingController extends Controller
             'customer_id' => ['required', 'string'],
         ]);
 
-        $payscribeKey = AppSetting::get('payscribe_secret_key');
+        $payscribeKey = AppSetting::get('payscribe_public_key');
         if (!$payscribeKey) {
             return response()->json(['error' => 'Payscribe API credentials not configured.'], 422);
         }
