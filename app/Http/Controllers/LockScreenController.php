@@ -121,7 +121,7 @@ class LockScreenController extends Controller
                 return response()->json(['error' => 'Credential ID not registered.'], 400);
             }
 
-            $publicKey = base64_decode($credential->public_key);
+            $publicKey = $credential->public_key;
             $challengeHex = session('webauthn_challenge');
 
             if (!$challengeHex) {
