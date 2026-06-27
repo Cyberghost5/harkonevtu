@@ -36,7 +36,7 @@ class BettingController extends Controller
         $minAmount = (float) AppSetting::get('betting_min_amount', '100');
         $dailyLimit = (float) AppSetting::get('betting_daily_limit', '30000');
 
-        return view('services.betting', compact('platforms', 'history', 'charge', 'minAmount', 'dailyLimit'));
+        return view('services.betting', compact('platforms', 'user', 'history', 'charge', 'minAmount', 'dailyLimit'));
     }
 
     public function validateCustomer(Request $request): JsonResponse
