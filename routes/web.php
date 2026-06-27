@@ -124,6 +124,10 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked']
 
         Route::get('/airtime-to-cash',         [\App\Http\Controllers\AirtimeToCashController::class, 'index'])->name('airtime-to-cash');
         Route::post('/airtime-to-cash/submit', [\App\Http\Controllers\AirtimeToCashController::class, 'submit'])->name('airtime-to-cash.submit');
+
+        Route::get('/print-pins',            [\App\Http\Controllers\VoucherPrintingController::class, 'index'])->name('print-pins');
+        Route::post('/print-pins/generate',  [\App\Http\Controllers\VoucherPrintingController::class, 'generate'])->name('print-pins.generate');
+        Route::get('/print-pins/print',      [\App\Http\Controllers\VoucherPrintingController::class, 'printVouchers'])->name('print-pins.print');
     });
 
     // ── Referral ──────────────────────────────────────────────────────────────

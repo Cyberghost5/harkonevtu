@@ -50,6 +50,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(AirtimeToCashRequest::class);
     }
 
+    public function printedVouchers(): HasMany
+    {
+        return $this->hasMany(PrintedVoucher::class);
+    }
+
     // ─── PIN Helpers ──────────────────────────────────────────────────────────
 
     public function hasPinSet(): bool
