@@ -125,7 +125,7 @@
         </div>
 
         {{-- ══ RIGHT TABBED FORMS ══════════════════════════════════════════════ --}}
-        <div class="lg:col-span-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="lg:col-span-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden mb-6">
 
             {{-- Tabs --}}
             <div class="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto">

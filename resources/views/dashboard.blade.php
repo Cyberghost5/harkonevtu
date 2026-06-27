@@ -22,7 +22,7 @@
         <div class="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
         <div class="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-vtu-secondary/20 blur-2xl"></div>
 
-        <div class="relative z-10">
+        <div class="relative">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-2">
                     <div class="h-8 w-8 rounded-xl bg-white/20 flex items-center justify-center">
