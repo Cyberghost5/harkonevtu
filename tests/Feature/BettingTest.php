@@ -22,6 +22,7 @@ class BettingTest extends TestCase
         AppSetting::set('email_verification', '0');
         AppSetting::set('otp_verification', '0');
         AppSetting::set('payscribe_secret_key', 'test_payscribe_key');
+        AppSetting::set('payscribe_public_key', 'test_payscribe_pub_key');
 
         // Seed settings
         AppSetting::set('service_betting', '1');

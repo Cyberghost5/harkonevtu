@@ -64,6 +64,11 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function verifyPin(string $pin): bool
     {
+        $verifiedAt = session('biometric_verified_at');
+        if ($verifiedAt && now()->diffInSeconds($verifiedAt) < 30) {
+            session()->forget('biometric_verified_at');
+            return true;
+        }
         return $this->transaction_pin && Hash::check($pin, $this->transaction_pin);
     }
 

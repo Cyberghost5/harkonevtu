@@ -145,4 +145,25 @@ class BiometricsTest extends TestCase
 
         $this->assertNotNull(session('webauthn_challenge'));
     }
+
+    public function test_biometric_session_bypasses_pin(): void
+    {
+        $user = User::factory()->create([
+            'is_active' => true,
+            'transaction_pin' => bcrypt('1234'),
+            'phone_verified_at' => now(),
+        ]);
+        $user->wallet()->create(['balance' => 1000]);
+
+        $this->actingAs($user);
+
+        // Put biometric verified timestamp in session
+        $this->withSession(['biometric_verified_at' => now()]);
+
+        // Verify that any dummy PIN validates successfully due to biometric session
+        $this->assertTrue($user->verifyPin('any_dummy_value'));
+
+        // Assert session token is cleared after use to prevent replay/reuse
+        $this->assertNull(session('biometric_verified_at'));
+    }
 }

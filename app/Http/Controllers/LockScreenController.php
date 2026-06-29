@@ -149,7 +149,11 @@ class LockScreenController extends Controller
                 ]);
 
                 // Unlock session
-                session(['session_locked' => false, 'last_activity' => now()]);
+                session([
+                    'session_locked' => false,
+                    'last_activity' => now(),
+                    'biometric_verified_at' => now()
+                ]);
                 session()->forget('webauthn_challenge');
 
                 return response()->json(['success' => true]);

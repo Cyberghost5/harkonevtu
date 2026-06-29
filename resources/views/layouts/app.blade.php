@@ -267,7 +267,7 @@
             <div class="mt-8 border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between text-xs">
                 <p>@if($siteCopyright){{ $siteCopyright }}@else&copy; {{ date('Y') }} {{ $siteName }}. All rights reserved.@endif</p>
                 <p class="mt-4 md:mt-0 flex space-x-4">
-                    <span>Designed with ❤️ by <a href="https://harkone.com.ng">Harkone Designs</a></span>
+                    <span>Designed with ❤️ by <a href="https://harkone.com.ng" target="_blank">Harkone Designs</a></span>
                 </p>
             </div>
         </div>

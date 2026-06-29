@@ -432,7 +432,8 @@
                     async function registerBiometrics() {
                         try {
                             // const name = prompt("Enter a label for this biometric device (e.g. My Phone, Office Laptop):", "Biometric Device");
-                            const name = "Biometric Device";
+                            // Get device name from navigator.userAgent
+                            const name = navigator.userAgent;
                             // if (!name) return;
 
                             const response = await fetch('/settings/biometrics/register/options', {

@@ -216,11 +216,11 @@
                                   {{ request()->routeIs('services.airtime') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                             Airtime Top-Up
                         </a>
-                        <a href="{{ route('services.airtime-to-cash') }}"
+                        <!-- <a href="{{ route('services.airtime-to-cash') }}"
                            class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
                                   {{ request()->routeIs('services.airtime-to-cash*') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                             Airtime to Cash
-                        </a>
+                        </a> -->
                         <a href="{{ route('services.data') }}"
                            class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
                                   {{ request()->routeIs('services.data*') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
@@ -244,7 +244,7 @@
                         <a href="{{ route('services.betting') }}"
                            class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
                                   {{ request()->routeIs('services.betting*') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
-                            Betting Wallet
+                            Betting
                         </a>
                     </div>
                 </div>
@@ -654,6 +654,27 @@
 
             <p id="pin-modal-error" class="hidden text-xs text-center text-red-500 mb-3"></p>
 
+            @if(auth()->user()->webauthnCredentials->isNotEmpty())
+            <div class="flex flex-col items-center mt-4">
+                <div class="flex items-center justify-center w-full my-3">
+                    <div class="border-t border-slate-200 dark:border-slate-800 w-1/4"></div>
+                    <span class="mx-3 text-[9px] uppercase font-bold text-slate-400">or use biometric</span>
+                    <div class="border-t border-slate-200 dark:border-slate-800 w-1/4"></div>
+                </div>
+                <button type="button" onclick="triggerBiometricPinBypass()" id="modal-biometric-btn"
+                        class="h-12 w-12 rounded-full flex items-center justify-center bg-vtu-primary text-white shadow-md hover:scale-105 transition-transform duration-150 relative">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11a5 5 0 00-10 0c0 .768.111 1.51.319 2.214m12.438-10.462A9.947 9.947 0 0114 11c0 1.259-.234 2.463-.66 3.575m0 0a3 3 0 10-4.47-4.47m3.44 2.214a13.916 13.916 0 01-2.18 7.74" />
+                    </svg>
+                    <svg id="modal-biometric-spinner" class="hidden absolute inset-0 h-12 w-12 animate-spin text-vtu-primary" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 font-medium">Scan Fingerprint</p>
+            </div>
+            @endif
+
             <div class="flex gap-3 mt-5">
                 <button onclick="closePinModal()" type="button"
                         class="flex-1 py-3 rounded-xl text-sm font-semibold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
@@ -736,6 +757,125 @@
             });
             _pinDigits.forEach(d => d.value = '');
             _pinDigits[0]?.focus();
+        }
+
+        // WebAuthn helpers for Biometric PIN Bypass
+        function bufferToBase64url(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary)
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=/g, '');
+        }
+
+        function base64urlToBuffer(base64url) {
+            let base64 = base64url
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+            while (base64.length % 4) {
+                base64 += '=';
+            }
+            const binary = atob(base64);
+            const buffer = new ArrayBuffer(binary.length);
+            const bytes = new Uint8Array(buffer);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return buffer;
+        }
+
+        async function triggerBiometricPinBypass() {
+            try {
+                const spinner = document.getElementById('modal-biometric-spinner');
+                const btn = document.getElementById('modal-biometric-btn');
+                const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                _pinErr.classList.add('hidden');
+                _pinErr.textContent = '';
+
+                if (spinner) spinner.classList.remove('hidden');
+                if (btn) btn.disabled = true;
+
+                // 1. Fetch challenge options
+                const response = await fetch('/lockscreen/fingerprint/options', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf
+                    }
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // 2. Decode standard WebAuthn parameters
+                const options = data.publicKey;
+                options.challenge = base64urlToBuffer(options.challenge);
+
+                if (options.allowCredentials) {
+                    options.allowCredentials = options.allowCredentials.map(cred => {
+                        cred.id = base64urlToBuffer(cred.id);
+                        return cred;
+                    });
+                }
+
+                // 3. Prompt user's biometric authenticator
+                const credential = await navigator.credentials.get({
+                    publicKey: options
+                });
+
+                if (!credential) {
+                    throw new Error('Biometric signature failed or was cancelled.');
+                }
+
+                // 4. Encode assertion signature results
+                const assertion = {
+                    id: credential.id,
+                    clientDataJSON: bufferToBase64url(credential.response.clientDataJSON),
+                    authenticatorData: bufferToBase64url(credential.response.authenticatorData),
+                    signature: bufferToBase64url(credential.response.signature)
+                };
+
+                // 5. Send assertion verification request
+                const verifyResponse = await fetch('/lockscreen/fingerprint/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf
+                    },
+                    body: JSON.stringify(assertion)
+                });
+
+                const verifyData = await verifyResponse.json();
+                if (verifyData.success) {
+                    // Success! Invoke PIN callback with dummy PIN '9999' which passes request validations
+                    const cb = _pinCallback;
+                    closePinModal();
+                    if (cb) cb('9999');
+                } else {
+                    throw new Error(verifyData.error || 'Biometric verification failed.');
+                }
+
+            } catch (err) {
+                console.error(err);
+                if (err.name !== 'NotAllowedError') {
+                    _pinErr.textContent = err.message || 'Biometric authentication failed.';
+                    _pinErr.classList.remove('hidden');
+                }
+            } finally {
+                const spinner = document.getElementById('modal-biometric-spinner');
+                const btn = document.getElementById('modal-biometric-btn');
+                if (spinner) spinner.classList.add('hidden');
+                if (btn) btn.disabled = false;
+            }
         }
 
         // Close on backdrop click
