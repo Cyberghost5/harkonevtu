@@ -78,7 +78,6 @@ class CableController extends Controller
         return match ($api) {
             'easyaccess' => $this->validateCardEasyaccess($provider, $smartcard),
             'payscribe'  => $this->validateCardPayscribe($provider, $plan, $smartcard),
-            'autopilot' => $this->validateCardAutopilot($provider, $plan, $smartcard),
             default      => $this->validateCardVtpass($provider, $smartcard),
         };
     }
@@ -243,7 +242,6 @@ class CableController extends Controller
         return match ($api) {
             'easyaccess' => $this->callEasyaccessCable($provider, $plan, $smartcard, $reference),
             'payscribe'  => $this->callPayscribeCable($provider, $plan, $smartcard, $reference),
-            'autopilot' => $this->callAutopilotCable($provider, $plan, $smartcard, $reference),
             default      => $this->callVtpassCable($provider, $plan, $smartcard, $phone, $reference),
         };
     }
