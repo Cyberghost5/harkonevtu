@@ -336,7 +336,7 @@ class AirtimeController extends Controller
     {
         $endpoint   = config('services.autopilot.base_url') . '/airtime';
         $payload    = [
-            'networkId' => $network->id,
+            'networkId' => (string) $network->id,
             'amount' => (string) $amount,
             'phone' => $phone,
             'airtimeType' => 'VTU',
