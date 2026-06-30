@@ -430,7 +430,7 @@ class AirtimeController extends Controller
             ApiLog::record([
                 'user_id'     => auth()->id(),
                 'service'          => 'airtime',
-                'provider'         => 'easyaccess',
+                'provider'         => 'payscribe',
                 'reference'        => $reference,
                 'endpoint'         => $endpoint,
                 'method'           => 'POST',
