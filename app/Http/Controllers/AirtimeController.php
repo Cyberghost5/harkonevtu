@@ -211,7 +211,7 @@ class AirtimeController extends Controller
             'autopilot'   => $this->callAutopilot($network, $amount, $phone, $reference),
             'legitdataway'=> $this->callLegitdataway($network, $amount, $phone, $reference),
             'merrybills'  => $this->callMerrybills($network, $amount, $phone, $reference),
-            'easyaccess'   => $this->callEasyaccess($network, $amount, $phone, $reference),
+            'payscribe'   => $this->callPayscribe($network, $amount, $phone, $reference),
             default       => $this->callVtpass($network, $amount, $phone, $reference),
         };
     }
@@ -389,17 +389,16 @@ class AirtimeController extends Controller
         return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
     }
 
-    // ─── Easyairtime ─────────────────────────────────────────────────────────
+    // ─── Payscribe ─────────────────────────────────────────────────────────
 
-    private function callEasyaccess(NetworkAirtime $network, float $amount, string $phone, string $reference): array
+    private function callPayscribe(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
-        $endpoint   = config('services.easyaccess.base_url') . '/topup';
+        $endpoint   = config('services.payscribe.base_url') . '/airtime';
         $payload    = [
-            'network' => $network->easyaccess_id,
-            'mobileno' => $phone,
-            'airtimetype' => 'VTU',
+            'network' => strtolower($network->name), //change to small letters
             'amount' => (int) $amount,
-            'client_reference' => $reference,
+            'recipient' => $phone,
+            'ref' => $reference,
         ];
         $data       = [];
         $httpStatus = null;
@@ -407,8 +406,8 @@ class AirtimeController extends Controller
         $apiRef     = $reference;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
-            'Cache-Control' => 'no-cache',
+            'Authorization' => 'Bearer ' . config('services.payscribe.public_key'),
+            'Content-Type' => 'application/json',
         ];
         $responseHeaders = null;
         $start = hrtime(true);
@@ -421,11 +420,11 @@ class AirtimeController extends Controller
             // 'process' means queued - treat as success (wallet already debited)
             $success    = in_array($status, ['success', 'process'], true);
             if (!$success) {
-                $data['message'] = $data['message'] ?? 'Easyairtime transaction failed.';
+                $data['message'] = $data['message'] ?? 'Payscribe transaction failed.';
             }
         } catch (\Exception $e) {
             $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
-            Log::error('Easyairtime request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+            Log::error('Payscribe request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
         } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([

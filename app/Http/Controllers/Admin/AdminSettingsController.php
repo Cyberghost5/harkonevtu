@@ -183,7 +183,7 @@ class AdminSettingsController extends Controller
 
         // Per-service integrated API lists — only show APIs that are actually
         // coded into each service controller AND have credentials configured.
-        $airtimeIntegrated   = ['vtpass', 'clubkonnect', 'autopilot', 'legitdataway', 'merrybills', 'easyaccess'];
+        $airtimeIntegrated   = ['vtpass', 'clubkonnect', 'autopilot', 'legitdataway', 'merrybills', 'payscribe'];
         $airtimeProviders    = array_values(array_intersect($availableProviders, $airtimeIntegrated));
 
         $dataIntegrated      = ['vtpass', 'clubkonnect', 'autopilot', 'merrybills', 'easyaccess', 'aabaxztech', 'legitdataway', 'globacom'];
