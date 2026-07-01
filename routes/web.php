@@ -253,4 +253,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::post('/coupons',            [AdminCouponController::class, 'store'])->name('coupons.store');
     Route::patch('/coupons/{coupon}',  [AdminCouponController::class, 'update'])->name('coupons.update');
     Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
+
+    // Server Monitoring
+    Route::get('/monitoring',          [\App\Http\Controllers\Admin\AdminMonitoringController::class, 'index'])->name('monitoring');
+    Route::get('/monitoring/data',     [\App\Http\Controllers\Admin\AdminMonitoringController::class, 'data'])->name('monitoring.data');
 });
