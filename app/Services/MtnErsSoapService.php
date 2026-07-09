@@ -12,6 +12,7 @@ class MtnErsSoapService
     protected string $endpoint;
     protected ?string $username;
     protected ?string $pin;
+    protected ?string $originatorMsisdn;
     protected string $mode;
 
     public function __construct()
@@ -19,6 +20,7 @@ class MtnErsSoapService
         $this->endpoint = AppSetting::get('mtn_ers_endpoint', 'https://ers.seamless.se/services/ERSExchange3GPort');
         $this->username = AppSetting::get('mtn_ers_username');
         $this->pin = AppSetting::get('mtn_ers_pin');
+        $this->originatorMsisdn = AppSetting::get('mtn_ers_originator_msisdn');
         $this->mode = AppSetting::get('mtn_ers_mode', 'sandbox');
     }
 
@@ -179,14 +181,27 @@ class MtnErsSoapService
     }
 
     /**
+     * Helper to format MSISDN to standard 11 digits starting with 0.
+     */
+    public function formatMsisdn(string $phone): string
+    {
+        $cleaned = preg_replace('/[^0-9]/', '', $phone);
+        if (str_starts_with($cleaned, '234') && strlen($cleaned) === 13) {
+            return '0' . substr($cleaned, 3);
+        }
+        return $cleaned;
+    }
+
+    /**
      * Executes airtime/data/voucher disbursements using automatic sequence tracking.
      */
     public function vend(string $destMsisdn, float $amount, int $tariffTypeId): array
     {
-        $originator = '09062058470'; // fallback mock originator
+        $originator = $this->formatMsisdn($this->originatorMsisdn ?: '09062058470');
+        $target = $this->formatMsisdn($destMsisdn);
 
-        $execute = function (int $seq) use ($originator, $destMsisdn, $amount, $tariffTypeId, &$execute) {
-            $xml = $this->buildVendXml($originator, $destMsisdn, $amount, $seq, $tariffTypeId);
+        $execute = function (int $seq) use ($originator, $target, $amount, $tariffTypeId, &$execute) {
+            $xml = $this->buildVendXml($originator, $target, $amount, $seq, $tariffTypeId);
             return $this->sendRequest(
                 'urn:Vend', 
                 $xml, 
@@ -208,7 +223,8 @@ class MtnErsSoapService
     public function queryTx(int $sequence): array
     {
         $xml = $this->buildQueryTxXml($sequence);
-        return $this->sendRequest('urn:QyeryTx', $xml, $sequence, $this->username ?: 'default');
+        $originator = $this->formatMsisdn($this->originatorMsisdn ?: '09062058470');
+        return $this->sendRequest('urn:QyeryTx', $xml, $sequence, $originator);
     }
 
     /**
@@ -220,6 +236,11 @@ class MtnErsSoapService
         $destMsisdn = '09062058617';
         if (preg_match('/<xsd:destMsisdn>(.*?)<\/xsd:destMsisdn>/', $xmlPayload, $matches)) {
             $destMsisdn = $matches[1];
+        }
+
+        $tariffTypeId = 1;
+        if (preg_match('/<xsd:tariffTypeId>(.*?)<\/xsd:tariffTypeId>/', $xmlPayload, $matches)) {
+            $tariffTypeId = (int) $matches[1];
         }
 
         if ($soapAction === 'urn:Vend') {
@@ -239,6 +260,10 @@ class MtnErsSoapService
  </soapenv:Body>
 </soapenv:Envelope>';
             } else { // Trigger mock success
+                $voucherXml = '';
+                if ($tariffTypeId === 7) {
+                    $voucherXml = "\n     <voucherPIN>40692125281574</voucherPIN>\n     <voucherSerial>600000000001</voucherSerial>";
+                }
                 $mockResponse = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Body>
    <vendResponse>
@@ -250,9 +275,7 @@ class MtnErsSoapService
      <responseMessage>Successful</responseMessage>
      <sequence>' . $sequence . '</sequence>
      <statusId>0</statusId>
-     <txRefId>ERS-MOCK-SUCCESS-' . uniqid() . '</txRefId>
-     <voucherPIN>40692125281574</voucherPIN>
-     <voucherSerial>600000000001</voucherSerial>
+     <txRefId>ERS-MOCK-SUCCESS-' . uniqid() . '</txRefId>' . $voucherXml . '
    </vendResponse>
  </soapenv:Body>
 </soapenv:Envelope>';

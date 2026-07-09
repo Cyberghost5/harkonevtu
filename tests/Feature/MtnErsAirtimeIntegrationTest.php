@@ -33,6 +33,8 @@ class MtnErsAirtimeIntegrationTest extends TestCase
                 'enabled' => true,
             ]
         );
+
+        AppSetting::set('mtn_ers_originator_msisdn', '09062058470');
     }
 
     public function test_mtn_airtime_purchase_routes_to_ers_soap_sandbox_success(): void

@@ -477,7 +477,7 @@
                         <span class="text-indigo-500">Seamless Distribution Systems (SDS)</span>
                     </span>
                 </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Username (Trade Partner ID)</label>
                         <input type="text" name="mtn_ers_username" value="{{ $s['mtn_ers_username'] ?? '' }}"
@@ -489,7 +489,13 @@
                                placeholder="Leave blank to keep current"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
-                    <div class="sm:col-span-2">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Originator MSISDN (Merchant Phone)</label>
+                        <input type="text" name="mtn_ers_originator_msisdn" value="{{ $s['mtn_ers_originator_msisdn'] ?? '' }}"
+                               placeholder="e.g. 09062058470"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div class="sm:col-span-3">
                         <label class="block text-xs font-medium text-slate-500 mb-1">SOAP Gateway Endpoint Url</label>
                         <input type="text" name="mtn_ers_endpoint" value="{{ $s['mtn_ers_endpoint'] ?? '' }}"
                                placeholder="e.g. https://ers.seamless.se/services/ERSExchange3GPort"

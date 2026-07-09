@@ -59,12 +59,24 @@ class MtnErsSoapServiceTest extends TestCase
     {
         AppSetting::set('mtn_ers_mode', 'sandbox');
 
-        $result = $this->service->vend('08030001122', 200, 1);
+        $result = $this->service->vend('08030001122', 200, 1); // Airtime
 
         $this->assertTrue($result['status']);
         $this->assertEquals('Successful', $result['message']);
         $this->assertArrayHasKey('txRefId', $result['data']);
+        $this->assertArrayNotHasKey('voucherPIN', $result['data']);
+    }
+
+    public function test_sandbox_voucher_success_mock(): void
+    {
+        AppSetting::set('mtn_ers_mode', 'sandbox');
+
+        $result = $this->service->vend('08030001122', 200, 7); // Voucher
+
+        $this->assertTrue($result['status']);
+        $this->assertEquals('Successful', $result['message']);
         $this->assertEquals('40692125281574', $result['data']['voucherPIN']);
+        $this->assertEquals('600000000001', $result['data']['voucherSerial']);
     }
 
     public function test_sandbox_failure_mock(): void
@@ -92,11 +104,12 @@ class MtnErsSoapServiceTest extends TestCase
     {
         AppSetting::set('mtn_ers_username', 'partner_user');
         AppSetting::set('mtn_ers_pin', '1234');
+        AppSetting::set('mtn_ers_originator_msisdn', '09062058470');
         AppSetting::set('mtn_ers_mode', 'production');
         AppSetting::set('mtn_ers_endpoint', 'https://ers.seamless.se/test');
 
         // Seed sequence at 5
-        MtnErsSequence::setNextSequence('partner_user', 5);
+        MtnErsSequence::setNextSequence('09062058470', 5);
 
         // Fake first call returning 106 (sequence out of sync, ERS expects 15)
         // Fake second call returning 0 (successful retry)
@@ -129,7 +142,7 @@ class MtnErsSoapServiceTest extends TestCase
         $this->assertEquals('Successful', $result['message']);
         $this->assertEquals('ERS-RETRY-SUCCESS', $result['data']['txRefId']);
 
-        // Check that sequence was auto-synced to 16 in DB (lastseq 14 + 1 used during retry, then incremented to 16)
-        $this->assertEquals(16, MtnErsSequence::where('key', 'partner_user')->first()->next_sequence);
+        // Check that sequence was auto-synced to 16 in DB
+        $this->assertEquals(16, MtnErsSequence::where('key', '09062058470')->first()->next_sequence);
     }
 }
