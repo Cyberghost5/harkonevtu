@@ -107,6 +107,12 @@
                                class="text-xs font-medium text-vtu-primary hover:underline">
                                 Edit
                             </a>
+                            <form method="POST" action="{{ route('admin.users.impersonate', $user) }}" class="inline">
+                                @csrf
+                                <button type="submit" class="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:hover:text-emerald-400">
+                                    Impersonate
+                                </button>
+                            </form>
                             <form method="POST" action="{{ route('admin.users.destroy', $user) }}"
                                   onsubmit="return confirm('Are you sure you want to delete this user? This cannot be undone.');"
                                   class="inline">

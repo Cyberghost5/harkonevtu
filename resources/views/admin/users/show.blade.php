@@ -93,6 +93,12 @@
                     </div>
                 </div>
             </form>
+            <form method="POST" action="{{ route('admin.users.impersonate', $user) }}" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                @csrf
+                <button type="submit" class="w-full inline-flex justify-center items-center py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors">
+                    Impersonate User
+                </button>
+            </form>
         </div>
 
         {{-- Wallet Adjustment --}}

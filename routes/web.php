@@ -78,6 +78,9 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked']
     Route::get('/kyc',       [\App\Http\Controllers\KycController::class, 'index'])->name('kyc.index');
     Route::post('/kyc',      [\App\Http\Controllers\KycController::class, 'submit'])->name('kyc.submit');
 
+    // Stop Impersonation
+    Route::post('/impersonate/stop', [\App\Http\Controllers\Admin\AdminUserController::class, 'stopImpersonate'])->name('users.impersonate.stop');
+
     // PIN confirmation AJAX
     Route::post('/pin/verify', [PinController::class, 'verify'])->name('pin.verify');
 
@@ -201,6 +204,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::patch('/users/{user}',              [AdminUserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}',             [AdminUserController::class, 'destroy'])->name('users.destroy');
     Route::post('/users/{user}/adjust-wallet', [AdminUserController::class, 'adjustWallet'])->name('users.adjust-wallet');
+    Route::post('/users/{user}/impersonate',   [AdminUserController::class, 'impersonate'])->name('users.impersonate');
 
     // Transactions
     Route::get('/transactions',        [AdminTransactionController::class, 'index'])->name('transactions.index');

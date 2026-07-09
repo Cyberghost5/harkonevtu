@@ -182,4 +182,45 @@ class AdminUserController extends Controller
 
         return back()->with('success', 'Wallet adjusted successfully.');
     }
+
+    /**
+     * Impersonate a user.
+     */
+    public function impersonate(User $user)
+    {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Unauthorized.');
+        }
+
+        // Store current admin's ID in the session
+        session(['impersonator_id' => auth()->id()]);
+
+        // Login as target user
+        auth()->login($user);
+
+        return redirect()->route('dashboard')->with('success', 'You are now impersonating ' . $user->name);
+    }
+
+    /**
+     * Stop impersonating and return to admin.
+     */
+    public function stopImpersonate()
+    {
+        $impersonatorId = session('impersonator_id');
+        if (!$impersonatorId) {
+            return redirect()->route('dashboard');
+        }
+
+        $admin = User::find($impersonatorId);
+        if (!$admin || !$admin->isAdmin()) {
+            session()->forget('impersonator_id');
+            return redirect()->route('dashboard');
+        }
+
+        // Log back in as the admin
+        auth()->login($admin);
+        session()->forget('impersonator_id');
+
+        return redirect()->route('admin.users.index')->with('success', 'Returned to Admin Panel.');
+    }
 }

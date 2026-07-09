@@ -373,6 +373,25 @@
         ══════════════════════════════════════════════════════════════ --}}
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
 
+            {{-- Impersonation Alert Banner --}}
+            @if(session()->has('impersonator_id'))
+            <div class="bg-gradient-to-r from-amber-600 to-amber-700 text-white text-xs px-4 py-2.5 flex items-center justify-between shadow-md relative z-30 flex-shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    <span>You are currently impersonating <strong>{{ auth()->user()->name }} ({{ auth()->user()->username }})</strong>.</span>
+                </div>
+                <form method="POST" action="{{ route('users.impersonate.stop') }}">
+                    @csrf
+                    <button type="submit" class="px-3 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg font-bold transition-colors">
+                        Return to Admin
+                    </button>
+                </form>
+            </div>
+            @endif
+
             {{-- Top Header --}}
             <header class="flex-shrink-0 flex items-center justify-between h-16 px-4 sm:px-6
                            bg-white dark:bg-slate-900
