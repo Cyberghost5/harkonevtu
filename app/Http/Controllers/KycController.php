@@ -56,6 +56,36 @@ class KycController extends Controller
             ], 422);
         }
 
+        $fee = (float) \App\Models\AppSetting::get('kyc_fee', 0);
+        $wallet = $user->wallet;
+
+        if ($fee > 0) {
+            if (!$wallet || $wallet->balance < $fee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Insufficient wallet balance. You need ₦' . number_format($fee, 2) . ' in your account to verify your KYC.'
+                ], 422);
+            }
+
+            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $wallet, $fee, $request) {
+                $before = $wallet->balance;
+                $wallet->decrement('balance', $fee);
+                $wallet->increment('total_spent', $fee);
+
+                \App\Models\WalletTransaction::create([
+                    'user_id'        => $user->id,
+                    'wallet_id'      => $wallet->id,
+                    'type'           => 'debit',
+                    'amount'         => $fee,
+                    'balance_before' => $before,
+                    'balance_after'  => $wallet->balance,
+                    'description'    => 'KYC Verification Fee (' . strtoupper($request->id_type) . ')',
+                    'reference'      => 'KYC-' . strtoupper(uniqid()),
+                    'status'         => 'success',
+                ]);
+            });
+        }
+
         // Sandbox/local fallback simulation if QoreID is not yet configured
         if (!$this->qoreIDService->isConfigured()) {
             $firstNameInput = strtolower($firstname);

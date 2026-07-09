@@ -101,6 +101,14 @@
                 <p class="text-[10px] text-slate-400">This name will automatically be retrieved from your profile to verify your ID card.</p>
             </div>
 
+            @php $kycFee = (float) \App\Models\AppSetting::get('kyc_fee', 0); @endphp
+            @if($kycFee > 0)
+            <div class="bg-indigo-50 dark:bg-indigo-950/40 rounded-xl p-3.5 border border-indigo-150 dark:border-indigo-900/50 text-xs text-indigo-700 dark:text-indigo-300 flex items-center justify-between">
+                <span class="font-medium">Verification Fee:</span>
+                <span class="text-sm font-bold">₦{{ number_format($kycFee, 2) }}</span>
+            </div>
+            @endif
+
             <div class="grid grid-cols-3 gap-4">
                 <div class="col-span-1">
                     <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">ID Type</label>
