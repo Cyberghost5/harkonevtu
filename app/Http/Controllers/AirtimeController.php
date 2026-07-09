@@ -204,7 +204,11 @@ class AirtimeController extends Controller
 
     private function callAirtimeApi(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
-        $api = AppSetting::get('airtime_api', 'vtpass');
+        $networkKey = $network->network_key;
+        $api = AppSetting::get('airtime_net_' . $networkKey);
+        if (empty($api)) {
+            $api = AppSetting::get('airtime_api', 'vtpass');
+        }
 
         return match ($api) {
             'clubkonnect' => $this->callClubkonnect($network, $amount, $phone, $reference),
@@ -212,8 +216,50 @@ class AirtimeController extends Controller
             'legitdataway'=> $this->callLegitdataway($network, $amount, $phone, $reference),
             'merrybills'  => $this->callMerrybills($network, $amount, $phone, $reference),
             'payscribe'   => $this->callPayscribe($network, $amount, $phone, $reference),
+            'mtn_ers'     => $this->callMtnErs($network, $amount, $phone, $reference),
             default       => $this->callVtpass($network, $amount, $phone, $reference),
         };
+    }
+
+    // ─── MTN ERS (SOAP) ────────────────────────────────────────────────────────
+    
+    private function callMtnErs(NetworkAirtime $network, float $amount, string $phone, string $reference): array
+    {
+        $start = hrtime(true);
+        $ersService = app(\App\Services\MtnErsSoapService::class);
+
+        $formattedPhone = $phone;
+        if (str_starts_with($phone, '0')) {
+            $formattedPhone = '234' . substr($phone, 1);
+        } elseif (str_starts_with($phone, '+')) {
+            $formattedPhone = substr($phone, 1);
+        }
+
+        $result = $ersService->vend($formattedPhone, $amount, 1);
+
+        $success = $result['status'];
+        $data = $result['data'] ?? ['message' => $result['message']];
+        $apiRef = $data['txRefId'] ?? $reference;
+        
+        $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+        ApiLog::record([
+            'user_id'          => auth()->id(),
+            'service'          => 'airtime',
+            'provider'         => 'mtn_ers',
+            'reference'        => $reference,
+            'endpoint'         => AppSetting::get('mtn_ers_endpoint', 'https://ers.seamless.se/services/ERSExchange3GPort'),
+            'method'           => 'POST',
+            'payload'          => ['phone' => $formattedPhone, 'amount' => $amount, 'tariffTypeId' => 1],
+            'request_headers'  => ['Content-Type' => 'application/xml', 'SoapAction' => 'urn:Vend'],
+            'response'         => $data,
+            'http_status'      => $success ? 200 : 500,
+            'response_headers' => null,
+            'duration_ms'      => $duration,
+            'success'          => $success,
+        ]);
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
     }
 
     // ─── VTpass ───────────────────────────────────────────────────────────────
