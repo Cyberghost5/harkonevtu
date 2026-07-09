@@ -5,7 +5,7 @@
 @section('subheading', 'Create a new user account manually')
 
 @section('content')
-<div class="max-w-xl mx-auto">
+<div class="max-w-5xl mx-auto space-y-6">
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
         
         <form method="POST" action="{{ route('admin.users.store') }}" class="space-y-4">
