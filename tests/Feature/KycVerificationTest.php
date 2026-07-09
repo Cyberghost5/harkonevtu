@@ -56,22 +56,20 @@ class KycVerificationTest extends TestCase
         $response = $this->postJson(route('kyc.submit'), [
             'id_type' => 'invalid_type',
             'id_number' => '12345', // must be 11 digits
-            'firstname' => '',
-            'lastname' => '',
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['id_type', 'id_number', 'firstname', 'lastname']);
+        $response->assertJsonValidationErrors(['id_type', 'id_number']);
     }
 
-    public function test_simulated_kyc_verification_succeeds_if_names_match_registered_profile(): void
+    public function test_simulated_kyc_verification_succeeds_if_profile_contains_full_name(): void
     {
         // Set QoreID to unconfigured to trigger sandbox fallback logic
         AppSetting::set('qoreid_client_key', '');
         AppSetting::set('qoreid_secret_key', '');
 
         $user = User::factory()->create([
-            'name' => 'Alice Bob',
+            'name' => 'Alice Smith',
             'is_admin' => false,
             'is_active' => true,
             'kyc_status' => 'pending',
@@ -84,8 +82,6 @@ class KycVerificationTest extends TestCase
         $response = $this->postJson(route('kyc.submit'), [
             'id_type' => 'nin',
             'id_number' => '12345678901',
-            'firstname' => 'Alice',
-            'lastname' => 'Smith', // Bob is one of the names, Alice matches
         ]);
 
         $response->assertStatus(200);
@@ -95,13 +91,13 @@ class KycVerificationTest extends TestCase
         $this->assertEquals('verified', $user->kyc_status);
     }
 
-    public function test_simulated_kyc_verification_fails_if_names_mismatch_registered_profile(): void
+    public function test_simulated_kyc_verification_fails_if_profile_name_is_incomplete(): void
     {
         AppSetting::set('qoreid_client_key', '');
         AppSetting::set('qoreid_secret_key', '');
 
         $user = User::factory()->create([
-            'name' => 'Alice Bob',
+            'name' => 'SingleNameOnly', // no space, cannot separate first/last name
             'is_admin' => false,
             'is_active' => true,
             'kyc_status' => 'pending',
@@ -114,15 +110,16 @@ class KycVerificationTest extends TestCase
         $response = $this->postJson(route('kyc.submit'), [
             'id_type' => 'nin',
             'id_number' => '12345678901',
-            'firstname' => 'John',
-            'lastname' => 'Doe',
         ]);
 
         $response->assertStatus(422);
         $response->assertJsonPath('status', false);
+        $response->assertJsonFragment([
+            'message' => 'Please update your full name (First and Last Name separated by a space) in profile settings before verifying KYC.'
+        ]);
 
         $user->refresh();
-        $this->assertEquals('rejected', $user->kyc_status);
+        $this->assertEquals('pending', $user->kyc_status); // remains pending because validation halted before updating status
     }
 
     public function test_live_qoreid_api_verification_flow(): void
@@ -158,8 +155,6 @@ class KycVerificationTest extends TestCase
         $response = $this->postJson(route('kyc.submit'), [
             'id_type' => 'nin',
             'id_number' => '12345678901',
-            'firstname' => 'Alice',
-            'lastname' => 'Smith',
         ]);
 
         $response->assertStatus(200);

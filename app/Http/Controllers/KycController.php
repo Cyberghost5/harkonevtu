@@ -43,14 +43,23 @@ class KycController extends Controller
         $request->validate([
             'id_type'    => ['required', Rule::in(['bvn', 'nin'])],
             'id_number'  => ['required', 'string', 'numeric', 'digits:11'],
-            'firstname'  => ['required', 'string', 'max:100'],
-            'lastname'   => ['required', 'string', 'max:100'],
         ]);
+
+        $parts = explode(' ', trim($user->name), 2);
+        $firstname = trim($parts[0] ?? '');
+        $lastname = trim($parts[1] ?? '');
+
+        if (empty($firstname) || empty($lastname)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Please update your full name (First and Last Name separated by a space) in profile settings before verifying KYC.'
+            ], 422);
+        }
 
         // Sandbox/local fallback simulation if QoreID is not yet configured
         if (!$this->qoreIDService->isConfigured()) {
-            $firstNameInput = strtolower(trim($request->firstname));
-            $lastNameInput = strtolower(trim($request->lastname));
+            $firstNameInput = strtolower($firstname);
+            $lastNameInput = strtolower($lastname);
             $userNames = array_map('strtolower', explode(' ', trim($user->name)));
 
             // Validate that inputs correspond to parts of the user's name
@@ -67,7 +76,7 @@ class KycController extends Controller
             $user->update(['kyc_status' => 'rejected']);
             return response()->json([
                 'status' => false,
-                'message' => 'Verification failed. The names provided do not match your account profile.'
+                'message' => 'Verification failed. The names retrieved from your profile do not match your account identity.'
             ], 422);
         }
 
@@ -75,8 +84,8 @@ class KycController extends Controller
         $result = $this->qoreIDService->verifyIdentity(
             $request->id_type,
             $request->id_number,
-            $request->firstname,
-            $request->lastname
+            $firstname,
+            $lastname
         );
 
         if ($result['status']) {
