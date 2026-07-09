@@ -7,7 +7,7 @@ use App\Models\Wallet;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-class LegacyUserSeeder extends Seeder
+class NewMilleUserSeeder extends Seeder
 {
     /**
      * Imported from legacy KlassPay database.
