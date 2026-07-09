@@ -116,6 +116,7 @@ class AdminSettingsController extends Controller
             'bulksms_sender','bulksms_api_key','bulksms_amount_per_unit',
             'onesignal_app_id','onesignal_api_key',
             'qoreid_client_key','qoreid_secret_key','qoreid_mode',
+            'mtn_ers_username','mtn_ers_pin','mtn_ers_endpoint','mtn_ers_mode',
             'airtime2cash_phone','airtime2cash_tx_charge','airtime2cash_max_per_payment','airtime2cash_min_per_payment',
             'referral_commission','referral_min_withdrawal','referral_min_total_spent',
         ];
@@ -125,7 +126,7 @@ class AdminSettingsController extends Controller
 
     public function updateApiKeys(Request $request)
     {
-        $passwordFields = ['vtpass_password','aabaxztech_password','legitdataway_password','merrybills_password'];
+        $passwordFields = ['vtpass_password','aabaxztech_password','legitdataway_password','merrybills_password', 'mtn_ers_pin'];
         $data = $request->except(['_token','_method']);
         foreach ($data as $key => $value) {
             if (in_array($key, $passwordFields) && $value === '') {
@@ -173,6 +174,7 @@ class AdminSettingsController extends Controller
             'aabaxztech'   => 'aabaxztech_api_key',
             'legitdataway' => 'legitdataway_api_key',
             'globacom'    => 'globacom_xapi_key',
+            'mtn_ers'      => 'mtn_ers_username',
         ];
         $credValues = AppSetting::getMany(array_values($providerCredentialMap));
         $availableProviders = [];
@@ -184,10 +186,10 @@ class AdminSettingsController extends Controller
 
         // Per-service integrated API lists — only show APIs that are actually
         // coded into each service controller AND have credentials configured.
-        $airtimeIntegrated   = ['vtpass', 'clubkonnect', 'autopilot', 'legitdataway', 'merrybills', 'payscribe'];
+        $airtimeIntegrated   = ['vtpass', 'clubkonnect', 'autopilot', 'legitdataway', 'merrybills', 'payscribe', 'mtn_ers'];
         $airtimeProviders    = array_values(array_intersect($availableProviders, $airtimeIntegrated));
 
-        $dataIntegrated      = ['vtpass', 'clubkonnect', 'autopilot', 'merrybills', 'easyaccess', 'aabaxztech', 'legitdataway', 'globacom'];
+        $dataIntegrated      = ['vtpass', 'clubkonnect', 'autopilot', 'merrybills', 'easyaccess', 'aabaxztech', 'legitdataway', 'globacom', 'mtn_ers'];
         $dataProviders       = array_values(array_intersect($availableProviders, $dataIntegrated));
 
         $electricityIntegrated = ['vtpass', 'easyaccess', 'payscribe'];
@@ -196,7 +198,7 @@ class AdminSettingsController extends Controller
         $cableIntegrated     = ['vtpass', 'easyaccess', 'payscribe'];
         $cableProviders      = array_values(array_intersect($availableProviders, $cableIntegrated));
 
-        $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller'];
+        $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller', 'mtn_ers'];
         $epinsProviders      = array_values(array_intersect($availableProviders, $epinsIntegrated));
 
         return view('admin.settings.api', compact(

@@ -469,6 +469,42 @@
                 </div>
             </div>
 
+            {{-- ── MTN ERS (SOAP API Gateway) ───────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-lg font-bold text-slate-800 mb-4">
+                    MTN ERS (SOAP API Gateway)
+                    <span class="text-sm font-normal text-slate-400 ml-1">from
+                        <span class="text-indigo-500">Seamless Distribution Systems (SDS)</span>
+                    </span>
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Username (Trade Partner ID)</label>
+                        <input type="text" name="mtn_ers_username" value="{{ $s['mtn_ers_username'] ?? '' }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">PIN / Password</label>
+                        <input type="password" name="mtn_ers_pin" value="{{ $s['mtn_ers_pin'] ?? '' }}"
+                               placeholder="Leave blank to keep current"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">SOAP Gateway Endpoint Url</label>
+                        <input type="text" name="mtn_ers_endpoint" value="{{ $s['mtn_ers_endpoint'] ?? '' }}"
+                               placeholder="e.g. https://ers.seamless.se/services/ERSExchange3GPort"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Mode</label>
+                        <select name="mtn_ers_mode" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <option value="sandbox" {{ ($s['mtn_ers_mode'] ?? 'sandbox') === 'sandbox' ? 'selected' : '' }}>Sandbox / Mock</option>
+                            <option value="production" {{ ($s['mtn_ers_mode'] ?? 'sandbox') === 'production' ? 'selected' : '' }}>Production</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             {{-- ── Airtime2Cash Parameters ──────────────────────────────── --}}
             <div class="px-6 py-6">
                 <h4 class="text-lg font-bold text-slate-800 mb-4">Airtime2Cash Parameters</h4>
