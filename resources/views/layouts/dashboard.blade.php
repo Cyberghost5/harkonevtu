@@ -250,15 +250,23 @@
                 </div>
 
                 {{-- KYC Verification --}}
-                <a href="#"
-                   class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-150">
+                @php
+                    $kycStatus = auth()->user()->kyc_status ?? 'pending';
+                    $dotColor = 'bg-red-500';
+                    if ($kycStatus === 'verified') $dotColor = 'bg-emerald-500';
+                    elseif ($kycStatus === 'submitted') $dotColor = 'bg-blue-500';
+                    $kycActive = request()->routeIs('kyc.*');
+                @endphp
+                <a href="{{ route('kyc.index') }}"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150
+                          {{ $kycActive ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-650 hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                     <div class="flex items-center gap-3">
                         <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                         </svg>
-                        KYC Verification
+                        <span>KYC Verification</span>
                     </div>
-                    <span class="h-2 w-2 rounded-full bg-red-500 flex-shrink-0"></span>
+                    <span class="h-2 w-2 rounded-full {{ $dotColor }} flex-shrink-0"></span>
                 </a>
 
                 {{-- Virtual Card --}}

@@ -440,6 +440,35 @@
                 </div>
             </div>
 
+            {{-- ── QoreID (KYC Verification) ────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-lg font-bold text-slate-800 mb-4">
+                    QoreID (KYC Verification)
+                    <span class="text-sm font-normal text-slate-400 ml-1">from
+                        <a href="https://qoreid.com" target="_blank" class="text-blue-500 hover:underline">QoreID</a>
+                    </span>
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Client Key</label>
+                        <input type="text" name="qoreid_client_key" value="{{ $s['qoreid_client_key'] ?? '' }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Secret Key</label>
+                        <input type="text" name="qoreid_secret_key" value="{{ $s['qoreid_secret_key'] ?? '' }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Mode</label>
+                        <select name="qoreid_mode" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <option value="sandbox" {{ ($s['qoreid_mode'] ?? 'sandbox') === 'sandbox' ? 'selected' : '' }}>Sandbox</option>
+                            <option value="production" {{ ($s['qoreid_mode'] ?? 'sandbox') === 'production' ? 'selected' : '' }}>Production</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             {{-- ── Airtime2Cash Parameters ──────────────────────────────── --}}
             <div class="px-6 py-6">
                 <h4 class="text-lg font-bold text-slate-800 mb-4">Airtime2Cash Parameters</h4>

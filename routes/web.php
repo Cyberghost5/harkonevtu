@@ -74,6 +74,10 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // KYC Verification
+    Route::get('/kyc',       [\App\Http\Controllers\KycController::class, 'index'])->name('kyc.index');
+    Route::post('/kyc',      [\App\Http\Controllers\KycController::class, 'submit'])->name('kyc.submit');
+
     // PIN confirmation AJAX
     Route::post('/pin/verify', [PinController::class, 'verify'])->name('pin.verify');
 

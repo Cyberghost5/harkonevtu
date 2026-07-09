@@ -115,6 +115,7 @@ class AdminSettingsController extends Controller
             'termii_api_key',
             'bulksms_sender','bulksms_api_key','bulksms_amount_per_unit',
             'onesignal_app_id','onesignal_api_key',
+            'qoreid_client_key','qoreid_secret_key','qoreid_mode',
             'airtime2cash_phone','airtime2cash_tx_charge','airtime2cash_max_per_payment','airtime2cash_min_per_payment',
             'referral_commission','referral_min_withdrawal','referral_min_total_spent',
         ];

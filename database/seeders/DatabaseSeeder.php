@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             // LegacyUserSeeder::class,
             // ExamPinTypeSeeder::class,
-            NewMilleUserSeeder::class,
+            // NewMilleUserSeeder::class,
         ]);
     }
 }
