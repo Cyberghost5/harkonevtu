@@ -15,13 +15,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['name', 'username', 'email', 'phone', 'password', 'user_type', 'is_admin', 'is_active', 'referral_code', 'referred_by', 'transaction_pin', 'low_balance_notification', 'kyc_status', 'avatar', 'bank_name', 'bank_account_number', 'bank_account_name'])]
 #[Hidden(['password', 'remember_token', 'transaction_pin'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     // ─── Relationships ────────────────────────────────────────────────────────
 

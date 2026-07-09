@@ -39,6 +39,11 @@
                 <div class="flex justify-between"><span class="text-slate-400">Joined</span><span class="text-slate-900 dark:text-white">{{ $user->created_at->format('d M Y') }}</span></div>
                 <div class="flex justify-between"><span class="text-slate-400">Referral</span><span class="text-slate-900 dark:text-white font-mono text-xs">{{ $user->referral_code }}</span></div>
             </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <a href="{{ route('admin.users.edit', $user) }}" class="w-full inline-flex justify-center items-center py-2 text-xs font-semibold text-vtu-primary bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20 rounded-xl transition-colors">
+                    Edit Profile Details
+                </a>
+            </div>
         </div>
 
         {{-- Wallet Summary --}}

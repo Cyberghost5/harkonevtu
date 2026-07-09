@@ -6,6 +6,13 @@
 
 @section('content')
 
+<div class="flex justify-between items-center mb-5">
+    <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Registered Accounts</h2>
+    <a href="{{ route('admin.users.create') }}" class="px-4 py-2 text-xs font-semibold text-white bg-vtu-primary rounded-xl hover:bg-indigo-700 transition-colors">
+        + Add New User
+    </a>
+</div>
+
 {{-- Filters --}}
 <form method="GET" action="{{ route('admin.users.index') }}"
       class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm mb-5 flex flex-wrap gap-3 items-end">
@@ -91,10 +98,25 @@
                     </td>
                     <td class="px-5 py-3 text-xs text-slate-400">{{ $user->created_at->format('d M Y') }}</td>
                     <td class="px-5 py-3 text-right">
-                        <a href="{{ route('admin.users.show', $user) }}"
-                           class="inline-flex items-center gap-1 text-xs font-medium text-vtu-primary hover:underline">
-                            View
-                        </a>
+                        <div class="flex items-center justify-end gap-2.5">
+                            <a href="{{ route('admin.users.show', $user) }}"
+                               class="text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                                View
+                            </a>
+                            <a href="{{ route('admin.users.edit', $user) }}"
+                               class="text-xs font-medium text-vtu-primary hover:underline">
+                                Edit
+                            </a>
+                            <form method="POST" action="{{ route('admin.users.destroy', $user) }}"
+                                  onsubmit="return confirm('Are you sure you want to delete this user? This cannot be undone.');"
+                                  class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-xs font-medium text-red-500 hover:text-red-700 dark:hover:text-red-400">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 @empty

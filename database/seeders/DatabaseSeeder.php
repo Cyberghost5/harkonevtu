@@ -16,8 +16,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            LegacyUserSeeder::class,
-            ExamPinTypeSeeder::class,
+            // LegacyUserSeeder::class,
+            // ExamPinTypeSeeder::class,
+            NewMilleUserSeeder::class,
         ]);
     }
 }

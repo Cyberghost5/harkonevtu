@@ -50,17 +50,89 @@ class AdminUserController extends Controller
         return view('admin.users.show', compact('user', 'transactions', 'serviceTransactions'));
     }
 
-    public function update(Request $request, User $user)
+    public function create()
+    {
+        return view('admin.users.create');
+    }
+
+    public function store(Request $request)
     {
         $validated = $request->validate([
-            'is_active' => ['sometimes', 'boolean'],
-            'user_type' => ['sometimes', Rule::in(['user', 'agent'])],
-            'is_admin'  => ['sometimes', 'boolean'],
+            'name'            => ['required', 'string', 'max:255'],
+            'username'        => ['required', 'string', 'max:255', 'unique:users,username'],
+            'email'           => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'phone'           => ['required', 'string', 'max:255', 'unique:users,phone'],
+            'password'        => ['required', 'string', 'min:6'],
+            'transaction_pin' => ['required', 'string', 'digits:4'],
+            'user_type'       => ['required', Rule::in(['user', 'agent'])],
+            'is_admin'        => ['required', 'boolean'],
+            'is_active'       => ['required', 'boolean'],
         ]);
+
+        $validated['password'] = bcrypt($validated['password']);
+        $validated['transaction_pin'] = bcrypt($validated['transaction_pin']);
+        $validated['email_verified_at'] = now();
+        $validated['phone_verified_at'] = now();
+
+        DB::transaction(function () use ($validated) {
+            $user = User::create($validated);
+            $user->wallet()->create([
+                'balance' => 0.00,
+                'total_funded' => 0.00,
+                'total_spent' => 0.00,
+            ]);
+        });
+
+        return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
+    }
+
+    public function edit(User $user)
+    {
+        return view('admin.users.edit', compact('user'));
+    }
+
+    public function update(Request $request, User $user)
+    {
+        $rules = [
+            'name'            => ['sometimes', 'required', 'string', 'max:255'],
+            'username'        => ['sometimes', 'required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email'           => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'phone'           => ['sometimes', 'required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'password'        => ['nullable', 'string', 'min:6'],
+            'transaction_pin' => ['nullable', 'string', 'digits:4'],
+            'user_type'       => ['sometimes', 'required', Rule::in(['user', 'agent'])],
+            'is_active'       => ['sometimes', 'required', 'boolean'],
+            'is_admin'        => ['sometimes', 'required', 'boolean'],
+        ];
+
+        $validated = $request->validate($rules);
+
+        if (!empty($validated['password'])) {
+            $validated['password'] = bcrypt($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+
+        if (!empty($validated['transaction_pin'])) {
+            $validated['transaction_pin'] = bcrypt($validated['transaction_pin']);
+        } else {
+            unset($validated['transaction_pin']);
+        }
 
         $user->update($validated);
 
+        if ($request->has('_redirect_to_index')) {
+            return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
+        }
+
         return back()->with('success', 'User updated successfully.');
+    }
+
+    public function destroy(User $user)
+    {
+        $user->delete();
+
+        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
 
     public function adjustWallet(Request $request, User $user)
