@@ -205,9 +205,15 @@ class AirtimeController extends Controller
     private function callAirtimeApi(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
         $networkKey = $network->network_key;
+        
         $api = AppSetting::get('airtime_net_' . $networkKey);
-        if (empty($api)) {
+        if (empty($api) || in_array($api, ['Enable', 'Disable'])) {
             $api = AppSetting::get('airtime_api', 'vtpass');
+        }
+
+        // mtn_ers is MTN-specific. Fallback to vtpass for other networks.
+        if ($api === 'mtn_ers' && $networkKey !== 'mtn') {
+            $api = 'vtpass';
         }
 
         return match ($api) {
