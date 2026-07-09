@@ -235,11 +235,11 @@ class AirtimeController extends Controller
         $ersService = app(\App\Services\MtnErsSoapService::class);
 
         $formattedPhone = $phone;
-        if (str_starts_with($phone, '0')) {
-            $formattedPhone = '234' . substr($phone, 1);
-        } elseif (str_starts_with($phone, '+')) {
-            $formattedPhone = substr($phone, 1);
-        }
+        // if (str_starts_with($phone, '0')) {
+        //     $formattedPhone = '234' . substr($phone, 1);
+        // } elseif (str_starts_with($phone, '+')) {
+        //     $formattedPhone = substr($phone, 1);
+        // }
 
         $result = $ersService->vend($formattedPhone, $amount, 1);
 

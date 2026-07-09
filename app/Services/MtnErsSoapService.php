@@ -183,7 +183,7 @@ class MtnErsSoapService
      */
     public function vend(string $destMsisdn, float $amount, int $tariffTypeId): array
     {
-        $originator = $this->username ?: '2349062058470'; // fallback mock originator
+        $originator = '09062058470'; // fallback mock originator
 
         $execute = function (int $seq) use ($originator, $destMsisdn, $amount, $tariffTypeId, &$execute) {
             $xml = $this->buildVendXml($originator, $destMsisdn, $amount, $seq, $tariffTypeId);
