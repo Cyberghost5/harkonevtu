@@ -95,6 +95,9 @@ class DataController extends Controller
         $networkKey = $request->network_key;
         $dataType   = $request->data_type;
         $api        = AppSetting::get('data_api_' . $networkKey, 'autopilot');
+        if ($api === 'mtn_ers' && $networkKey !== 'mtn') {
+            $api = 'autopilot';
+        }
         $user       = auth()->user();
         $isAgent    = $user->isAgent();
 
@@ -145,6 +148,10 @@ class DataController extends Controller
         }
 
         $api = AppSetting::get('data_api_' . $request->network_key, 'autopilot');
+
+        if ($api === 'mtn_ers' && $request->network_key !== 'mtn') {
+            $api = 'autopilot';
+        }
 
         // Load plan (must belong to network/type, be active, and have an ID for the active API)
         $plan = DataPlan::active()
