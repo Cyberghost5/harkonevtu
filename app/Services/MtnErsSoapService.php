@@ -33,6 +33,14 @@ class MtnErsSoapService
     }
 
     /**
+     * Get the configured originator MSISDN or fallback to default mock number.
+     */
+    public function getOriginatorMsisdn(): string
+    {
+        return $this->originatorMsisdn ?: '09062058470';
+    }
+
+    /**
      * Parse SOAP XML response, stripping namespaces for clean array parsing.
      */
     public function parseResponse(string $xmlString): array
