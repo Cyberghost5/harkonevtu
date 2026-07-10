@@ -299,8 +299,50 @@ class DataController extends Controller
             'aabaxztech'   => $this->callAabaxyztechData($network, $plan, $phone, $reference),
             'legitdataway' => $this->callLegitdatawayData($network, $plan, $phone, $reference),
             'globacom'     => $this->callGlobacomData($network, $plan, $phone, $reference),
+            'mtn_ers'      => $this->callMtnErsData($network, $plan, $phone, $reference),
             default        => $this->callVtpassData($network, $plan, $phone, $reference),
         };
+    }
+
+    // ─── MTN ERS (SOAP) ────────────────────────────────────────────────────────
+
+    private function callMtnErsData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
+    {
+        $start = hrtime(true);
+        $ersService = app(\App\Services\MtnErsSoapService::class);
+
+        $formattedPhone = $phone;
+        if (str_starts_with($phone, '234') && strlen($phone) === 13) {
+            $formattedPhone = '0' . substr($phone, 3);
+        }
+
+        $tariffTypeId = (int) $plan->mtn_ers_id;
+
+        $result = $ersService->vend($formattedPhone, $plan->amount, $tariffTypeId);
+
+        $success = $result['status'];
+        $data = $result['data'] ?? ['message' => $result['message']];
+        $apiRef = $data['txRefId'] ?? $reference;
+        
+        $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+        ApiLog::record([
+            'user_id'          => auth()->id(),
+            'service'          => 'data',
+            'provider'         => 'mtn_ers',
+            'reference'        => $reference,
+            'endpoint'         => AppSetting::get('mtn_ers_endpoint', 'https://ers.seamless.se/services/ERSExchange3GPort'),
+            'method'           => 'POST',
+            'payload'          => ['phone' => $formattedPhone, 'amount' => $plan->amount, 'tariffTypeId' => $tariffTypeId, 'plan' => $plan->plan_name],
+            'request_headers'  => ['Content-Type' => 'application/xml', 'SoapAction' => 'urn:Vend'],
+            'response'         => $data,
+            'http_status'      => $success ? 200 : 500,
+            'response_headers' => null,
+            'duration_ms'      => $duration,
+            'success'          => $success,
+        ]);
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
     }
 
     // ─── VTpass ───────────────────────────────────────────────────────────────

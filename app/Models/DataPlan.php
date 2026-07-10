@@ -20,6 +20,7 @@ class DataPlan extends Model
         'autopilot_id',
         'merrybills_product_id',
         'merrybills_id',
+        'mtn_ers_id',
         'amount',
         'amount_agent',
         'enabled',
@@ -63,6 +64,7 @@ class DataPlan extends Model
             'aabaxztech'   => $query->whereNotNull('aabaxztech_id'),
             'legitdataway' => $query->whereNotNull('legitdataway_id'),
             'globacom'     => $query->whereNotNull('globacom_id'),
+            'mtn_ers'      => $query->whereNotNull('mtn_ers_id'),
             default        => $query->whereNotNull('vtpass_id'),   // vtpass
         };
     }
@@ -91,6 +93,7 @@ class DataPlan extends Model
             'aabaxztech'   => $this->aabaxztech_id,
             'legitdataway' => $this->legitdataway_id,
             'globacom'     => $this->globacom_id,
+            'mtn_ers'      => $this->mtn_ers_id,
             default        => $this->vtpass_id,
         };
     }
