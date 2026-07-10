@@ -25,7 +25,39 @@
 </div>
 @endif
 
-<div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+<style>
+    /* Dark mode styling overrides for settings cards and form inputs */
+    .dark .admin-settings-card {
+        background-color: #0f172a !important; /* bg-slate-900 */
+        border-color: #1e293b !important; /* border-slate-800 */
+    }
+    .dark .admin-settings-card h3,
+    .dark .admin-settings-card h4 {
+        color: #ffffff !important;
+    }
+    .dark .admin-settings-card p,
+    .dark .admin-settings-card span.text-slate-400,
+    .dark .admin-settings-card span.text-slate-500,
+    .dark .admin-settings-card p.text-slate-400 {
+        color: #64748b !important; /* text-slate-500 */
+    }
+    .dark .admin-settings-card label {
+        color: #94a3b8 !important; /* text-slate-400 */
+    }
+    .dark .admin-settings-card select,
+    .dark .admin-settings-card input {
+        background-color: #0f172a !important; /* bg-slate-900 */
+        border-color: #334155 !important; /* border-slate-700 */
+        color: #f1f5f9 !important; /* text-slate-100 */
+    }
+    .dark .admin-settings-card div.border-b,
+    .dark .admin-settings-card div.border-slate-100,
+    .dark .admin-settings-card div.divide-y > div {
+        border-color: #1e293b !important; /* border-slate-800 */
+    }
+</style>
+
+<div class="admin-settings-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
 
     {{-- Card header --}}
     <div class="px-6 pt-5 pb-4 border-b border-slate-100">
@@ -57,15 +89,15 @@
                         'service_funding_coupon'     => ['label' => 'Coupon Funding', 'icon' => 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z'],
                     ] as $key => $def)
                     @php $val = $s[$key] ?? '1'; @endphp
-                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 p-4">
                         <div class="flex items-center gap-2.5 mb-3">
                             <div class="h-8 w-8 rounded-lg flex items-center justify-center" style="background:{{ $themeColor }}20">
                                 <svg class="h-4 w-4" style="color:{{ $themeColor }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $def['icon'] }}"/>
                                 </svg>
                             </div>
-                            <span class="text-sm font-semibold text-slate-700">{{ $def['label'] }}</span>
-                            <span class="ml-auto text-xs font-bold px-2 py-0.5 rounded-full {{ $val === '1' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }}">
+                            <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ $def['label'] }}</span>
+                            <span class="ml-auto text-xs font-bold px-2 py-0.5 rounded-full {{ $val === '1' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400' }}">
                                 {{ $val === '1' ? 'ON' : 'OFF' }}
                             </span>
                         </div>
@@ -73,12 +105,12 @@
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="radio" name="{{ $key }}" value="1" {{ $val === '1' ? 'checked' : '' }}
                                        class="w-3.5 h-3.5" style="accent-color:{{ $themeColor }}">
-                                <span class="text-xs text-slate-600">Enabled</span>
+                                <span class="text-xs text-slate-650 dark:text-slate-400">Enabled</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="radio" name="{{ $key }}" value="0" {{ $val !== '1' ? 'checked' : '' }}
                                        class="w-3.5 h-3.5" style="accent-color:{{ $themeColor }}">
-                                <span class="text-xs text-slate-600">Disabled</span>
+                                <span class="text-xs text-slate-650 dark:text-slate-400">Disabled</span>
                             </label>
                         </div>
                     </div>
