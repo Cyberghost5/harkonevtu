@@ -6,7 +6,39 @@
 
 @section('content')
 
-<div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+<style>
+    /* Dark mode styling overrides for settings cards and form inputs */
+    .dark .admin-settings-card {
+        background-color: #0f172a !important; /* bg-slate-900 */
+        border-color: #1e293b !important; /* border-slate-800 */
+    }
+    .dark .admin-settings-card h3,
+    .dark .admin-settings-card h4 {
+        color: #ffffff !important;
+    }
+    .dark .admin-settings-card p,
+    .dark .admin-settings-card span.text-slate-400,
+    .dark .admin-settings-card span.text-slate-500,
+    .dark .admin-settings-card p.text-slate-400 {
+        color: #64748b !important; /* text-slate-500 */
+    }
+    .dark .admin-settings-card label {
+        color: #94a3b8 !important; /* text-slate-400 */
+    }
+    .dark .admin-settings-card select,
+    .dark .admin-settings-card input {
+        background-color: #0f172a !important; /* bg-slate-900 */
+        border-color: #334155 !important; /* border-slate-700 */
+        color: #f1f5f9 !important; /* text-slate-100 */
+    }
+    .dark .admin-settings-card div.border-b,
+    .dark .admin-settings-card div.border-slate-100,
+    .dark .admin-settings-card div.divide-y > div {
+        border-color: #1e293b !important; /* border-slate-800 */
+    }
+</style>
+
+<div class="admin-settings-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
 
     {{-- Card header --}}
     <div class="px-6 pt-5 pb-4 border-b border-slate-100">
@@ -143,7 +175,7 @@
             {{-- ── Other Payment Settings ───────────────────────────────── --}}
             <div class="px-6 py-6">
                 <h4 class="text-lg font-bold text-slate-800 mb-4">Other Payment Settings</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment [VM Funding]</label>
                         <input type="text" name="tx_charge_m2m" value="{{ $s['tx_charge_m2m'] ?? '0' }}"
@@ -155,6 +187,13 @@
                         <input type="text" name="tx_charge_bank" value="{{ $s['tx_charge_bank'] ?? '0' }}"
                                placeholder="Enter Transaction Charge"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Active Card/ATM Payment Gateway</label>
+                        <select name="active_gateway" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <option value="paystack" {{ ($s['active_gateway'] ?? 'paystack') === 'paystack' ? 'selected' : '' }}>Paystack</option>
+                            <option value="flutterwave" {{ ($s['active_gateway'] ?? 'paystack') === 'flutterwave' ? 'selected' : '' }}>Flutterwave</option>
+                        </select>
                     </div>
                 </div>
             </div>

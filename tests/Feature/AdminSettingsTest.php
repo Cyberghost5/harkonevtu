@@ -373,6 +373,33 @@ class AdminSettingsTest extends TestCase
         $response = $this->get(route('admin.settings.api'));
         $response->assertStatus(200);
     }
+
+    public function test_active_gateway_configuration_works(): void
+    {
+        $admin = User::factory()->create([
+            'is_admin' => true,
+            'is_active' => true,
+        ]);
+        $this->actingAs($admin);
+
+        // Fetch api-keys view, check load values
+        AppSetting::set('active_gateway', 'flutterwave');
+        $response = $this->get(route('admin.settings.api-keys'));
+        $response->assertStatus(200);
+        $response->assertSee('value="flutterwave"', false);
+
+        // Submit API Keys settings change form
+        $response = $this->post(route('admin.settings.api-keys.update'), [
+            'active_gateway' => 'paystack',
+            'tx_charge_m2m' => '1.5',
+        ]);
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // Check DB update
+        $this->assertEquals('paystack', AppSetting::get('active_gateway'));
+        $this->assertEquals('1.5', AppSetting::get('tx_charge_m2m'));
+    }
 }
 
 
