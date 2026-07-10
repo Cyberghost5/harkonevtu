@@ -120,7 +120,7 @@
                 </div>
                 <div class="col-span-2">
                     <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">ID Number (11 digits)</label>
-                    <input type="number" name="id_number" required placeholder="e.g. 12345678901" maxlength="11" pattern="\d{11}"
+                    <input type="number" name="id_number" required placeholder="e.g. 12345678901" maxlength="11" max="11" min="11" pattern="\d{11}"
                            class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                 </div>
             </div>
