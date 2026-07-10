@@ -183,14 +183,19 @@
             {{-- ── Airtime Network Settings ─────────────────────────────── --}}
             <div class="px-6 py-6">
                 <h4 class="text-xl font-bold text-slate-800 mb-1">Airtime Network Settings</h4>
-                <p class="text-xs text-slate-400 mb-5">Enable or disable airtime per network</p>
+                <p class="text-xs text-slate-400 mb-5">Route network airtime purchases to a specific provider or toggle status</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     @foreach(['airtime_net_mtn'=>'MTN','airtime_net_airtel'=>'Airtel','airtime_net_glo'=>'Glo','airtime_net_etisalat'=>'9Mobile'] as $key=>$label)
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">{{ $label }}</label>
                         <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            @foreach($net_opts as $o)
-                            <option value="{{ $o }}" {{ ($s[$key] ?? '') === $o ? 'selected' : '' }}>{{ $o ?: '- Select -' }}</option>
+                            <option value="" {{ ($s[$key] ?? '') === '' ? 'selected' : '' }}>Default (Use Global API)</option>
+                            <option value="Enable" {{ ($s[$key] ?? '') === 'Enable' ? 'selected' : '' }}>Enable (Use Global API)</option>
+                            <option value="Disable" {{ ($s[$key] ?? '') === 'Disable' ? 'selected' : '' }}>Disable</option>
+                            @foreach($airtimeProviders as $p)
+                            <option value="{{ $p }}" {{ ($s[$key] ?? '') === $p ? 'selected' : '' }}>
+                                Use {{ ucfirst($p) }}
+                            </option>
                             @endforeach
                         </select>
                     </div>
@@ -223,23 +228,44 @@
                         @endif
                     </div>
 
-                    {{-- Other services still use the full available-providers list --}}
-                    @foreach([
-                        'datacard_api'    => 'DataCard',
-                        'airtime_pin_api' => 'Airtime PIN',
-                        'betting_api'     => 'Betting',
-                    ] as $key => $label)
+                    {{-- Datacard --}}
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">API for {{ $label }}</label>
-                        <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            @foreach($providerOpts as $p)
-                            <option value="{{ $p }}" {{ ($s[$key] ?? '') === $p ? 'selected' : '' }}>
-                                {{ $p ? ucfirst($p) : '- Select Provider -' }}
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API for DataCard</label>
+                        <select name="datacard_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <option value="">- Select Provider -</option>
+                            @foreach($datacardProviders as $p)
+                            <option value="{{ $p }}" {{ ($s['datacard_api'] ?? '') === $p ? 'selected' : '' }}>
+                                {{ ucfirst($p) }}
                             </option>
                             @endforeach
                         </select>
                     </div>
-                    @endforeach
+
+                    {{-- Airtime PIN --}}
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API for Airtime PIN</label>
+                        <select name="airtime_pin_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <option value="">- Select Provider -</option>
+                            @foreach($airtimePinProviders as $p)
+                            <option value="{{ $p }}" {{ ($s['airtime_pin_api'] ?? '') === $p ? 'selected' : '' }}>
+                                {{ ucfirst($p) }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Betting --}}
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API for Betting</label>
+                        <select name="betting_api" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <option value="">- Select Provider -</option>
+                            @foreach($bettingProviders as $p)
+                            <option value="{{ $p }}" {{ ($s['betting_api'] ?? '') === $p ? 'selected' : '' }}>
+                                {{ ucfirst($p) }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
 
                     {{-- Electricity — only shows its own integrated providers --}}
                     <div>

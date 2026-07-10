@@ -165,6 +165,28 @@ class AdminSettingsController extends Controller
         ];
         $s = AppSetting::getMany($keys);
 
+        // Map and synchronize views settings variables from the database keys
+        $mirrorMap = [
+            'mtn_sme'                  => 'data_type_mtn_sme',
+            'mtn_gifting'              => 'data_type_mtn_gifting',
+            'mtn_awoof'                => 'data_type_mtn_awoof',
+            'mtn_corporate_gifting'    => 'data_type_mtn_cg',
+            'airtel_gifting'           => 'data_type_airtel_gifting',
+            'airtel_corporate_gifting' => 'data_type_airtel_cg',
+            'airtel_awoof'             => 'data_type_airtel_awoof',
+            'glo_awoof'                => 'data_type_glo_awoof',
+            'glo_corporate_gifting'    => 'data_type_glo_cg',
+            'etisalat_sme'             => 'data_type_etisalat_sme',
+            'etisalat_gifting'         => 'data_type_etisalat_gifting',
+        ];
+
+        foreach ($mirrorMap as $viewKey => $dbKey) {
+            $dbVal = AppSetting::get($dbKey);
+            if ($dbVal !== null) {
+                $s[$viewKey] = ($dbVal === '1') ? 'Enable' : 'Disable';
+            }
+        }
+
         // Only surface providers whose credentials have been configured
         $providerCredentialMap = [
             'vtpass'       => 'vtpass_api_key',
@@ -204,18 +226,46 @@ class AdminSettingsController extends Controller
         $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller', 'mtn_ers'];
         $epinsProviders      = array_values(array_intersect($availableProviders, $epinsIntegrated));
 
+        $datacardIntegrated  = ['vtpass'];
+        $datacardProviders   = array_values(array_intersect($availableProviders, $datacardIntegrated));
+
+        $airtimePinIntegrated = ['vtpass'];
+        $airtimePinProviders  = array_values(array_intersect($availableProviders, $airtimePinIntegrated));
+
+        $bettingIntegrated   = ['payscribe'];
+        $bettingProviders    = array_values(array_intersect($availableProviders, $bettingIntegrated));
+
         return view('admin.settings.api', compact(
             's', 'availableProviders',
             'airtimeProviders', 'dataProviders',
-            'electricityProviders', 'cableProviders', 'epinsProviders'
+            'electricityProviders', 'cableProviders', 'epinsProviders',
+            'datacardProviders', 'airtimePinProviders', 'bettingProviders'
         ));
     }
 
     public function updateApi(Request $request)
     {
         $data = $request->except(['_token','_method']);
+        $mirrorMap = [
+            'mtn_sme'                  => 'data_type_mtn_sme',
+            'mtn_gifting'              => 'data_type_mtn_gifting',
+            'mtn_awoof'                => 'data_type_mtn_awoof',
+            'mtn_corporate_gifting'    => 'data_type_mtn_cg',
+            'airtel_gifting'           => 'data_type_airtel_gifting',
+            'airtel_corporate_gifting' => 'data_type_airtel_cg',
+            'airtel_awoof'             => 'data_type_airtel_awoof',
+            'glo_awoof'                => 'data_type_glo_awoof',
+            'glo_corporate_gifting'    => 'data_type_glo_cg',
+            'etisalat_sme'             => 'data_type_etisalat_sme',
+            'etisalat_gifting'         => 'data_type_etisalat_gifting',
+        ];
+
         foreach ($data as $key => $value) {
             AppSetting::set($key, $value ?? '');
+            if (array_key_exists($key, $mirrorMap)) {
+                $mappedValue = ($value === 'Enable') ? '1' : '0';
+                AppSetting::set($mirrorMap[$key], $mappedValue);
+            }
         }
         return back()->with('success', 'API settings saved successfully.');
     }

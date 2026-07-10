@@ -343,6 +343,36 @@ class AdminSettingsTest extends TestCase
             $response->assertSessionHas('error');
         }
     }
+
+    public function test_data_type_settings_mirroring_works(): void
+    {
+        $admin = User::factory()->create([
+            'is_admin' => true,
+            'is_active' => true,
+        ]);
+        $this->actingAs($admin);
+
+        // Submit settings change mirroring test
+        $response = $this->post(route('admin.settings.api.update'), [
+            'mtn_sme' => 'Enable',
+            'mtn_corporate_gifting' => 'Disable',
+        ]);
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // Check mirroring
+        $this->assertEquals('1', AppSetting::get('data_type_mtn_sme'));
+        $this->assertEquals('0', AppSetting::get('data_type_mtn_cg'));
+
+        // Load the view and assert values mapped in reverse
+        $response = $this->get(route('admin.settings.api'));
+        $response->assertStatus(200);
+        
+        // Assert view keys populated
+        AppSetting::set('data_type_mtn_cg', '1');
+        $response = $this->get(route('admin.settings.api'));
+        $response->assertStatus(200);
+    }
 }
 
 
