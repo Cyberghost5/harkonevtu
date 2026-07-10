@@ -348,6 +348,7 @@ class AdminSettingsController extends Controller
             'autopilot_id'          => 'nullable|string|max:100',
             'merrybills_product_id' => 'nullable|string|max:100',
             'merrybills_id'         => 'nullable|string|max:100',
+            'mtn_ers_id'            => 'nullable|string|max:100',
             'amount'                => 'required|numeric|min:0',
             'amount_agent'          => 'nullable|numeric|min:0',
             'sort_order'            => 'nullable|integer|min:0',
@@ -357,7 +358,7 @@ class AdminSettingsController extends Controller
                 'network_key','data_type','plan_name','validity',
                 'vtpass_id','clubkonnect_id','easyaccess_id','aabaxztech_id',
                 'legitdataway_id','globacom_id','autopilot_id',
-                'merrybills_product_id','merrybills_id',
+                'merrybills_product_id','merrybills_id','mtn_ers_id',
                 'amount','amount_agent','sort_order',
             ]),
             ['enabled' => $request->boolean('enabled', true)]
@@ -373,7 +374,7 @@ class AdminSettingsController extends Controller
                 'network_key','data_type','plan_name','validity',
                 'vtpass_id','clubkonnect_id','easyaccess_id','aabaxztech_id',
                 'legitdataway_id','globacom_id','autopilot_id',
-                'merrybills_product_id','merrybills_id',
+                'merrybills_product_id','merrybills_id','mtn_ers_id',
                 'amount','amount_agent','sort_order',
             ]),
             ['enabled' => $request->boolean('enabled', false)]

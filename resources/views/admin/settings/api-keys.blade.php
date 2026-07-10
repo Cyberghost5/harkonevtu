@@ -31,16 +31,19 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Public Key</label>
                         <input type="text" name="flutterwave_public_key" value="{{ $s['flutterwave_public_key'] ?? '' }}"
+                        placeholder="Enter Public Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Secret Key</label>
                         <input type="text" name="flutterwave_secret_key" value="{{ $s['flutterwave_secret_key'] ?? '' }}"
+                        placeholder="Enter Secret Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Encryption Key</label>
                         <input type="text" name="flutterwave_encryption_key" value="{{ $s['flutterwave_encryption_key'] ?? '' }}"
+                        placeholder="Enter Encryption Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
@@ -64,11 +67,13 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Public Key</label>
                         <input type="text" name="paystack_public_key" value="{{ $s['paystack_public_key'] ?? '' }}"
+                               placeholder="Enter Public Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Secret Key</label>
                         <input type="text" name="paystack_secret_key" value="{{ $s['paystack_secret_key'] ?? '' }}"
+                               placeholder="Enter Secret Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
@@ -86,16 +91,19 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
                         <input type="text" name="monnify_api_key" value="{{ $s['monnify_api_key'] ?? '' }}"
+                               placeholder="Enter API Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Secret Key</label>
                         <input type="text" name="monnify_secret_key" value="{{ $s['monnify_secret_key'] ?? '' }}"
+                               placeholder="Enter Secret Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Contract Code</label>
                         <input type="text" name="monnify_contract_no" value="{{ $s['monnify_contract_no'] ?? '' }}"
+                               placeholder="Enter Contract Code"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
@@ -120,11 +128,13 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Secret Key</label>
                         <input type="text" name="payscribe_secret_key" value="{{ $s['payscribe_secret_key'] ?? '' }}"
+                               placeholder="Enter Secret Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Public Key</label>
                         <input type="text" name="payscribe_public_key" value="{{ $s['payscribe_public_key'] ?? '' }}"
+                               placeholder="Enter Public Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
@@ -137,11 +147,13 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment [VM Funding]</label>
                         <input type="text" name="tx_charge_m2m" value="{{ $s['tx_charge_m2m'] ?? '0' }}"
+                               placeholder="Enter Transaction Charge"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment [with Bank Transfer]</label>
                         <input type="text" name="tx_charge_bank" value="{{ $s['tx_charge_bank'] ?? '0' }}"
+                               placeholder="Enter Transaction Charge"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
@@ -159,17 +171,19 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Username / Email</label>
                         <input type="text" name="vtpass_username" value="{{ $s['vtpass_username'] ?? '' }}"
+                               placeholder="Enter Username / Email"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Password</label>
                         <input type="password" name="vtpass_password" value="{{ $s['vtpass_password'] ?? '' }}"
-                               placeholder="Leave blank to keep current"
+                               placeholder="Enter Password"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
                         <input type="text" name="vtpass_api_key" value="{{ $s['vtpass_api_key'] ?? '' }}"
+                               placeholder="Enter API Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
@@ -187,6 +201,7 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
                         <input type="text" name="primebiller_api_key" value="{{ $s['primebiller_api_key'] ?? '' }}"
+                               placeholder="Enter API Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div class="flex items-end gap-3">
@@ -212,17 +227,19 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Username</label>
                         <input type="text" name="aabaxztech_username" value="{{ $s['aabaxztech_username'] ?? '' }}"
+                               placeholder="Enter Username"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Password</label>
                         <input type="password" name="aabaxztech_password" value="{{ $s['aabaxztech_password'] ?? '' }}"
-                               placeholder="Leave blank to keep current"
+                               placeholder="Enter Password"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
                         <input type="text" name="aabaxztech_api_key" value="{{ $s['aabaxztech_api_key'] ?? '' }}"
+                               placeholder="Enter API Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
@@ -240,11 +257,13 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Email</label>
                         <input type="email" name="autopilot_email" value="{{ $s['autopilot_email'] ?? '' }}"
+                               placeholder="Enter Email"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
                         <input type="text" name="autopilot_api_key" value="{{ $s['autopilot_api_key'] ?? '' }}"
+                               placeholder="Enter API Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
@@ -262,6 +281,7 @@
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
                         <input type="text" name="easyaccess_api_key" value="{{ $s['easyaccess_api_key'] ?? '' }}"
+                               placeholder="Enter API Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
@@ -279,17 +299,19 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Username</label>
                         <input type="text" name="legitdataway_username" value="{{ $s['legitdataway_username'] ?? '' }}"
+                               placeholder="Enter Username"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Password</label>
                         <input type="password" name="legitdataway_password" value="{{ $s['legitdataway_password'] ?? '' }}"
-                               placeholder="Leave blank to keep current"
+                               placeholder="Enter Password"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
                         <input type="text" name="legitdataway_api_key" value="{{ $s['legitdataway_api_key'] ?? '' }}"
+                               placeholder="Enter API Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
@@ -307,22 +329,25 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Username</label>
                         <input type="text" name="merrybills_username" value="{{ $s['merrybills_username'] ?? '' }}"
+                               placeholder="Enter Username"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Password</label>
                         <input type="password" name="merrybills_password" value="{{ $s['merrybills_password'] ?? '' }}"
-                               placeholder="Leave blank to keep current"
+                               placeholder="Enter Password"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Pin</label>
                         <input type="text" name="merrybills_pin" value="{{ $s['merrybills_pin'] ?? '' }}"
+                               placeholder="Enter Pin"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Token</label>
                         <input type="text" name="merrybills_token" value="{{ $s['merrybills_token'] ?? '' }}"
+                               placeholder="Enter Token"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
@@ -340,11 +365,13 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">User ID</label>
                         <input type="text" name="clubkonnect_user_id" value="{{ $s['clubkonnect_user_id'] ?? '' }}"
+                               placeholder="Enter User ID"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
                         <input type="text" name="clubkonnect_api_key" value="{{ $s['clubkonnect_api_key'] ?? '' }}"
+                               placeholder="Enter API Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
@@ -362,109 +389,14 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">X-API Key</label>
                         <input type="text" name="globacom_xapi_key" value="{{ $s['globacom_xapi_key'] ?? '' }}"
+                               placeholder="Enter X-API Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Sponsor ID</label>
                         <input type="text" name="globacom_sponsor_id" value="{{ $s['globacom_sponsor_id'] ?? '' }}"
+                               placeholder="Enter Sponsor ID"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                </div>
-            </div>
-
-
-            {{-- ── SMS API: Termii ──────────────────────────────────────── --}}
-            <div class="px-6 py-6">
-                <h4 class="text-lg font-bold text-slate-800 mb-4">
-                    SMS API
-                    <span class="text-sm font-normal text-slate-400 ml-1">from
-                        <a href="https://termii.com" target="_blank" class="text-blue-500 hover:underline">Termii</a>
-                    </span>
-                </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
-                        <input type="text" name="termii_api_key" value="{{ $s['termii_api_key'] ?? '' }}"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                </div>
-            </div>
-
-            {{-- ── SMS API: BulkSMSNigeria ──────────────────────────────── --}}
-            <div class="px-6 py-6">
-                <h4 class="text-lg font-bold text-slate-800 mb-4">
-                    SMS API
-                    <span class="text-sm font-normal text-slate-400 ml-1">from
-                        <a href="https://bulksmsnigeria.com" target="_blank" class="text-blue-500 hover:underline">BulkSMSNigeria</a>
-                    </span>
-                </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Sender ID</label>
-                        <input type="text" name="bulksms_sender" value="{{ $s['bulksms_sender'] ?? '' }}"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
-                        <input type="text" name="bulksms_api_key" value="{{ $s['bulksms_api_key'] ?? '' }}"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Amount per unit</label>
-                        <input type="text" name="bulksms_amount_per_unit" value="{{ $s['bulksms_amount_per_unit'] ?? '' }}"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                </div>
-            </div>
-
-
-            {{-- ── Onesignal ────────────────────────────────────────────── --}}
-            <div class="px-6 py-6">
-                <h4 class="text-lg font-bold text-slate-800 mb-4">
-                    Onesignal
-                    <span class="text-sm font-normal text-slate-400 ml-1">from
-                        <a href="https://onesignal.com" target="_blank" class="text-blue-500 hover:underline">Onesignal</a>
-                    </span>
-                </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">App ID</label>
-                        <input type="text" name="onesignal_app_id" value="{{ $s['onesignal_app_id'] ?? '' }}"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
-                        <input type="text" name="onesignal_api_key" value="{{ $s['onesignal_api_key'] ?? '' }}"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                </div>
-            </div>
-
-            {{-- ── QoreID (KYC Verification) ────────────────────────────── --}}
-            <div class="px-6 py-6">
-                <h4 class="text-lg font-bold text-slate-800 mb-4">
-                    QoreID (KYC Verification)
-                    <span class="text-sm font-normal text-slate-400 ml-1">from
-                        <a href="https://qoreid.com" target="_blank" class="text-blue-500 hover:underline">QoreID</a>
-                    </span>
-                </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Client Key</label>
-                        <input type="text" name="qoreid_client_key" value="{{ $s['qoreid_client_key'] ?? '' }}"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Secret Key</label>
-                        <input type="text" name="qoreid_secret_key" value="{{ $s['qoreid_secret_key'] ?? '' }}"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Mode</label>
-                        <select name="qoreid_mode" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            <option value="sandbox" {{ ($s['qoreid_mode'] ?? 'sandbox') === 'sandbox' ? 'selected' : '' }}>Sandbox</option>
-                            <option value="production" {{ ($s['qoreid_mode'] ?? 'sandbox') === 'production' ? 'selected' : '' }}>Production</option>
-                        </select>
                     </div>
                 </div>
             </div>
@@ -511,6 +443,112 @@
                 </div>
             </div>
 
+
+
+            {{-- ── SMS API: Termii ──────────────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-lg font-bold text-slate-800 mb-4">
+                    SMS API
+                    <span class="text-sm font-normal text-slate-400 ml-1">from
+                        <a href="https://termii.com" target="_blank" class="text-blue-500 hover:underline">Termii</a>
+                    </span>
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
+                        <input type="text" name="termii_api_key" value="{{ $s['termii_api_key'] ?? '' }}"
+                               placeholder="Enter API Key"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── SMS API: BulkSMSNigeria ──────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-lg font-bold text-slate-800 mb-4">
+                    SMS API
+                    <span class="text-sm font-normal text-slate-400 ml-1">from
+                        <a href="https://bulksmsnigeria.com" target="_blank" class="text-blue-500 hover:underline">BulkSMSNigeria</a>
+                    </span>
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Sender ID</label>
+                        <input type="text" name="bulksms_sender" value="{{ $s['bulksms_sender'] ?? '' }}"
+                               placeholder="Enter Sender ID"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
+                        <input type="text" name="bulksms_api_key" value="{{ $s['bulksms_api_key'] ?? '' }}"
+                               placeholder="Enter API Key"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Amount per unit</label>
+                        <input type="text" name="bulksms_amount_per_unit" value="{{ $s['bulksms_amount_per_unit'] ?? '' }}"
+                               placeholder="Enter Amount per unit"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                </div>
+            </div>
+
+
+            {{-- ── Onesignal ────────────────────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-lg font-bold text-slate-800 mb-4">
+                    Onesignal
+                    <span class="text-sm font-normal text-slate-400 ml-1">from
+                        <a href="https://onesignal.com" target="_blank" class="text-blue-500 hover:underline">Onesignal</a>
+                    </span>
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">App ID</label>
+                        <input type="text" name="onesignal_app_id" value="{{ $s['onesignal_app_id'] ?? '' }}"
+                               placeholder="Enter App ID"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
+                        <input type="text" name="onesignal_api_key" value="{{ $s['onesignal_api_key'] ?? '' }}"
+                               placeholder="Enter API Key"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── QoreID (KYC Verification) ────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-lg font-bold text-slate-800 mb-4">
+                    QoreID (KYC Verification)
+                    <span class="text-sm font-normal text-slate-400 ml-1">from
+                        <a href="https://qoreid.com" target="_blank" class="text-blue-500 hover:underline">QoreID</a>
+                    </span>
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Client Key</label>
+                        <input type="text" name="qoreid_client_key" value="{{ $s['qoreid_client_key'] ?? '' }}"
+                               placeholder="Enter Client Key"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Secret Key</label>
+                        <input type="text" name="qoreid_secret_key" value="{{ $s['qoreid_secret_key'] ?? '' }}"
+                               placeholder="Enter Secret Key"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Mode</label>
+                        <select name="qoreid_mode" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <option value="sandbox" {{ ($s['qoreid_mode'] ?? 'sandbox') === 'sandbox' ? 'selected' : '' }}>Sandbox</option>
+                            <option value="production" {{ ($s['qoreid_mode'] ?? 'sandbox') === 'production' ? 'selected' : '' }}>Production</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             {{-- ── Airtime2Cash Parameters ──────────────────────────────── --}}
             <div class="px-6 py-6">
                 <h4 class="text-lg font-bold text-slate-800 mb-4">Airtime2Cash Parameters</h4>
@@ -518,21 +556,25 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Phone Number to receive airtime</label>
                         <input type="text" name="airtime2cash_phone" value="{{ $s['airtime2cash_phone'] ?? '' }}"
+                               placeholder="Enter Phone Number"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment</label>
                         <input type="text" name="airtime2cash_tx_charge" value="{{ $s['airtime2cash_tx_charge'] ?? '' }}"
+                               placeholder="Enter Transaction Charge"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Max. Amount per payment</label>
                         <input type="text" name="airtime2cash_max_per_payment" value="{{ $s['airtime2cash_max_per_payment'] ?? '' }}"
+                               placeholder="Enter Maximum Amount"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Min. Amount per payment</label>
                         <input type="text" name="airtime2cash_min_per_payment" value="{{ $s['airtime2cash_min_per_payment'] ?? '' }}"
+                               placeholder="Enter Minimum Amount"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
@@ -545,16 +587,19 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Referral Commission (%)</label>
                         <input type="text" name="referral_commission" value="{{ $s['referral_commission'] ?? '0' }}"
+                               placeholder="Enter Referral Commission"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Referral Min. Withdrawal Amount (₦)</label>
                         <input type="text" name="referral_min_withdrawal" value="{{ $s['referral_min_withdrawal'] ?? '0' }}"
+                               placeholder="Enter Minimum Withdrawal Amount"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Referral Min. Total Spent (₦)</label>
                         <input type="text" name="referral_min_total_spent" value="{{ $s['referral_min_total_spent'] ?? '0' }}"
+                               placeholder="Enter Minimum Total Spent"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
