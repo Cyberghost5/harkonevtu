@@ -20,8 +20,38 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
-class WalletFundingController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+
+class WalletFundingController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            function ($request, $next) {
+                $route = $request->route();
+                if ($route) {
+                    $routeName = $route->getName();
+                    $map = [
+                        'wallet.fund.gateway' => ['key' => 'service_funding_gateway', 'name' => 'Card / ATM Funding'],
+                        'wallet.fund.auto'    => ['key' => 'service_funding_auto_bank', 'name' => 'Auto Bank Transfer (DVA)'],
+                        'wallet.fund.manual'  => ['key' => 'service_funding_manual', 'name' => 'Manual Bank Funding'],
+                        'wallet.fund.coupon'  => ['key' => 'service_funding_coupon', 'name' => 'Coupon Funding'],
+                    ];
+                    foreach ($map as $prefix => $info) {
+                        if (str_starts_with($routeName, $prefix)) {
+                            if (\App\Models\AppSetting::get($info['key'], '1') !== '1') {
+                                if ($request->expectsJson()) {
+                                    return response()->json(['success' => false, 'message' => $info['name'] . ' is currently disabled.'], 503);
+                                }
+                                return redirect()->route('dashboard')->with('error', $info['name'] . ' is currently disabled.');
+                            }
+                        }
+                    }
+                }
+                return $next($request);
+            }
+        ];
+    }
     // ─── Pages ───────────────────────────────────────────────────────────────
 
     public function gateway(): View

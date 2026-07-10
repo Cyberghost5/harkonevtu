@@ -168,26 +168,34 @@
                     {{-- Sub-items --}}
                     <div id="fund-wallet-menu"
                          class="{{ request()->routeIs('wallet.fund.*') ? '' : 'hidden' }} mt-0.5 ml-8 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+                        @if(\App\Models\AppSetting::get('service_funding_gateway', '1') === '1')
                         <a href="{{ route('wallet.fund.gateway') }}"
                            class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
                                   {{ request()->routeIs('wallet.fund.gateway') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                             Card / ATM Funding
                         </a>
+                        @endif
+                        @if(\App\Models\AppSetting::get('service_funding_auto_bank', '1') === '1')
                         <a href="{{ route('wallet.fund.auto') }}"
                            class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
                                   {{ request()->routeIs('wallet.fund.auto') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                             Auto Bank Transfer
                         </a>
+                        @endif
+                        @if(\App\Models\AppSetting::get('service_funding_manual', '1') === '1')
                         <a href="{{ route('wallet.fund.manual') }}"
                            class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
                                   {{ request()->routeIs('wallet.fund.manual') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                             Manual Funding
                         </a>
+                        @endif
+                        @if(\App\Models\AppSetting::get('service_funding_coupon', '1') === '1')
                         <a href="{{ route('wallet.fund.coupon') }}"
                            class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
                                   {{ request()->routeIs('wallet.fund.coupon') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                             Coupon Funding
                         </a>
+                        @endif
                     </div>
                 </div>
 

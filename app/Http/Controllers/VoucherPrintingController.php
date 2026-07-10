@@ -10,8 +10,24 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 
-class VoucherPrintingController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+
+class VoucherPrintingController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            function ($request, $next) {
+                if (\App\Models\AppSetting::get('service_recharge_card_printing', '1') !== '1') {
+                    if ($request->expectsJson()) {
+                        return response()->json(['success' => false, 'message' => 'Recharge Card printing is currently disabled.'], 503);
+                    }
+                    return redirect()->route('dashboard')->with('error', 'Recharge Card printing is currently disabled.');
+                }
+                return $next($request);
+            }
+        ];
+    }
     public function index(Request $request): View
     {
         $user = auth()->user();
