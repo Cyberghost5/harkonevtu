@@ -34,6 +34,7 @@ class KycController extends Controller
     {
         $start = hrtime(true);
         $user = auth()->user();
+        $reference = 'KYC-' . date('YmdHis') . Str::upper(Str::random(10));
 
         if ($user->kyc_status === 'verified') {
             return response()->json([
@@ -50,7 +51,6 @@ class KycController extends Controller
         $parts = explode(' ', trim($user->name), 2);
         $firstname = trim($parts[0] ?? '');
         $lastname = trim($parts[1] ?? '');
-        $reference = 'KYC-' . date('YmdHis') . Str::upper(Str::random(10));
 
         if (empty($firstname) || empty($lastname)) {
             return response()->json([
