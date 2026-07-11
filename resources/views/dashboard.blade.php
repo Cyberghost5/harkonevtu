@@ -177,7 +177,7 @@
 <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 p-5 sm:p-6 shadow-xl shadow-amber-500/20 mb-8">
     <div class="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-3xl"></div>
     <div class="absolute -bottom-8 left-10 h-28 w-28 rounded-full bg-orange-600/20 blur-2xl"></div>
-    <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"> 
         <div>
             <div class="flex items-center gap-2 mb-1">
                 <span class="text-xs font-bold uppercase tracking-wider text-amber-900/70">Upgrade Now</span>
