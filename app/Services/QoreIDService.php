@@ -17,7 +17,7 @@ class QoreIDService
         $mode = AppSetting::get('qoreid_mode', 'sandbox');
         $this->baseUrl = $mode === 'production' 
             ? 'https://api.qoreid.com' 
-            : 'https://sandbox.qoreid.com';
+            : 'https://api.qoreid.com';
 
         $this->clientId = AppSetting::get('qoreid_client_key');
         $this->clientSecret = AppSetting::get('qoreid_secret_key');
@@ -39,7 +39,7 @@ class QoreIDService
         try {
             $response = Http::post("{$this->baseUrl}/token", [
                 'clientId' => $this->clientId,
-                'clientSecret' => $this->clientSecret,
+                'secret' => $this->clientSecret,
             ]);
 
             if ($response->successful()) {
