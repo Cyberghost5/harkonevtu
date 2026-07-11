@@ -124,9 +124,13 @@
             <!-- Admin user -->
             <div class="flex-shrink-0 px-4 py-3" style="border-bottom:1px solid rgba(255,255,255,0.1)">
                 <div class="flex items-center gap-2.5">
+                    @if (auth()->user()->avatar)
+                        <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Avatar" class="h-8 w-8 rounded-full object-cover">
+                    @else
                     <div class="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:{{ $themeColor }}">
                         {{ auth()->user()->initials() }}
                     </div>
+                    @endif
                     <div class="min-w-0">
                         <p class="text-xs font-semibold text-white truncate">{{ auth()->user()->displayName() }}</p>
                         <p class="text-[10px]" style="color:{{ $themeColor }}">Administrator</p>

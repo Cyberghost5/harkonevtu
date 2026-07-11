@@ -99,9 +99,13 @@
             <div class="flex-shrink-0 px-4 py-4 border-b border-slate-100 dark:border-slate-800 space-y-3">
                 {{-- Avatar + name --}}
                 <div class="flex items-center gap-3">
+                     @if (auth()->user()->avatar)
+                        <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Avatar" class="h-11 w-11 rounded-2xl object-cover">
+                    @else
                     <div class="h-11 w-11 rounded-2xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md shadow-indigo-500/20">
                         {{ auth()->user()->initials() }}
                     </div>
+                    @endif
                     <div class="min-w-0">
                         <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">{{ auth()->user()->displayName() }}</p>
                         <p class="text-xs text-slate-400 dark:text-slate-500 truncate">{{ auth()->user()->email }}</p>

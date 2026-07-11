@@ -258,7 +258,7 @@
                             <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 00.099.281L10 8.583a1 1 0 00-.547.547L8.383 10.2A1 1 0 009 11.233A8.997 8.997 0 0013 15a1.003 1.003 0 001.233-.617l1.07-1.07a1 1 0 00.547-.547l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                             </svg>
-                            <span>+234 701 995 5999</span>
+                            <span>+234 903 170 4109</span>
                         </li>
                     </ul>
                 </div>
