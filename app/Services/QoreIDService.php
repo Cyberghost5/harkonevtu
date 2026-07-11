@@ -86,15 +86,22 @@ class QoreIDService
             ]);
 
             $requestHeaders = [
-                'Authorization' => 'Bearer ' . $token,
-                'Content-Type' => 'application/json',
+                'authorization' => 'Bearer ' . $token,
+                'content-type' => 'application/json',
+                'accept' => 'application/json'
+            ];
+
+            $requestPayload = [
+                'firstname' => $firstName,
+                'lastname' => $lastName,
             ];
             
             $response = Http::withHeaders($requestHeaders)
-                ->post("{$this->baseUrl}{$endpoint}/{$idNumber}", [
-                    'firstname' => $firstName,
-                    'lastname' => $lastName,
-                ]);
+                ->post("{$this->baseUrl}{$endpoint}/{$idNumber}", $requestPayload);
+
+            Log::info('QoreID Verification Response', [
+                'response' => $response->body(),
+            ]);
 
             if ($response->successful()) {
                 $data = $response->json();
