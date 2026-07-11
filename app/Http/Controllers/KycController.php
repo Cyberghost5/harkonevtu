@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApiLog;
 use App\Services\QoreIDService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
