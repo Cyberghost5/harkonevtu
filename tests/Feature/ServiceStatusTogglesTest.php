@@ -146,4 +146,45 @@ class ServiceStatusTogglesTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Generate More Accounts');
     }
+
+    public function test_manual_funding_bank_accounts_are_displayed(): void
+    {
+        $this->actingAs($this->user);
+
+        // 1. Enable manual funding service
+        AppSetting::set('service_funding_manual', '1');
+
+        // Case 1: Empty bank details state
+        $response = $this->get(route('wallet.fund.manual'));
+        $response->assertStatus(200);
+        $response->assertSee('Bank details not yet configured');
+
+        // Case 2: Use AppSetting fallback
+        AppSetting::set('bank_name', 'Setting Fallback Bank');
+        AppSetting::set('bank_account_name', 'Fallback Name');
+        AppSetting::set('bank_account_number', '12345678901');
+
+        $response = $this->get(route('wallet.fund.manual'));
+        $response->assertStatus(200);
+        $response->assertSee('Setting Fallback Bank');
+        $response->assertSee('Fallback Name');
+        $response->assertSee('12345678901');
+        $response->assertDontSee('Bank details not yet configured');
+
+        // Case 3: Add bank account in bank_accounts table (takes precedence)
+        \App\Models\BankAccount::create([
+            'bank_name' => 'Database Primary Bank',
+            'account_name' => 'Database Primary Name',
+            'account_number' => '98765432109',
+        ]);
+
+        $response = $this->get(route('wallet.fund.manual'));
+        $response->assertStatus(200);
+        $response->assertSee('Database Primary Bank');
+        $response->assertSee('Database Primary Name');
+        $response->assertSee('98765432109');
+        
+        // Settings fallback is ignored when bank accounts table is populated
+        $response->assertDontSee('Setting Fallback Bank');
+    }
 }

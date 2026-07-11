@@ -16,45 +16,75 @@
     {{-- ── Left: Form ─────────────────────────────────────────────────────── --}}
     <div class="xl:col-span-3 space-y-5">
 
-        {{-- Bank Account Card --}}
-        @if($settings['bank_account_number'] ?? false)
-        <div class="rounded-2xl bg-gradient-to-br from-vtu-primary to-indigo-700 p-5 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden">
-            <div class="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
-            <p class="text-xs font-semibold uppercase tracking-wider text-white/70 mb-4">Transfer to this account</p>
-            <div class="space-y-3">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-white/70">Bank</span>
-                    <span class="text-sm font-semibold">{{ $settings['bank_name'] ?: 'N/A' }}</span>
+        {{-- Bank Account Card(s) --}}
+        @if($bankAccounts->isNotEmpty())
+            <div class="space-y-4">
+                @foreach($bankAccounts as $account)
+                <div class="rounded-2xl bg-gradient-to-br from-vtu-primary to-indigo-700 p-5 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden">
+                    <div class="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-white/70 mb-4">Transfer to this account</p>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-white/70">Bank</span>
+                            <span class="text-sm font-semibold">{{ $account->bank_name }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-white/70">Account Name</span>
+                            <span class="text-sm font-semibold">{{ $account->account_name }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-white/70">Account Number</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg font-bold font-outfit tracking-widest">{{ $account->account_number }}</span>
+                                <button onclick="copyAccNumber('{{ $account->account_number }}', this)" class="text-white/70 hover:text-white/100 transition-colors" title="Copy">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-white/70">Account Name</span>
-                    <span class="text-sm font-semibold">{{ $settings['bank_account_name'] ?: 'N/A' }}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-white/70">Account Number</span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-lg font-bold font-outfit tracking-widest" id="acc-num">{{ $settings['bank_account_number'] }}</span>
-                        <button onclick="copyAccNumber()" class="text-white/70 hover:text-white" title="Copy">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                            </svg>
-                        </button>
+                @endforeach
+            </div>
+        @elseif($settings['bank_account_number'] ?? false)
+            <div class="rounded-2xl bg-gradient-to-br from-vtu-primary to-indigo-700 p-5 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden">
+                <div class="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-white/70 mb-4">Transfer to this account</p>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-white/70">Bank</span>
+                        <span class="text-sm font-semibold">{{ $settings['bank_name'] ?: 'N/A' }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-white/70">Account Name</span>
+                        <span class="text-sm font-semibold">{{ $settings['bank_account_name'] ?: 'N/A' }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-white/70">Account Number</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg font-bold font-outfit tracking-widest">{{ $settings['bank_account_number'] }}</span>
+                            <button onclick="copyAccNumber('{{ $settings['bank_account_number'] }}', this)" class="text-white/70 hover:text-white/100 transition-colors" title="Copy">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
         @else
-        <div class="rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 p-5">
-            <div class="flex items-start gap-3">
-                <svg class="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <div>
-                    <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">Bank details not yet configured</p>
-                    <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">The admin has not added a bank account. Please check back shortly or use card funding.</p>
+            <div class="rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 p-5">
+                <div class="flex items-start gap-3">
+                    <svg class="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">Bank details not yet configured</p>
+                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">The admin has not added a bank account. Please check back shortly or use card funding.</p>
+                    </div>
                 </div>
             </div>
-        </div>
         @endif
 
         {{-- Upload Form --}}
@@ -171,15 +201,14 @@
 
 @section('scripts')
 <script>
-    function copyAccNumber() {
-        const num = document.getElementById('acc-num')?.textContent?.trim();
-        if (!num) return;
-        navigator.clipboard.writeText(num).then(() => {
+    function copyAccNumber(text, btn) {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
             // Brief visual feedback
-            const btn = event.currentTarget;
+            const orig = btn.innerHTML;
             btn.innerHTML = '<svg class="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
             setTimeout(() => {
-                btn.innerHTML = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>';
+                btn.innerHTML = orig;
             }, 1500);
         });
     }

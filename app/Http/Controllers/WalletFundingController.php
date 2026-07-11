@@ -81,12 +81,13 @@ class WalletFundingController extends Controller implements HasMiddleware
     {
         $user     = auth()->user();
         $settings = AppSetting::getMany(['bank_name', 'bank_account_name', 'bank_account_number']);
+        $bankAccounts = \App\Models\BankAccount::orderBy('id')->get();
 
         $previousRequests = FundingRequest::where('user_id', $user->id)
             ->latest()
             ->paginate(10);
 
-        return view('wallet.fund-manual', compact('user', 'settings', 'previousRequests'));
+        return view('wallet.fund-manual', compact('user', 'settings', 'bankAccounts', 'previousRequests'));
     }
 
     public function coupon(): View
