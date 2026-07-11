@@ -70,7 +70,7 @@ class QoreIDService
             ];
         }
 
-        $endpoint = $type === 'bvn' ? '/v1/ng/identities/bvn-basic' : '/v1/ng/identities/nin';
+        $endpoint = $type === 'bvn' ? '/v1/ng/identities/bvn-match' : '/v1/ng/identities/nin';
         
         try {
             Log::info('QoreID Verification Request', [
