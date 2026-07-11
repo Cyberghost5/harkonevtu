@@ -98,8 +98,22 @@
             </p>
         </div>
 
-        {{-- Option to generate more (if not all 3 yet) --}}
-        @if($accounts->count() < 3)
+        {{-- Option to generate more (if any configured gateway accounts are missing) --}}
+        @php
+            $hasPaystack = $accounts->where('provider', 'paystack')->isNotEmpty();
+            $hasFlutterwave = $accounts->where('provider', 'flutterwave')->isNotEmpty();
+            $hasMonnify = $accounts->where('provider', 'monnify')->isNotEmpty();
+            
+            $paystackEnabled = !empty(\App\Models\AppSetting::get('paystack_secret_key'));
+            $flutterwaveEnabled = !empty(\App\Models\AppSetting::get('flutterwave_secret_key'));
+            $monnifyEnabled = !empty(\App\Models\AppSetting::get('monnify_api_key'));
+            
+            $canGenerateMore = ($paystackEnabled && !$hasPaystack) ||
+                               ($flutterwaveEnabled && !$hasFlutterwave) ||
+                               ($monnifyEnabled && !$hasMonnify);
+        @endphp
+
+        @if($canGenerateMore)
         <div class="flex justify-center">
             <button onclick="openBvnModal()"
                     class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-300 dark:border-indigo-500/40 text-vtu-primary hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">

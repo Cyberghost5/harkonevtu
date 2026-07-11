@@ -142,12 +142,14 @@ class KycVerificationTest extends TestCase
 
         // Fake QoreID API endpoints
         Http::fake([
-            'https://sandbox.qoreid.com/token' => Http::response([
+            'https://api.qoreid.com/token' => Http::response([
                 'accessToken' => 'mock_token_abc123'
             ], 200),
-            'https://sandbox.qoreid.com/v1/ng/identities/nin' => Http::response([
-                'status' => [
-                    'state' => 'VERIFIED'
+            'https://api.qoreid.com/v1/ng/identities/nin/*' => Http::response([
+                'summary' => [
+                    'nin_match' => [
+                        'status' => 'MATCH'
+                    ]
                 ]
             ], 200),
         ]);

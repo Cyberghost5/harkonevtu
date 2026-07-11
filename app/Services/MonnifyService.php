@@ -56,7 +56,7 @@ class MonnifyService
     /**
      * Reserve accounts (DVA) for a user.
      */
-    public static function generateReservedAccounts(\App\Models\User $user): array
+    public static function generateReservedAccounts(\App\Models\User $user, $bvn): array
     {
         $accessToken = self::getAccessToken();
         if (!$accessToken) {
@@ -77,6 +77,7 @@ class MonnifyService
             'contractCode'         => $contractCode,
             'customerEmail'        => $user->email,
             'customerName'         => $user->name,
+            'bvn'                  => $bvn,
             'getAllAvailableBanks' => true
         ];
 

@@ -82,4 +82,68 @@ class ServiceStatusTogglesTest extends TestCase
         $response->assertRedirect(route('dashboard'));
         $response->assertSessionHas('error', 'Coupon Funding is currently disabled.');
     }
+
+    public function test_auto_bank_funding_more_accounts_button_visibility(): void
+    {
+        $this->actingAs($this->user);
+
+        // Enable auto bank transfer
+        AppSetting::set('service_funding_auto_bank', '1');
+
+        // Case 1: No accounts at all -> empty state (should show main generate button)
+        $response = $this->get(route('wallet.fund.auto'));
+        $response->assertStatus(200);
+        $response->assertSee('Generate Virtual Accounts');
+        $response->assertDontSee('Generate More Accounts');
+
+        // Case 2: Configured Paystack and Flutterwave, but user only generated Paystack (2 accounts)
+        AppSetting::set('paystack_secret_key', 'mock_sk');
+        AppSetting::set('flutterwave_secret_key', 'mock_flw_sk');
+        
+        \App\Models\VirtualAccount::create([
+            'user_id' => $this->user->id,
+            'provider' => 'paystack',
+            'bank_name' => 'Wema Bank',
+            'bank_code' => 'wema-bank',
+            'account_number' => '1234567890',
+            'account_name' => $this->user->name,
+        ]);
+        \App\Models\VirtualAccount::create([
+            'user_id' => $this->user->id,
+            'provider' => 'paystack',
+            'bank_name' => 'Titan Trust',
+            'bank_code' => 'titan-paystack',
+            'account_number' => '1234567891',
+            'account_name' => $this->user->name,
+        ]);
+
+        // Has 2 accounts from Paystack. Flutterwave is enabled but missing.
+        // It should see the "Generate More Accounts" button.
+        $response = $this->get(route('wallet.fund.auto'));
+        $response->assertStatus(200);
+        $response->assertSee('Generate More Accounts');
+
+        // Case 3: Let's also add Flutterwave account, so we have 3 accounts.
+        \App\Models\VirtualAccount::create([
+            'user_id' => $this->user->id,
+            'provider' => 'flutterwave',
+            'bank_name' => 'Sterling Bank',
+            'bank_code' => 'flutterwave_dva',
+            'account_number' => '1234567892',
+            'account_name' => $this->user->name,
+        ]);
+
+        // Total count is 3. Paystack and Flutterwave are enabled and have accounts.
+        // "Generate More Accounts" button should NOT be visible.
+        $response = $this->get(route('wallet.fund.auto'));
+        $response->assertStatus(200);
+        $response->assertDontSee('Generate More Accounts');
+
+        // Case 4: Enable Monnify but it is missing.
+        // Now canGenerateMore should be true again! (Even though count is 3)
+        AppSetting::set('monnify_api_key', 'mock_monnify_key');
+        $response = $this->get(route('wallet.fund.auto'));
+        $response->assertStatus(200);
+        $response->assertSee('Generate More Accounts');
+    }
 }

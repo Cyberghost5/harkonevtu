@@ -142,6 +142,7 @@ class WalletFundingController extends Controller implements HasMiddleware
                     ->post('https://api.paystack.co/dedicated_account', [
                         'customer'       => $customerCode,
                         'preferred_bank' => $bankCode,
+                        'phone'          => $user->phone,
                     ]);
 
                 if ($resp->successful() && $resp->json('status') === true) {
@@ -178,10 +179,10 @@ class WalletFundingController extends Controller implements HasMiddleware
                     ->timeout(20)
                     ->post('https://api.flutterwave.com/v3/virtual-account-numbers', [
                         'email'        => $user->email,
+                        'currency'     => 'NGN',
                         'is_permanent' => true,
                         'bvn'          => $bvn,
                         'tx_ref'       => 'DVA_FLW_' . $user->id . '_' . time(),
-                        'currency'     => 'NGN',
                         'narration'    => $user->name,
                     ]);
 
@@ -220,7 +221,7 @@ class WalletFundingController extends Controller implements HasMiddleware
                         $results[] = $acc->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
                     }
                 } else {
-                    $data = \App\Services\MonnifyService::generateReservedAccounts($user);
+                    $data = \App\Services\MonnifyService::generateReservedAccounts($user, $bvn);
                     if (!empty($data['accounts'])) {
                         foreach ($data['accounts'] as $acc) {
                             $va = VirtualAccount::create([
@@ -285,15 +286,15 @@ class WalletFundingController extends Controller implements HasMiddleware
         $customerCode = $resp->json('data.customer_code');
 
         // Submit BVN for identity validation (best-effort, non-blocking)
-        Http::withToken(config('services.paystack.secret_key'))
-            ->timeout(20)
-            ->post("https://api.paystack.co/customer/{$customerCode}/identification", [
-                'country'    => 'NG',
-                'type'       => 'bvn',
-                'value'      => $bvn,
-                'first_name' => $nameParts[0],
-                'last_name'  => $nameParts[1] ?? '',
-            ]);
+        // Http::withToken(config('services.paystack.secret_key'))
+        //     ->timeout(20)
+        //     ->post("https://api.paystack.co/customer/{$customerCode}/identification", [
+        //         'country'    => 'NG',
+        //         'type'       => 'bvn',
+        //         'value'      => $bvn,
+        //         'first_name' => $nameParts[0],
+        //         'last_name'  => $nameParts[1] ?? '',
+        //     ]);
 
         return $customerCode;
     }
