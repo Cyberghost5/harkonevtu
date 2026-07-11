@@ -31,6 +31,7 @@ class KycController extends Controller
      */
     public function submit(Request $request): JsonResponse
     {
+        $start = hrtime(true);
         $user = auth()->user();
 
         if ($user->kyc_status === 'verified') {
@@ -48,6 +49,7 @@ class KycController extends Controller
         $parts = explode(' ', trim($user->name), 2);
         $firstname = trim($parts[0] ?? '');
         $lastname = trim($parts[1] ?? '');
+        $reference = 'KYC-' . date('YmdHis') . Str::upper(Str::random(10));
 
         if (empty($firstname) || empty($lastname)) {
             return response()->json([
@@ -80,7 +82,7 @@ class KycController extends Controller
                     'balance_before' => $before,
                     'balance_after'  => $wallet->balance,
                     'description'    => 'KYC Verification Fee (' . strtoupper($request->id_type) . ')',
-                    'reference'      => 'KYC-' . strtoupper(uniqid()),
+                    'reference'      => $reference,
                     'status'         => 'success',
                 ]);
             });
@@ -117,6 +119,33 @@ class KycController extends Controller
             $firstname,
             $lastname
         );
+        $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+        // Log the ApiLog response
+        ApiLog::create([
+            'user_id' => $user->id,
+            'service' => 'kyc',
+            'provider' => 'qoreid',
+            'reference' => $reference,
+            'endpoint' => 'https://api.qoreid.com/v1/ng/identities/'.$request->id_type,
+            'method' => 'POST',
+            'payload' => [
+                'id_type' => $request->id_type,
+                'id_number' => $request->id_number,
+                'first_name' => $firstname,
+                'last_name' => $lastname,
+            ],
+            'request_headers' => [
+                'Authorization' => 'Bearer ' . config('services.qoreid.api_key'),
+                'Content-Type'  => 'application/json',
+            ],
+            'response' => $result,
+            'http_status' => $result['status'] ? 200 : 422,
+            'response_headers' => $result['headers'] ?? [],
+            'duration_ms' => $duration,
+            'success' => $result['status'],
+        ]);
+        
 
         if ($result['status']) {
             $user->update(['kyc_status' => 'verified']);
