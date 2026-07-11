@@ -70,7 +70,7 @@ class KycController extends Controller
                 ], 422);
             }
 
-            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $wallet, $fee, $request) {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $wallet, $fee, $request, $reference) {
                 $before = $wallet->balance;
                 $wallet->decrement('balance', $fee);
                 $wallet->increment('total_spent', $fee);
