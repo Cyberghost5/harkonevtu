@@ -362,9 +362,15 @@
 
                     {{-- Profile Dropdown --}}
                     <div class="relative">
+                        @if(auth()->user()->avatar)
+                        <button onclick="toggleProfileDropdown(event)" id="profile-btn" class="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-vtu-primary/50">
+                            <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Avatar" class="h-8 w-8 rounded-full object-cover">
+                        </button>
+                        @else
                         <button onclick="toggleProfileDropdown(event)" id="profile-btn" class="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-vtu-primary/50" style="background:{{ $themeColor }}">
                             {{ auth()->user()->initials() }}
                         </button>
+                        @endif
                         
                         <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden">
                             <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
