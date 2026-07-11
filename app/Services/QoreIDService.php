@@ -84,8 +84,13 @@ class QoreIDService
                 ],
                 'endpoint' => "{$this->baseUrl}{$endpoint}/{$idNumber}",
             ]);
+
+            $requestHeaders = [
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json',
+            ];
             
-            $response = Http::withToken($token)
+            $response = Http::withHeaders($requestHeaders)
                 ->post("{$this->baseUrl}{$endpoint}/{$idNumber}", [
                     'firstname' => $firstName,
                     'lastname' => $lastName,
