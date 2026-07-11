@@ -112,9 +112,18 @@ class QoreIDService
                 $data = $response->json();
                 
                 // QoreID match verification payload response check
-                $statusState = $data['status']['state'] ?? null;
-                if ($statusState === 'VERIFIED' || $statusState === 'MATCH') {
-                    return ['status' => true, 'data' => $data];
+                if($type == 'bvn'){
+                    $statusState = $data['summary']['bvn_match_check']['status'] ?? null;
+                    if ($statusState === 'PARTIAL_MATCH' || $statusState === 'MATCH' || $statusState === 'EXACT_MATCH') {
+                        return ['status' => true, 'data' => $data];
+                    }   
+                }
+
+                if($type == 'nin'){
+                    $statusState = $data['summary']['nin_match']['status'] ?? null;
+                    if ($statusState === 'PARTIAL_MATCH' || $statusState === 'MATCH' || $statusState === 'EXACT_MATCH') {
+                        return ['status' => true, 'data' => $data];
+                    }   
                 }
                 
                 return [
