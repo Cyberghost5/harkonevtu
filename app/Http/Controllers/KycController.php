@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\QoreIDService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
