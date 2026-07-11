@@ -53,12 +53,12 @@ class ElectricityController extends Controller
         $meterType   = $request->meter_type;
         $meterNumber = $request->meter_number;
 
-        $api = AppSetting::get('electricity_api', 'vtpass');
+        $api = AppSetting::get('electricity_api', 'easyaccess');
 
         return match ($api) {
             'easyaccess' => $this->validateMeterEasyaccess($disco, $meterType, $meterNumber),
             'payscribe'  => $this->validateMeterPayscribe($disco, $meterType, $meterNumber),
-            default      => $this->validateMeterVtpass($disco, $meterType, $meterNumber),
+            'vtpass'      => $this->validateMeterVtpass($disco, $meterType, $meterNumber),
         };
     }
 
