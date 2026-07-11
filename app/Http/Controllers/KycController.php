@@ -34,7 +34,7 @@ class KycController extends Controller
     {
         $start = hrtime(true);
         $user = auth()->user();
-        $reference = 'KYC-' . date('YmdHis') . Str::upper(Str::random(10));
+        $reference = 'KYC-' . strtoupper(uniqid());
 
         if ($user->kyc_status === 'verified') {
             return response()->json([
