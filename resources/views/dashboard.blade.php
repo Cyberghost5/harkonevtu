@@ -142,6 +142,15 @@
             <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Exam Pins</span>
         </a>
 
+        <a href="{{ route('services.betting') }}" class="group flex flex-col items-center gap-3 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-400/40 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all duration-200">
+            <div class="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/20 transition-colors">
+                <svg class="h-6 w-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z"/>
+                </svg>
+            </div>
+            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Betting</span>
+        </a>
+
         <a href="{{ route('services.print-pins', ['type' => 'airtime']) }}" class="group flex flex-col items-center gap-3 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-400/40 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all duration-200">
             <div class="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/20 transition-colors">
                 <svg class="h-6 w-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -149,15 +158,6 @@
                 </svg>
             </div>
             <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight">Recharge Card<br>PIN</span>
-        </a>
-
-        <a href="{{ route('services.print-pins', ['type' => 'data']) }}" class="group flex flex-col items-center gap-3 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-teal-400/40 hover:shadow-lg hover:shadow-teal-500/10 hover:-translate-y-0.5 transition-all duration-200">
-            <div class="h-12 w-12 rounded-2xl bg-teal-50 dark:bg-teal-500/10 flex items-center justify-center group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20 transition-colors">
-                <svg class="h-6 w-6 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                </svg>
-            </div>
-            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Data Card</span>
         </a>
 
         <a href="{{ route('settings') }}" class="group flex flex-col items-center gap-3 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-400/40 hover:shadow-lg hover:shadow-slate-500/10 hover:-translate-y-0.5 transition-all duration-200">
