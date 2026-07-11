@@ -40,7 +40,7 @@
                             $networkBorders[$net->network_key] = $s['border'];
                             $networkLabels[$net->network_key]  = $net->name;
                         }
-                        $typeLabels   = ['sme' => 'SME', 'gifting' => 'Gifting', 'cg' => 'Corp. Gifting', 'awoof' => 'AWOOF'];
+                        $typeLabels   = ['sme' => 'SME', 'gifting' => 'Gifting', 'cg' => 'Corp. Gifting', 'awoof' => 'Awoof'];
                         $networkNames = $networkLabels; // plain assoc array for JS
                     @endphp
                     <div>
@@ -307,7 +307,7 @@
 <script>
 // ─── State ──────────────────────────────────────────────────────────────────
 const DATA_TYPES  = @json($dataTypes);   // { mtn: ['sme','awoof','gifting'], ... }
-const TYPE_LABELS = { cheap_data: 'Cheap Data', sme: 'SME', gifting: 'Gifting', cg: 'Corp. Gifting', awoof: 'AWOOF' };
+const TYPE_LABELS = { cheap_data: 'Cheap Data', sme: 'SME', gifting: 'Gifting', cg: 'Corp. Gifting', awoof: 'Awoof' };
 const DISCOUNTS   = @json($discounts);   // { mtn: 0, glo: 0, ... }
 const WALLET_BAL  = {{ (float) auth()->user()->wallet?->balance ?? 0 }};
 

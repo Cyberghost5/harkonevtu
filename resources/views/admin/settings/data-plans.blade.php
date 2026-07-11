@@ -30,7 +30,7 @@
         'sme'        => 'SME',
         'gifting'    => 'Gifting',
         'cg'         => 'Corp. Gifting',
-        'awoof'      => 'AWOOF',
+        'awoof'      => 'Awoof',
         'cheap_data' => 'Cheap Data',
     ];
 @endphp
@@ -171,7 +171,7 @@
                         <option value="sme">SME</option>
                         <option value="gifting">Gifting</option>
                         <option value="cg">Corp. Gifting</option>
-                        <option value="awoof">AWOOF</option>
+                        <option value="awoof">Awoof</option>
                         <option value="cheap_data">Cheap Data</option>
                     </select>
                 </div>
@@ -252,7 +252,7 @@
                         <option value="sme">SME</option>
                         <option value="gifting">Gifting</option>
                         <option value="cg">Corp. Gifting</option>
-                        <option value="awoof">AWOOF</option>
+                        <option value="awoof">Awoof</option>
                         <option value="cheap_data">Cheap Data</option>
                     </select>
                 </div>

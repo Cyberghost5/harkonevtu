@@ -39,7 +39,7 @@ class DataController extends Controller
         'sme'        => 'SME',
         'gifting'    => 'Gifting',
         'cg'         => 'Corporate Gifting',
-        'awoof'      => 'AWOOF',
+        'awoof'      => 'Awoof',
     ];
 
     // ─── Pages ────────────────────────────────────────────────────────────────
@@ -374,7 +374,7 @@ class DataController extends Controller
 
         $requestHeaders = [
             'api-key'    => config('services.vtpass.api_key'),
-            'public-key' => config('services.vtpass.public_key'),
+            'secret-key' => config('services.vtpass.secret_key'),
         ];
         $responseHeaders = null;
         $start = hrtime(true);
