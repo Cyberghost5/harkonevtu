@@ -53,7 +53,7 @@ class ElectricityController extends Controller
         $meterType   = $request->meter_type;
         $meterNumber = $request->meter_number;
 
-        $api = AppSetting::get('electricity_api', 'easyaccess');
+        $api = AppSetting::get('electricity_api', 'vtpass');
 
         return match ($api) {
             'easyaccess' => $this->validateMeterEasyaccess($disco, $meterType, $meterNumber),
@@ -255,8 +255,8 @@ class ElectricityController extends Controller
     {
         $endpoint   = config('services.vtpass.base_url') . '/api/merchant-verify';
         $payload    = [
-            'serviceID'   => $disco->slug,
             'billersCode' => $meterNumber,
+            'serviceID'   => $disco->slug,
             'type'        => $meterType,
         ];
         $data       = [];
@@ -266,7 +266,7 @@ class ElectricityController extends Controller
 
         $requestHeaders = [
             'api-key'    => config('services.vtpass.api_key'),
-            'public-key' => config('services.vtpass.public_key'),
+            'secret-key' => config('services.vtpass.secret_key'),
         ];
         $responseHeaders = null;
         $start = hrtime(true);
@@ -499,7 +499,7 @@ class ElectricityController extends Controller
 
         $requestHeaders = [
             'api-key'    => config('services.vtpass.api_key'),
-            'public-key' => config('services.vtpass.public_key'),
+            'secret-key' => config('services.vtpass.secret_key'),
         ];
         $responseHeaders = null;
         $start = hrtime(true);
