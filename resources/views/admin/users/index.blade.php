@@ -63,9 +63,13 @@
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                     <td class="px-5 py-3">
                         <div class="flex items-center gap-2.5">
+                            @if ($user->avatar)
+                                <img src="{{ Storage::url($user->avatar) }}" alt="Avatar" class="h-8 w-8 rounded-2xl object-cover">
+                            @else
                             <div class="h-8 w-8 rounded-xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                                 {{ $user->initials() }}
                             </div>
+                            @endif
                             <div>
                                 <p class="font-medium text-slate-900 dark:text-white text-xs">{{ $user->name }}</p>
                                 <p class="text-[10px] text-slate-400">{{ $user->username }}</p>

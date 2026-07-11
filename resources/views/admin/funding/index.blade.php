@@ -29,9 +29,13 @@
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <div class="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-b border-slate-100 dark:border-slate-800">
             <div class="flex items-center gap-3">
+                @if ($req->user->avatar)
+                    <img src="{{ Storage::url($req->user->avatar) }}" alt="Avatar" class="h-9 w-9 rounded-2xl object-cover">
+                @else
                 <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                     {{ $req->user->initials() }}
                 </div>
+                @endif
                 <div>
                     <a href="{{ route('admin.users.show', $req->user) }}" class="text-sm font-semibold text-slate-900 dark:text-white hover:underline">{{ $req->user->name }}</a>
                     <p class="text-xs text-slate-400">{{ $req->user->email }} &middot; {{ $req->user->phone }}</p>

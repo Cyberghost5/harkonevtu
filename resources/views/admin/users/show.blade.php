@@ -14,9 +14,13 @@
         {{-- Profile Card --}}
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
             <div class="flex items-center gap-3 mb-4">
-                <div class="h-12 w-12 rounded-2xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center text-white font-bold text-base flex-shrink-0">
-                    {{ $user->initials() }}
-                </div>
+                @if ($user->avatar)
+                    <img src="{{ Storage::url($user->avatar) }}" alt="Avatar" class="h-12 w-12 rounded-2xl object-cover">
+                @else
+                    <div class="h-12 w-12 rounded-2xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center text-white font-bold text-base flex-shrink-0">
+                        {{ $user->initials() }}
+                    </div>
+                @endif
                 <div>
                     <p class="font-semibold text-slate-900 dark:text-white">{{ $user->name }}</p>
                     <p class="text-xs text-slate-400">{{ $user->username }}</p>
