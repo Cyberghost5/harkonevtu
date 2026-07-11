@@ -74,8 +74,7 @@ class QoreIDService
 
         try {
             $response = Http::withToken($token)
-                ->post("{$this->baseUrl}{$endpoint}", [
-                    $type => $idNumber,
+                ->post("{$this->baseUrl}{$endpoint}/{$idNumber}", [
                     'firstname' => $firstName,
                     'lastname' => $lastName,
                 ]);
