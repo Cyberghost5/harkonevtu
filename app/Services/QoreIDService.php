@@ -71,8 +71,20 @@ class QoreIDService
         }
 
         $endpoint = $type === 'bvn' ? '/v1/ng/identities/bvn' : '/v1/ng/identities/nin';
-
+        
         try {
+            Log::info('QoreID Verification Request', [
+                'type' => $type,
+                'idNumber' => $idNumber,
+                'firstName' => $firstName,
+                'lastName' => $lastName,
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type' => 'application/json',
+                ],
+                'endpoint' => "{$this->baseUrl}{$endpoint}/{$idNumber}",
+            ]);
+            
             $response = Http::withToken($token)
                 ->post("{$this->baseUrl}{$endpoint}/{$idNumber}", [
                     'firstname' => $firstName,
