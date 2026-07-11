@@ -287,7 +287,7 @@ class AirtimeController extends Controller
 
         $requestHeaders = [
             'api-key'    => config('services.vtpass.api_key'),
-            'public-key' => config('services.vtpass.public_key'),
+            'secret-key' => config('services.vtpass.secret_key'),
         ];
         $responseHeaders = null;
         $start = hrtime(true);
