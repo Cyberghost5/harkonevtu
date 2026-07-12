@@ -404,9 +404,14 @@ class ElectricityController extends Controller
     private function validateMeterEasyaccess(ElectricityDisco $disco, string $meterType, string $meterNumber): JsonResponse
     {
         $endpoint   = config('services.easyaccess.base_url') . '/api/verifyelectricity.php';
+        if($meterType === 'prepaid') {
+            $meterTypeRequest = '1';
+        } else {
+            $meterTypeRequest = '2';
+        }
         $payload    = [
             'company'   => $disco->idForApi('easyaccess'),
-            'metertype' => $meterType,
+            'metertype' => $meterTypeRequest,
             'meterno'   => $meterNumber,
         ];
         $data       = [];
@@ -647,9 +652,14 @@ class ElectricityController extends Controller
         string $reference
     ): array {
         $endpoint = config('services.easyaccess.base_url') . '/pay-electricity';
+        if($meterType === 'prepaid') {
+            $meterTypeRequest = '1';
+        } else {
+            $meterTypeRequest = '2';
+        }
         $payload  = [
             'company'   => $disco->idForApi('easyaccess'),
-            'metertype' => $meterType,
+            'metertype' => $meterTypeRequest,
             'meterno'   => $meterNumber,
             'amount'    => (int) $amount,
         ];
