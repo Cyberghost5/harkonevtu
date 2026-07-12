@@ -35,7 +35,7 @@ class OneSignalService
         }
 
         $requestHeaders = [
-            'Authorization' => 'Basic ' . $apiKey,
+            'Authorization' => $apiKey,
             'Content-Type'  => 'application/json;',
         ];
 
