@@ -672,7 +672,7 @@ class ElectricityController extends Controller
         $customerName = null;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
+            'AuthorizationToken' => config('services.easyaccess.token'),
             'Cache-Control' => 'no-cache',
         ];
         $responseHeaders = null;
