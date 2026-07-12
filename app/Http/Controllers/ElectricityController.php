@@ -403,7 +403,7 @@ class ElectricityController extends Controller
 
     private function validateMeterEasyaccess(ElectricityDisco $disco, string $meterType, string $meterNumber): JsonResponse
     {
-        $endpoint   = config('services.easyaccess.base_url') . '/api/verifyelectricity.php';
+        $endpoint   = config('services.easyaccess.base_url') . '/verify-electricity';
         if($meterType === 'prepaid') {
             $meterTypeRequest = '1';
         } else {
