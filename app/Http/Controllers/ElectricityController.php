@@ -685,7 +685,7 @@ class ElectricityController extends Controller
             $data       = is_array($raw) ? $raw : ['message' => 'Unknown EasyAccess response'];
             $statusCode = $data['status'] ?? 'false';
             $msgCode    = $data['code']  ?? '';
-            $success    = ($statusCode === 'success') && ($msgCode === '200');
+            // $success    = ($statusCode === 'success') && ($msgCode === '200');
 
             if ($msgCode === '200') {
                 $msg  = $data['message'] ?? [];
@@ -694,9 +694,11 @@ class ElectricityController extends Controller
                 $units    = $data['meter_units'] ?? $msg['mainTokenUnit'] ?? $msg['units'] ?? null;
                 // Fetch customer name via a follow-up verify call (best-effort)
                 $customerName = $data['customer_name'];
+                $success = true;
             } else {
                 $errorMsg = $data['message'] ?? 'EasyAccess electricity vending failed.';
                 $data['message'] = is_array($errorMsg) ? ($errorMsg['content'] ?? json_encode($errorMsg)) : $errorMsg;
+                $success = false;
             }
         } catch (\Exception $e) {
             $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
