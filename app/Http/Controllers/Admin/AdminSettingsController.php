@@ -223,13 +223,13 @@ class AdminSettingsController extends Controller
         $cableIntegrated     = ['vtpass', 'easyaccess', 'payscribe'];
         $cableProviders      = array_values(array_intersect($availableProviders, $cableIntegrated));
 
-        $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller', 'mtn_ers'];
+        $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller'];
         $epinsProviders      = array_values(array_intersect($availableProviders, $epinsIntegrated));
 
         $datacardIntegrated  = ['vtpass'];
         $datacardProviders   = array_values(array_intersect($availableProviders, $datacardIntegrated));
 
-        $airtimePinIntegrated = ['vtpass'];
+        $airtimePinIntegrated = ['vtpass', 'mtn_ers'];
         $airtimePinProviders  = array_values(array_intersect($availableProviders, $airtimePinIntegrated));
 
         $bettingIntegrated   = ['payscribe'];

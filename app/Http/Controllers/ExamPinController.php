@@ -186,7 +186,7 @@ class ExamPinController extends Controller
         return match ($api) {
             'easyaccess'  => $this->callEasyaccessExamPin($examType, $quantity, $reference),
             'primebiller' => $this->callPrimebillerExamPin($examType, $quantity, $reference),
-            default       => $this->callVtpassExamPin($examType, $quantity, $phone, $reference),
+            'vtpass'       => $this->callVtpassExamPin($examType, $quantity, $phone, $reference),
         };
     }
 
@@ -202,9 +202,8 @@ class ExamPinController extends Controller
         $endpoint  = config('services.vtpass.base_url') . '/api/pay';
         $payload   = [
             'request_id'   => $vtpassRef,
-            'serviceID'    => $examType->vtpass_service_id,
-            'billersCode'  => $phone,
-            'amount'       => (int) $examType->amount,
+            'serviceID'    => $examType->slug,
+            'variation_code' => $examType->vtpass_service_id,
             'phone'        => $phone,
             'quantity'     => $quantity,
         ];
@@ -217,7 +216,7 @@ class ExamPinController extends Controller
 
         $requestHeaders = [
             'api-key'    => config('services.vtpass.api_key'),
-            'public-key' => config('services.vtpass.public_key'),
+            'secret-key' => config('services.vtpass.secret_key'),
         ];
         $start = hrtime(true);
         try {
