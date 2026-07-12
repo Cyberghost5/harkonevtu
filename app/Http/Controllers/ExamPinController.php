@@ -232,11 +232,11 @@ class ExamPinController extends Controller
 
             if ($success) {
                 // VTPass may return pins as an array under 'pins', or as token/token2/…
-                if (!empty($txn['pins']) && is_array($txn['pins'])) {
-                    foreach ($txn['pins'] as $p) {
+                if (!empty($data['cards']) && is_array($data['cards'])) {
+                    foreach ($data['cards'] as $p) {
                         $pins[] = [
-                            'pin'    => $p['pin']          ?? ($p['token']  ?? ''),
-                            'serial' => $p['serialnumber'] ?? ($p['serial'] ?? null),
+                            'pin'    => $p['pin']          ?? ($p['Pin']  ?? ''),
+                            'serial' => $p['serialnumber'] ?? ($p['Serial'] ?? null),
                         ];
                     }
                 } else {
