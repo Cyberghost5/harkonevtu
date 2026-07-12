@@ -685,9 +685,8 @@ class ElectricityController extends Controller
             $data       = is_array($raw) ? $raw : ['message' => 'Unknown EasyAccess response'];
             $statusCode = $data['status'] ?? 'false';
             $msgCode    = $data['code']  ?? '';
-            // $success    = ($statusCode === 'success') && ($msgCode === '200');
 
-            if ($msgCode === '200') {
+            if ($msgCode === 200) {
                 $msg  = $data['message'] ?? [];
                 $rawToken = $data['token'] ?? $msg['mainToken'] ?? $msg['token'] ?? $msg['Token'] ?? null;
                 $token    = $rawToken ? preg_replace('/^Token\s*:\s*/i', '', trim((string) $rawToken)) : null;
