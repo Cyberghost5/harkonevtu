@@ -344,7 +344,7 @@ class CableController extends Controller
 
             if ($status) {
                 $content = $data['message']['content'] ?? $data['message'] ?? [];
-                $name    = is_array($content) ? ($content['Customer_Name'] ?? $content['name'] ?? $content['customer_name'] ?? $data['customer_name']) : null;
+                $name    = $data['customer_name'] ?? null; //is_array($content) ? ($content['Customer_Name'] ?? $content['name'] ?? $content['customer_name'] ?? $data['customer_name']) : null;
                 $success = true;
                 $result  = response()->json([
                     'success'       => true,
