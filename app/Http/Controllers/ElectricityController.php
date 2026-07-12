@@ -431,15 +431,14 @@ class ElectricityController extends Controller
             $httpStatus      = $httpResponse->status();
             $responseHeaders = $httpResponse->headers();
             $data            = $httpResponse->json() ?? [];
-            $status     = $data['success'] ?? 'false';
+            $status     = isset($data['status']) ? ($data['status'] === 'success') : ($data['code'] === 100);
 
-            if ($status === 'true') {
-                $content = $data['message']['content'] ?? [];
+            if ($status) {
                 $success = true;
                 $result  = response()->json([
                     'success'          => true,
-                    'customer_name'    => $content['Customer_Name'] ?? null,
-                    'customer_address' => $content['Address']       ?? null,
+                    'customer_name'    => $data['customer_name'] ?? null,
+                    'customer_address' => $data['customer_address'] ?? null,
                     'meter_number'     => $meterNumber,
                 ]);
             } else {
