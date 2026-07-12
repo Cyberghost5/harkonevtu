@@ -431,7 +431,7 @@ class ElectricityController extends Controller
             $httpStatus      = $httpResponse->status();
             $responseHeaders = $httpResponse->headers();
             $data            = $httpResponse->json() ?? [];
-            $status     = isset($data['status']) ? ($data['status'] === 'success') : ($data['code'] === 100);
+            $status          = isset($data['status']) ? ($data['status'] === 'success') : ($data['code'] === 100);
 
             if ($status) {
                 $success = true;
@@ -683,17 +683,17 @@ class ElectricityController extends Controller
             $responseHeaders = $response->headers();
             $raw        = $response->json();
             $data       = is_array($raw) ? $raw : ['message' => 'Unknown EasyAccess response'];
-            $statusCode = $data['success']          ?? 'false';
-            $msgCode    = $data['message']['code']  ?? '';
-            $success    = ($statusCode === 'true') && ($msgCode === '000');
+            $statusCode = $data['status'] ?? 'false';
+            $msgCode    = $data['code']  ?? '';
+            $success    = ($statusCode === 'success') && ($msgCode === '200');
 
             if ($success) {
                 $msg  = $data['message'] ?? [];
-                $rawToken = $msg['mainToken'] ?? $msg['token'] ?? $msg['Token'] ?? null;
+                $rawToken = $data['token'] ?? $msg['mainToken'] ?? $msg['token'] ?? $msg['Token'] ?? null;
                 $token    = $rawToken ? preg_replace('/^Token\s*:\s*/i', '', trim((string) $rawToken)) : null;
-                $units    = $msg['mainTokenUnit'] ?? $msg['units'] ?? null;
+                $units    = $data['meter_units'] ?? $msg['mainTokenUnit'] ?? $msg['units'] ?? null;
                 // Fetch customer name via a follow-up verify call (best-effort)
-                $customerName = null;
+                $customerName = $data['customer_name'];
             } else {
                 $errorMsg = $data['message'] ?? 'EasyAccess electricity vending failed.';
                 $data['message'] = is_array($errorMsg) ? ($errorMsg['content'] ?? json_encode($errorMsg)) : $errorMsg;
