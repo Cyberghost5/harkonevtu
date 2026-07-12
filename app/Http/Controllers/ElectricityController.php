@@ -245,7 +245,7 @@ class ElectricityController extends Controller
         return match ($api) {
             'easyaccess' => $this->callEasyaccessElectricity($disco, $meterType, $meterNumber, $amount, $reference),
             'payscribe'  => $this->callPayscribeElectricity($disco, $meterType, $meterNumber, $amount, $reference),
-            default      => $this->callVtpassElectricity($disco, $meterType, $meterNumber, $amount, $phone, $reference),
+            'vtpass'      => $this->callVtpassElectricity($disco, $meterType, $meterNumber, $amount, $phone, $reference),
         };
     }
 
@@ -515,10 +515,10 @@ class ElectricityController extends Controller
 
             if ($success) {
                 $txn          = $data['content']['transactions'] ?? [];
-                $rawToken     = $txn['token'] ?? $data['purchased_code'] ?? null;
+                $rawToken     = $txn['token'] ?? $data['purchased_code'] ?? $data['Token'] ?? null;
                 $token        = $rawToken ? preg_replace('/^Token\s*:\s*/i', '', trim((string) $rawToken)) : null;
-                $units        = $txn['units'] ?? null;
-                $customerName = $txn['customerName'] ?? $data['customerName'] ?? null;
+                $units        = $txn['units'] ?? $data['RefundUnits'] ?? $data['FreeUnits'] ?? null;
+                $customerName = $txn['customerName'] ?? $data['customerName'] ?? $data['Name'] ?? null;
             } else {
                 $data['message'] = $data['response_description'] ?? 'Electricity vending failed.';
             }
