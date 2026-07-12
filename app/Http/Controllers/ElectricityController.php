@@ -413,6 +413,7 @@ class ElectricityController extends Controller
             'company'   => $disco->idForApi('easyaccess'),
             'metertype' => $meterTypeRequest,
             'meterno'   => $meterNumber,
+            'amount' => '1000',
         ];
         $data       = [];
         $httpStatus = null;
