@@ -340,11 +340,11 @@ class CableController extends Controller
             $httpStatus      = $httpResponse->status();
             $responseHeaders = $httpResponse->headers();
             $data            = $httpResponse->json() ?? [];
-            $status     = $data['success'] ?? 'false';
+            $status          = isset($data['status']) ? ($data['status'] === 'success') : ($data['code'] === 200);
 
-            if ($status === 'true') {
+            if ($status) {
                 $content = $data['message']['content'] ?? $data['message'] ?? [];
-                $name    = is_array($content) ? ($content['Customer_Name'] ?? $content['name'] ?? $content['customer_name'] ?? null) : null;
+                $name    = is_array($content) ? ($content['Customer_Name'] ?? $content['name'] ?? $content['customer_name'] ?? $data['customer_name']) : null;
                 $success = true;
                 $result  = response()->json([
                     'success'       => true,

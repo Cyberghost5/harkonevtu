@@ -431,7 +431,7 @@ class ElectricityController extends Controller
             $httpStatus      = $httpResponse->status();
             $responseHeaders = $httpResponse->headers();
             $data            = $httpResponse->json() ?? [];
-            $status          = isset($data['status']) ? ($data['status'] === 'success') : ($data['code'] === 100);
+            $status          = isset($data['status']) ? ($data['status'] === 'success') : ($data['code'] === 200);
 
             if ($status) {
                 $success = true;
