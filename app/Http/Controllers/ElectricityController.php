@@ -687,7 +687,7 @@ class ElectricityController extends Controller
             $msgCode    = $data['code']  ?? '';
             $success    = ($statusCode === 'success') && ($msgCode === '200');
 
-            if ($success) {
+            if ($msgCode === '200') {
                 $msg  = $data['message'] ?? [];
                 $rawToken = $data['token'] ?? $msg['mainToken'] ?? $msg['token'] ?? $msg['Token'] ?? null;
                 $token    = $rawToken ? preg_replace('/^Token\s*:\s*/i', '', trim((string) $rawToken)) : null;
