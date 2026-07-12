@@ -310,11 +310,14 @@ class ExamPinController extends Controller
             $rawSuccess      = $data['status'] ?? 'false';
             $success         = ($rawSuccess === 'true' || $rawSuccess === true);
             $apiRef          = $data['reference_no'] ?? $reference;
+            $msgCode         = $data['code'];
 
-            if ($success) {
+            if ($msgCode === 200) {
                 $pins = $this->parsePins($data);
+                $success = true;
             } else {
                 $data['message'] = $data['message'] ?? 'Exam pin purchase failed.';
+                $success = false;
             }
         } catch (\Exception $e) {
             $data    = ['error' => $e->getMessage(), 'message' => 'Request failed. Please try again.'];
