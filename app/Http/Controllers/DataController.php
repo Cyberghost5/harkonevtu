@@ -629,7 +629,8 @@ class DataController extends Controller
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
             $data       = $response->json() ?? [];
-            $success    = isset($data['success']) && (string) $data['success'] === 'true';
+            // $success    = isset($data['success']) && (string) $data['success'] === 'true';
+            $success = $data['code'] === '200' || $data['message'] === 'Data purchase was successful' || $data['status'] === 'success';
             if (!$success) {
                 $data['message'] = $data['message'] ?? $data['error'] ?? 'Easyaccess transaction failed.';
             }
