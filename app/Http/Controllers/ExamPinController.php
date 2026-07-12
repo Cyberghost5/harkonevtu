@@ -313,7 +313,7 @@ class ExamPinController extends Controller
             $msgCode         = $data['code'];
 
             if ($msgCode === 200) {
-                $pins = $this->parsePins($data);
+                $pins = $this->parsePins($data['pins']);
                 $success = true;
             } else {
                 $data['message'] = $data['message'] ?? 'Exam pin purchase failed.';
