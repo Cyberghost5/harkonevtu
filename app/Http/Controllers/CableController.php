@@ -573,16 +573,18 @@ class CableController extends Controller
             $responseHeaders = $response->headers();
             $raw        = $response->json();
             $data       = is_array($raw) ? $raw : ['message' => 'Unknown EasyAccess response'];
-            $statusCode = $data['success'] ?? 'false';
-            $success    = ($statusCode === 'true');
+            $statusCode = $data['status'] ?? 'false';
+            $success    = ($statusCode === 'success');
 
             if (!$success) {
                 $errMsg          = $data['message'] ?? 'EasyAccess cable subscription failed.';
                 $data['message'] = is_array($errMsg) ? json_encode($errMsg) : $errMsg;
+                $success =  false;
             }
         } catch (\Exception $e) {
             $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
             Log::error('EasyAccess cable request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+            $success = false;
         } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             ApiLog::record([
