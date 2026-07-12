@@ -307,7 +307,7 @@ class ExamPinController extends Controller
             $responseHeaders = $response->headers();
             $raw             = $response->json();
             $data            = is_array($raw) ? $raw : ['message' => 'Unknown EasyAccess response'];
-            $rawSuccess      = $data['success'] ?? 'false';
+            $rawSuccess      = $data['status'] ?? 'false';
             $success         = ($rawSuccess === 'true' || $rawSuccess === true);
             $apiRef          = $data['reference_no'] ?? $reference;
 

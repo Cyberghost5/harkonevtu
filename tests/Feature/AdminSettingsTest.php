@@ -180,7 +180,7 @@ class AdminSettingsTest extends TestCase
         // Verify OneSignal HTTP API was called
         \Illuminate\Support\Facades\Http::assertSent(function ($request) use ($user) {
             return $request->url() === 'https://api.onesignal.com/notifications?c=push' &&
-                $request->hasHeader('Authorization', 'Key test_api_key') &&
+                $request->hasHeader('Authorization', 'Basic test_api_key') &&
                 $request['app_id'] === 'test_app_id' &&
                 $request['headings']['en'] === 'Wallet Credited' &&
                 str_contains($request['contents']['en'], 'Your wallet has been credited with ₦150.00') &&
@@ -217,7 +217,7 @@ class AdminSettingsTest extends TestCase
         // Verify OneSignal HTTP API was called
         \Illuminate\Support\Facades\Http::assertSent(function ($request) use ($user) {
             return $request->url() === 'https://api.onesignal.com/notifications?c=push' &&
-                $request->hasHeader('Authorization', 'Key test_api_key') &&
+                $request->hasHeader('Authorization', 'Basic test_api_key') &&
                 $request['app_id'] === 'test_app_id' &&
                 $request['headings']['en'] === 'Airtime Purchase Success' &&
                 str_contains($request['contents']['en'], 'Your purchase of Airtime (₦100.00) for 08031234567 was successful.') &&
@@ -300,7 +300,7 @@ class AdminSettingsTest extends TestCase
         // Verify OneSignal HTTP API was called for Wallet Credited
         \Illuminate\Support\Facades\Http::assertSent(function ($request) use ($user) {
             return $request->url() === 'https://api.onesignal.com/notifications?c=push' &&
-                $request->hasHeader('Authorization', 'Key test_api_key') &&
+                $request->hasHeader('Authorization', 'Basic test_api_key') &&
                 $request['app_id'] === 'test_app_id' &&
                 $request['headings']['en'] === 'Wallet Credited' &&
                 str_contains($request['contents']['en'], 'Your wallet has been credited with ₦150.00. New balance: ₦1,150.00.') &&
