@@ -239,8 +239,9 @@
                     <ul class="space-y-2 text-sm">
                         <li><a href="#" class="hover:text-white transition-colors">Contact Us</a></li>
                         <li><a href="#" class="hover:text-white transition-colors">FAQs</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Privacy Policy</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Terms of Service</a></li>
+                        <li><a href="{{ route('privacy-policy') }}" class="hover:text-white transition-colors">Privacy Policy</a></li>
+                        <li><a href="{{ route('terms-of-service') }}" class="hover:text-white transition-colors">Terms of Service</a></li>
+                        <li><a href="{{ route('terms-conditions') }}" class="hover:text-white transition-colors">Terms & Conditions</a></li>
                     </ul>
                 </div>
 

@@ -29,6 +29,10 @@ Route::get('/', function () {
     return view('index');
 });
 
+Route::view('/privacy-policy', 'privacy')->name('privacy-policy');
+Route::view('/terms-and-conditions', 'terms-conditions')->name('terms-conditions');
+Route::view('/terms-of-service', 'terms-of-service')->name('terms-of-service');
+
 // ── Guest-only routes ─────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login',          [AuthController::class, 'showLogin'])->name('login');

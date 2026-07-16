@@ -245,9 +245,9 @@
                             class="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-vtu-primary accent-vtu-primary focus:ring-vtu-primary/30 flex-shrink-0">
                         <span class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                             I agree to {{ $siteName }}'s
-                            <a href="#" class="font-semibold text-vtu-primary hover:text-indigo-700 transition-colors">Terms of Service</a>
+                            <a href="{{ route('terms-of-service') }}" class="font-semibold text-vtu-primary hover:text-indigo-700 transition-colors">Terms of Service</a>
                             and
-                            <a href="#" class="font-semibold text-vtu-primary hover:text-indigo-700 transition-colors">Privacy Policy</a>
+                            <a href="{{ route('privacy-policy') }}" class="font-semibold text-vtu-primary hover:text-indigo-700 transition-colors">Privacy Policy</a>
                         </span>
                     </label>
                     @error('terms')

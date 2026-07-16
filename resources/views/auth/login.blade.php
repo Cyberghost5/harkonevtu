@@ -187,9 +187,9 @@
 
             <p class="mt-8 text-center text-xs text-slate-400 dark:text-slate-500">
                 By signing in you agree to our
-                <a href="#" class="underline underline-offset-2 hover:text-vtu-primary transition-colors">Terms of Service</a>
+                <a href="{{ route('terms-of-service') }}" class="underline underline-offset-2 hover:text-vtu-primary transition-colors">Terms of Service</a>
                 and
-                <a href="#" class="underline underline-offset-2 hover:text-vtu-primary transition-colors">Privacy Policy</a>.
+                <a href="{{ route('privacy-policy') }}" class="underline underline-offset-2 hover:text-vtu-primary transition-colors">Privacy Policy</a>.
             </p>
         </div>
     </div>
