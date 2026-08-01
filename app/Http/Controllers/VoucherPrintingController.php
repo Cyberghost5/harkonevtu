@@ -71,11 +71,12 @@ class VoucherPrintingController extends Controller implements HasMiddleware
         $ref = 'VCH-' . strtoupper(Str::random(12));
 
         $useErs = ($network === 'mtn' && AppSetting::get('epins_api') === 'mtn_ers');
+        $useGloErs = ($network === 'glo' && AppSetting::get('epins_api') === 'glo_ers');
         $ersService = app(\App\Services\MtnErsSoapService::class);
         $ersOriginator = $ersService->formatMsisdn($ersService->getOriginatorMsisdn());
 
         try {
-            DB::transaction(function () use ($user, $type, $network, $value, $quantity, $nameOnCard, $totalCost, $ref, $useErs, $ersService, $ersOriginator) {
+            DB::transaction(function () use ($user, $type, $network, $value, $quantity, $nameOnCard, $totalCost, $ref, $useErs, $ersService, $ersOriginator, $useGloErs) {
                 // Debit wallet
                 $user->wallet->debit(
                     $totalCost,
@@ -129,6 +130,21 @@ class VoucherPrintingController extends Controller implements HasMiddleware
                             'duration_ms'      => 0,
                             'success'          => true,
                         ]);
+                    } elseif ($useGloErs) {
+                        // Request voucher from Glo ERS SOAP API (using requestPurchase with VOT)
+                        $gloErsService = app(\App\Services\GloErsSoapService::class);
+                        $result = $gloErsService->purchaseVoucher($user->phone ?: '2348050000000', $value, 'VOT', $ref . '-' . $i);
+                        
+                        if (!$result['success']) {
+                            throw new \Exception('Glo ERS Voucher generation failed: ' . ($result['response']['message'] ?? $result['message'] ?? 'Unknown Error'));
+                        }
+
+                        $pin = $result['pin'] ?? null;
+                        $serial = $result['serial'] ?? null;
+
+                        if (empty($pin) || empty($serial)) {
+                            throw new \Exception('Glo ERS response is missing voucher PIN or Serial. Response description: ' . ($result['response']['resultDescription'] ?? 'None'));
+                        }
                     } else {
                         // Pin is a random 15-digit number
                         $pin = str_pad((string) random_int(100000000000000, 999999999999999), 15, '0', STR_PAD_LEFT);

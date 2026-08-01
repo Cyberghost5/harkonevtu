@@ -153,6 +153,10 @@ class DataController extends Controller
             $api = 'autopilot';
         }
 
+        if ($api === 'glo_ers' && $request->network_key !== 'glo') {
+            $api = 'autopilot';
+        }
+
         // Load plan (must belong to network/type, be active, and have an ID for the active API)
         $plan = DataPlan::active()
             ->forNetwork($request->network_key)
@@ -307,8 +311,25 @@ class DataController extends Controller
             'legitdataway' => $this->callLegitdatawayData($network, $plan, $phone, $reference),
             'globacom'     => $this->callGlobacomData($network, $plan, $phone, $reference),
             'mtn_ers'      => $this->callMtnErsData($network, $plan, $phone, $reference),
+            'glo_ers'      => $this->callGloErsData($network, $plan, $phone, $reference),
             default        => $this->callVtpassData($network, $plan, $phone, $reference),
         };
+    }
+
+    // ─── Glo ERS (SOAP) ────────────────────────────────────────────────────────
+
+    private function callGloErsData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
+    {
+        $ersService = app(\App\Services\GloErsSoapService::class);
+        $productId = $plan->idForApi('glo_ers');
+        
+        $result = $ersService->vendData($phone, $productId, $reference);
+
+        $success = $result['success'];
+        $data = $result['response'] ?? ['message' => $result['message'] ?? 'Failed to communicate with Glo ERS SOAP Gateway'];
+        $apiRef = $result['reference'] ?? $reference;
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
     }
 
     // ─── MTN ERS (SOAP) ────────────────────────────────────────────────────────

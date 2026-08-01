@@ -216,6 +216,11 @@ class AirtimeController extends Controller
             $api = 'vtpass';
         }
 
+        // glo_ers is Glo-specific. Fallback to vtpass for other networks.
+        if ($api === 'glo_ers' && $networkKey !== 'glo') {
+            $api = 'vtpass';
+        }
+
         return match ($api) {
             'clubkonnect' => $this->callClubkonnect($network, $amount, $phone, $reference),
             'autopilot'   => $this->callAutopilot($network, $amount, $phone, $reference),
@@ -223,8 +228,23 @@ class AirtimeController extends Controller
             'merrybills'  => $this->callMerrybills($network, $amount, $phone, $reference),
             'payscribe'   => $this->callPayscribe($network, $amount, $phone, $reference),
             'mtn_ers'     => $this->callMtnErs($network, $amount, $phone, $reference),
+            'glo_ers'     => $this->callGloErs($network, $amount, $phone, $reference),
             default       => $this->callVtpass($network, $amount, $phone, $reference),
         };
+    }
+
+    // ─── Glo ERS (SOAP) ────────────────────────────────────────────────────────
+    
+    private function callGloErs(NetworkAirtime $network, float $amount, string $phone, string $reference): array
+    {
+        $ersService = app(\App\Services\GloErsSoapService::class);
+        $result = $ersService->vendAirtime($phone, $amount, $reference);
+
+        $success = $result['success'];
+        $data = $result['response'] ?? ['message' => $result['message'] ?? 'Failed to communicate with Glo ERS SOAP Gateway'];
+        $apiRef = $result['reference'] ?? $reference;
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
     }
 
     // ─── MTN ERS (SOAP) ────────────────────────────────────────────────────────

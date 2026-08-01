@@ -274,3 +274,5 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::get('/monitoring',          [\App\Http\Controllers\Admin\AdminMonitoringController::class, 'index'])->name('monitoring');
     Route::get('/monitoring/data',     [\App\Http\Controllers\Admin\AdminMonitoringController::class, 'data'])->name('monitoring.data');
 });
+
+

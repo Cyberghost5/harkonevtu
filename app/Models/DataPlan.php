@@ -64,6 +64,7 @@ class DataPlan extends Model
             'aabaxztech'   => $query->whereNotNull('aabaxztech_id'),
             'legitdataway' => $query->whereNotNull('legitdataway_id'),
             'globacom'     => $query->whereNotNull('globacom_id'),
+            'glo_ers'      => $query->whereNotNull('globacom_id'),
             'mtn_ers'      => $query->whereNotNull('mtn_ers_id'),
             default        => $query->whereNotNull('vtpass_id'),   // vtpass
         };
@@ -93,6 +94,7 @@ class DataPlan extends Model
             'aabaxztech'   => $this->aabaxztech_id,
             'legitdataway' => $this->legitdataway_id,
             'globacom'     => $this->globacom_id,
+            'glo_ers'      => $this->globacom_id,
             'mtn_ers'      => $this->mtn_ers_id,
             default        => $this->vtpass_id,
         };

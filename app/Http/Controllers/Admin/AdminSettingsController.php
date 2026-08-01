@@ -117,6 +117,7 @@ class AdminSettingsController extends Controller
             'onesignal_app_id','onesignal_api_key',
             'qoreid_client_key','qoreid_secret_key','qoreid_mode',
             'mtn_ers_username','mtn_ers_pin','mtn_ers_endpoint','mtn_ers_mode','mtn_ers_originator_msisdn',
+            'glo_ers_username','glo_ers_password','glo_ers_endpoint','glo_ers_mode','glo_ers_client_id','glo_ers_distributor_id','glo_ers_distributor_userid',
             'airtime2cash_phone','airtime2cash_tx_charge','airtime2cash_max_per_payment','airtime2cash_min_per_payment',
             'referral_commission','referral_min_withdrawal','referral_min_total_spent',
         ];
@@ -126,7 +127,7 @@ class AdminSettingsController extends Controller
 
     public function updateApiKeys(Request $request)
     {
-        $passwordFields = ['vtpass_password','aabaxztech_password','legitdataway_password','merrybills_password', 'mtn_ers_pin'];
+        $passwordFields = ['vtpass_password','aabaxztech_password','legitdataway_password','merrybills_password', 'mtn_ers_pin', 'glo_ers_password'];
         $data = $request->except(['_token','_method']);
         foreach ($data as $key => $value) {
             if (in_array($key, $passwordFields) && $value === '') {
