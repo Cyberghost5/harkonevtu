@@ -353,9 +353,27 @@ class WalletFundingController extends Controller implements HasMiddleware
             return response()->json(['success' => false, 'message' => 'Invalid or expired payment reference.'], 404);
         }
 
+        $startTime = hrtime(true);
         $response = Http::withToken(config('services.paystack.secret_key'))
             ->timeout(15)
             ->get("https://api.paystack.co/transaction/verify/{$request->reference}");
+        $durationMs = (int) round((hrtime(true) - $startTime) / 1e6);
+
+        $success = $response->successful() && $response->json('status') === true;
+
+        \App\Models\ApiLog::record([
+            'user_id' => auth()->id(),
+            'service' => 'funding',
+            'provider' => 'paystack',
+            'reference' => $request->reference,
+            'endpoint' => "https://api.paystack.co/transaction/verify/{$request->reference}",
+            'method' => 'GET',
+            'payload' => ['reference' => $request->reference],
+            'response' => $response->json() ?? ['raw' => $response->body()],
+            'http_status' => $response->status(),
+            'duration_ms' => $durationMs,
+            'success' => $success
+        ]);
 
         if (!$response->successful()) {
             return response()->json(['success' => false, 'message' => 'Could not reach Paystack. Please contact support.'], 502);
@@ -363,8 +381,8 @@ class WalletFundingController extends Controller implements HasMiddleware
 
         $data = $response->json('data');
 
-        if (($data['status'] ?? '') !== 'success') {
-            return response()->json(['success' => false, 'message' => 'Payment was not completed.'], 422);
+        if (($data['status'] ?? '') !== 'success' || ($data['currency'] ?? '') !== 'NGN') {
+            return response()->json(['success' => false, 'message' => 'Payment was not completed or currency mismatch.'], 422);
         }
 
         $paidNaira = ($data['amount'] ?? 0) / 100;
@@ -388,9 +406,27 @@ class WalletFundingController extends Controller implements HasMiddleware
             return response()->json(['success' => false, 'message' => 'Invalid or expired payment reference.'], 404);
         }
 
+        $startTime = hrtime(true);
         $response = Http::withToken(config('services.flutterwave.secret_key'))
             ->timeout(15)
             ->get("https://api.flutterwave.com/v3/transactions/{$request->transaction_id}/verify");
+        $durationMs = (int) round((hrtime(true) - $startTime) / 1e6);
+
+        $success = $response->successful() && $response->json('status') === 'success';
+
+        \App\Models\ApiLog::record([
+            'user_id' => auth()->id(),
+            'service' => 'funding',
+            'provider' => 'flutterwave',
+            'reference' => $request->reference,
+            'endpoint' => "https://api.flutterwave.com/v3/transactions/{$request->transaction_id}/verify",
+            'method' => 'GET',
+            'payload' => ['transaction_id' => $request->transaction_id, 'reference' => $request->reference],
+            'response' => $response->json() ?? ['raw' => $response->body()],
+            'http_status' => $response->status(),
+            'duration_ms' => $durationMs,
+            'success' => $success
+        ]);
 
         if (!$response->successful()) {
             return response()->json(['success' => false, 'message' => 'Could not reach Flutterwave. Please contact support.'], 502);
@@ -415,11 +451,11 @@ class WalletFundingController extends Controller implements HasMiddleware
      */
     private function performCredit(string $reference, array $intent): float
     {
-        if (WalletTransaction::where('reference', $reference)->exists()) {
-            throw new \RuntimeException('already_processed');
-        }
-
         DB::transaction(function () use ($reference, $intent) {
+            if (WalletTransaction::where('reference', $reference)->exists()) {
+                throw new \RuntimeException('already_processed');
+            }
+
             $wallet = Wallet::where('user_id', $intent['user_id'])->lockForUpdate()->first();
             $before = (float) $wallet->balance;
 
@@ -557,6 +593,23 @@ class WalletFundingController extends Controller implements HasMiddleware
             $reference = $data['reference'] ?? null;
             if (!$reference) return response('ok');
 
+            // Log incoming webhook event
+            $email = $data['customer']['email'] ?? null;
+            $user = $email ? \App\Models\User::where('email', $email)->first() : null;
+            \App\Models\ApiLog::record([
+                'user_id' => $user ? $user->id : null,
+                'service' => 'webhook',
+                'provider' => 'paystack',
+                'reference' => $reference,
+                'endpoint' => route('webhook.paystack'),
+                'method' => 'POST',
+                'payload' => $request->all(),
+                'response' => ['status' => 'Webhook received successfully'],
+                'http_status' => 200,
+                'duration_ms' => 0,
+                'success' => true
+            ]);
+
             // Already processed
             if (WalletTransaction::where('reference', $reference)->exists()) {
                 return response('ok');
@@ -585,15 +638,45 @@ class WalletFundingController extends Controller implements HasMiddleware
                 // Regular card / gateway payment
                 $intent = Cache::get('funding_intent_' . $reference);
                 if ($intent) {
-                    try { $this->performCredit($reference, $intent); } catch (\RuntimeException $e) {}
+                    $paidNaira = ($data['amount'] ?? 0) / 100;
+                    if ($paidNaira >= $intent['total'] && ($data['currency'] ?? '') === 'NGN') {
+                        try { $this->performCredit($reference, $intent); } catch (\RuntimeException $e) {}
+                    } else {
+                        Log::critical('Paystack webhook amount mismatch', [
+                            'reference' => $reference,
+                            'intent_total' => $intent['total'],
+                            'actual_paid' => $paidNaira,
+                            'currency' => $data['currency'] ?? '',
+                            'payload' => $data
+                        ]);
+                    }
                 } else {
                     // Fallback verification check directly from Paystack API
+                    $startTime = hrtime(true);
                     $response = Http::withToken(config('services.paystack.secret_key'))
                         ->timeout(15)
                         ->get("https://api.paystack.co/transaction/verify/{$reference}");
+                    $durationMs = (int) round((hrtime(true) - $startTime) / 1e6);
+
+                    $success = $response->successful() && $response->json('status') === true;
+
+                    \App\Models\ApiLog::record([
+                        'user_id' => $user ? $user->id : null,
+                        'service' => 'funding_fallback',
+                        'provider' => 'paystack',
+                        'reference' => $reference,
+                        'endpoint' => "https://api.paystack.co/transaction/verify/{$reference}",
+                        'method' => 'GET',
+                        'payload' => ['reference' => $reference],
+                        'response' => $response->json() ?? ['raw' => $response->body()],
+                        'http_status' => $response->status(),
+                        'duration_ms' => $durationMs,
+                        'success' => $success
+                    ]);
+
                     if ($response->successful() && $response->json('status') === true) {
                         $vData = $response->json('data');
-                        if (($vData['status'] ?? '') === 'success') {
+                        if (($vData['status'] ?? '') === 'success' && ($vData['currency'] ?? '') === 'NGN') {
                             $email = $vData['customer']['email'] ?? null;
                             $user = \App\Models\User::where('email', $email)->first();
                             if ($user) {
@@ -638,6 +721,24 @@ class WalletFundingController extends Controller implements HasMiddleware
 
         $data = $request->json('data');
 
+        // Log incoming webhook event
+        $reference = $data['tx_ref'] ?? $data['flw_ref'] ?? null;
+        $email = $data['customer']['email'] ?? null;
+        $user = $email ? \App\Models\User::where('email', $email)->first() : null;
+        \App\Models\ApiLog::record([
+            'user_id' => $user ? $user->id : null,
+            'service' => 'webhook',
+            'provider' => 'flutterwave',
+            'reference' => $reference ?? 'WEBHOOK_FLW_' . time(),
+            'endpoint' => route('webhook.flutterwave'),
+            'method' => 'POST',
+            'payload' => $request->all(),
+            'response' => ['status' => 'Webhook received successfully'],
+            'http_status' => 200,
+            'duration_ms' => 0,
+            'success' => true
+        ]);
+
         if (($data['status'] ?? '') === 'successful') {
             // Check for DVA payment first (has virtual_account_number field)
             $dvaAccountNumber = $data['virtual_account_number'] ?? null;
@@ -668,14 +769,44 @@ class WalletFundingController extends Controller implements HasMiddleware
 
                 $intent = Cache::get('funding_intent_' . $reference);
                 if ($intent) {
-                    try { $this->performCredit($reference, $intent); } catch (\RuntimeException $e) {}
+                    $paidNaira = (float) ($data['amount'] ?? 0);
+                    if ($paidNaira >= $intent['total'] && ($data['currency'] ?? '') === 'NGN') {
+                        try { $this->performCredit($reference, $intent); } catch (\RuntimeException $e) {}
+                    } else {
+                        Log::critical('Flutterwave webhook amount mismatch', [
+                            'reference' => $reference,
+                            'intent_total' => $intent['total'],
+                            'actual_paid' => $paidNaira,
+                            'currency' => $data['currency'] ?? '',
+                            'payload' => $data
+                        ]);
+                    }
                 } else {
                     // Fallback verification check directly from Flutterwave API
                     $transactionId = $data['id'] ?? null;
                     if ($transactionId) {
+                        $startTime = hrtime(true);
                         $response = Http::withToken(config('services.flutterwave.secret_key'))
                             ->timeout(15)
                             ->get("https://api.flutterwave.com/v3/transactions/{$transactionId}/verify");
+                        $durationMs = (int) round((hrtime(true) - $startTime) / 1e6);
+
+                        $success = $response->successful() && $response->json('status') === 'success';
+
+                        \App\Models\ApiLog::record([
+                            'user_id' => $user ? $user->id : null,
+                            'service' => 'funding_fallback',
+                            'provider' => 'flutterwave',
+                            'reference' => $reference,
+                            'endpoint' => "https://api.flutterwave.com/v3/transactions/{$transactionId}/verify",
+                            'method' => 'GET',
+                            'payload' => ['transaction_id' => $transactionId],
+                            'response' => $response->json() ?? ['raw' => $response->body()],
+                            'http_status' => $response->status(),
+                            'duration_ms' => $durationMs,
+                            'success' => $success
+                        ]);
+
                         if ($response->successful() && $response->json('status') === 'success') {
                             $vData = $response->json('data');
                             if (($vData['status'] ?? '') === 'successful' && ($vData['currency'] ?? '') === 'NGN') {
@@ -801,40 +932,50 @@ class WalletFundingController extends Controller implements HasMiddleware
 
         $user   = auth()->user();
         $code   = strtoupper(trim($request->code));
-        $coupon = Coupon::where('code', $code)->first();
-
-        if (!$coupon || !$coupon->isUsable()) {
-            return response()->json(['success' => false, 'message' => 'This coupon is invalid, expired, or has been fully used.'], 422);
-        }
-
-        if ($coupon->hasBeenUsedBy($user->id)) {
-            return response()->json(['success' => false, 'message' => 'You have already redeemed this coupon.'], 422);
-        }
-
         $reference = 'CPN' . strtoupper(Str::random(12));
+        $couponAmount = 0.0;
+        $couponCode = '';
 
-        DB::transaction(function () use ($user, $coupon, $reference) {
-            $user->wallet->credit(
-                (float) $coupon->amount,
-                "Coupon redemption: {$coupon->code}",
-                $reference,
-                ['source' => 'coupon', 'coupon_id' => $coupon->id]
-            );
+        try {
+            DB::transaction(function () use ($user, $code, $reference, &$couponAmount, &$couponCode) {
+                // Fetch the coupon and lock it for update to prevent concurrent double-redemptions
+                $coupon = Coupon::where('code', $code)->lockForUpdate()->first();
 
-            $coupon->increment('uses_count');
+                if (!$coupon || !$coupon->isUsable()) {
+                    throw new \Exception('This coupon is invalid, expired, or has been fully used.');
+                }
 
-            CouponRedemption::create([
-                'coupon_id'                    => $coupon->id,
-                'user_id'                      => $user->id,
-                'wallet_transaction_reference' => $reference,
-            ]);
-        });
+                if ($coupon->hasBeenUsedBy($user->id)) {
+                    throw new \Exception('You have already redeemed this coupon.');
+                }
+
+                $couponAmount = (float) $coupon->amount;
+                $couponCode = $coupon->code;
+
+                $user->wallet->credit(
+                    $couponAmount,
+                    "Coupon redemption: {$couponCode}",
+                    $reference,
+                    ['source' => 'coupon', 'coupon_id' => $coupon->id]
+                );
+
+                $coupon->increment('uses_count');
+
+                CouponRedemption::create([
+                    'coupon_id'                    => $coupon->id,
+                    'user_id'                      => $user->id,
+                    'wallet_transaction_reference' => $reference,
+                ]);
+            });
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
 
         $newBalance = $user->wallet()->value('balance');
 
         return response()->json([
             'success' => true,
-            'message' => '₦' . number_format((float) $coupon->amount, 2) . ' has been added to your wallet.',
+            'message' => '₦' . number_format($couponAmount, 2) . ' has been added to your wallet.',
             'balance' => '₦' . number_format((float) $newBalance, 2),
         ]);
     }
