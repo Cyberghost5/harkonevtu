@@ -303,7 +303,7 @@ class GloErsSoapService
         $target = $this->formatMsisdn($phone);
         // productId is typically TOPUP for airtime topups, and accountTypeId is AIRTIME
         $xml = $this->buildTopupXml($reference, $target, $amount, 'TOPUP', 'AIRTIME');
-        return $this->sendRequest('urn:requestTopup', $xml, $reference);
+        return $this->sendRequest('urn:requestTopUp', $xml, $reference);
     }
 
     /**
@@ -314,7 +314,7 @@ class GloErsSoapService
         $target = $this->formatMsisdn($phone);
         // productId is the Glo product SKU, and accountTypeId is DATA_BUNDLE for data
         $xml = $this->buildTopupXml($reference, $target, 0.0, $productId, 'DATA_BUNDLE');
-        return $this->sendRequest('urn:requestTopup', $xml, $reference);
+        return $this->sendRequest('urn:requestTopUp', $xml, $reference);
     }
 
     /**
