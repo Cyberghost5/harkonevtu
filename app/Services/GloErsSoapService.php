@@ -256,20 +256,19 @@ class GloErsSoapService
             $httpStatus = $response->status();
             $responseHeaders = $response->headers();
 
-            if ($response->successful()) {
-                $parsed = $this->parseResponse($response->body());
-                if ($parsed['status']) {
-                    $data = $parsed['data'];
-                    $resultCode = (int) ($data['resultCode'] ?? -1);
-                    $success = ($resultCode === 0);
-                    if (!$success) {
-                        $data['message'] = $data['resultDescription'] ?? 'Glo ERS returned failure code: ' . $resultCode;
-                    }
-                } else {
-                    $data = ['message' => $parsed['message']];
+            // Try to parse the SOAP response body first, as SOAP Faults always return HTTP status 500
+            $parsed = $this->parseResponse($response->body());
+
+            if ($parsed['status']) {
+                $data = $parsed['data'];
+                $resultCode = (int) ($data['resultCode'] ?? -1);
+                $success = ($resultCode === 0);
+                if (!$success) {
+                    $data['message'] = $data['resultDescription'] ?? 'Glo ERS returned failure code: ' . $resultCode;
                 }
             } else {
-                $data = ['message' => 'Glo SOAP HTTP transaction failed with status ' . $response->status()];
+                // If XML parsing failed, check if it was a SOAP Fault message
+                $data = ['message' => $parsed['message'] ?? 'Glo SOAP HTTP transaction failed with status ' . $response->status()];
             }
         } catch (\Exception $e) {
             $data = ['message' => 'Connection to Glo ERS timeout or failed: ' . $e->getMessage()];
