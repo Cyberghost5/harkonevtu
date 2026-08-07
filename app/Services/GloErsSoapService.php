@@ -128,7 +128,7 @@ class GloErsSoapService
    <ext:requestTopup>
      <context>
        <channel>WSClient</channel>
-       <clientComment>Topup via PayPulse</clientComment>
+       <clientComment>Topup via New Millennium</clientComment>
        <clientId>' . htmlspecialchars($this->clientId) . '</clientId>
        <clientReference>' . htmlspecialchars($reference) . '</clientReference>
        <clientRequestTimeout>30000</clientRequestTimeout>
