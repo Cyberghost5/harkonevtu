@@ -201,6 +201,7 @@ class AdminSettingsController extends Controller
             'legitdataway' => 'legitdataway_api_key',
             'globacom'    => 'globacom_xapi_key',
             'mtn_ers'      => 'mtn_ers_username',
+            'glo_ers'      => 'glo_ers_username',
         ];
         $credValues = AppSetting::getMany(array_values($providerCredentialMap));
         $availableProviders = [];
@@ -212,10 +213,10 @@ class AdminSettingsController extends Controller
 
         // Per-service integrated API lists — only show APIs that are actually
         // coded into each service controller AND have credentials configured.
-        $airtimeIntegrated   = ['vtpass', 'clubkonnect', 'autopilot', 'legitdataway', 'merrybills', 'payscribe', 'mtn_ers'];
+        $airtimeIntegrated   = ['vtpass', 'clubkonnect', 'autopilot', 'legitdataway', 'merrybills', 'payscribe', 'mtn_ers', 'glo_ers'];
         $airtimeProviders    = array_values(array_intersect($availableProviders, $airtimeIntegrated));
 
-        $dataIntegrated      = ['vtpass', 'clubkonnect', 'autopilot', 'merrybills', 'easyaccess', 'aabaxztech', 'legitdataway', 'globacom', 'mtn_ers'];
+        $dataIntegrated      = ['vtpass', 'clubkonnect', 'autopilot', 'merrybills', 'easyaccess', 'aabaxztech', 'legitdataway', 'globacom', 'mtn_ers', 'glo_ers'];
         $dataProviders       = array_values(array_intersect($availableProviders, $dataIntegrated));
 
         $electricityIntegrated = ['vtpass', 'easyaccess', 'payscribe'];
@@ -224,13 +225,13 @@ class AdminSettingsController extends Controller
         $cableIntegrated     = ['vtpass', 'easyaccess', 'payscribe'];
         $cableProviders      = array_values(array_intersect($availableProviders, $cableIntegrated));
 
-        $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller'];
+        $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller', 'mtn_ers', 'glo_ers'];
         $epinsProviders      = array_values(array_intersect($availableProviders, $epinsIntegrated));
 
         $datacardIntegrated  = ['vtpass'];
         $datacardProviders   = array_values(array_intersect($availableProviders, $datacardIntegrated));
 
-        $airtimePinIntegrated = ['vtpass', 'mtn_ers'];
+        $airtimePinIntegrated = ['vtpass', 'mtn_ers', 'glo_ers'];
         $airtimePinProviders  = array_values(array_intersect($availableProviders, $airtimePinIntegrated));
 
         $bettingIntegrated   = ['payscribe'];

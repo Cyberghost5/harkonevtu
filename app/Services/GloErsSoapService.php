@@ -110,6 +110,17 @@ class GloErsSoapService
      */
     public function buildTopupXml(string $reference, string $destMsisdn, float $amount, string $productId, string $accountTypeId): string
     {
+        $properties = '';
+        if ($accountTypeId === 'DATA_BUNDLE' || $accountTypeId === 'VOICE_BUNDLE') {
+            $properties = '
+       <transactionProperties>
+         <entry>
+           <key>TRANSACTION_TYPE</key>
+           <value>PRODUCT_RECHARGE</value>
+         </entry>
+       </transactionProperties>';
+        }
+
         return '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ext="http://external.interfaces.ers.seamless.com/">
  <soapenv:Header/>
@@ -126,7 +137,7 @@ class GloErsSoapService
          <type>RESELLERUSER</type>
          <userId>' . htmlspecialchars($this->distributorUserId ?: '9900') . '</userId>
        </initiatorPrincipalId>
-       <password>' . htmlspecialchars($this->password) . '</password>
+       <password>' . htmlspecialchars($this->password) . '</password>' . $properties . '
      </context>
      <senderPrincipalId>
        <id>' . htmlspecialchars($this->distributorId) . '</id>
@@ -426,6 +437,22 @@ class GloErsSoapService
                 $result['serial'] = $matches[1];
             }
         }
+
+        ApiLog::record([
+            'user_id'          => auth()->id(),
+            'service'          => str_contains($soapAction, 'Purchase') ? 'voucher' : 'airtime',
+            'provider'         => 'glo_ers',
+            'reference'        => $reference,
+            'endpoint'         => $this->endpoint . ' (Sandbox Mock)',
+            'method'           => 'POST',
+            'payload'          => ['xml' => $xmlPayload],
+            'request_headers'  => ['Content-Type' => 'text/xml', 'SOAPAction' => $soapAction],
+            'response'         => $data,
+            'http_status'      => 200,
+            'response_headers' => ['Content-Type' => 'text/xml'],
+            'duration_ms'      => 50,
+            'success'          => $success,
+        ]);
 
         return $result;
     }
