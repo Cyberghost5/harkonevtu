@@ -1,8 +1,9 @@
 <?php
 
-// Load Laravel Bootstrap
-require __DIR__ . '/../bootstrap/app.php';
+// Load Composer Autoloader
+require __DIR__ . '/../vendor/autoload.php';
 
+// Load Laravel Bootstrap
 $app = require_once __DIR__ . '/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $kernel->handle(Illuminate\Http\Request::capture());
