@@ -349,7 +349,7 @@
         const amount = parseFloat(document.getElementById('amount-input').value) || 0;
         const row    = document.getElementById('summary-row');
 
-        if (selectedNetwork && phone.length >= 11 && amount >= 50) {
+        if (selectedNetwork && phone.length >= 11 && amount >= 1) {
             const disc        = DISCOUNTS[selectedNetwork] || 0;
             const finalAmount = calcFinal(amount, selectedNetwork);
 
@@ -400,9 +400,9 @@
             valid = false;
         }
 
-        if (!amount || amount < 50 || amount > 50000) {
+        if (!amount || amount < 1 || amount > 50000) {
             const el = document.getElementById('amount-error');
-            el.textContent = 'Amount must be between ₦50 and ₦50,000.';
+            el.textContent = 'Amount must be between ₦1 and ₦50,000.';
             el.classList.remove('hidden');
             valid = false;
         }

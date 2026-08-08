@@ -47,7 +47,7 @@ class AirtimeController extends Controller
         $request->validate([
             'network'         => ['required', 'string', 'in:' . $validNetworkKeys],
             'phone'           => ['required', 'string', 'regex:/^(0|\+234)[789][01]\d{8}$/'],
-            'amount'          => ['required', 'numeric', 'min:50', 'max:50000'],
+            'amount'          => ['required', 'numeric', 'min:1', 'max:50000'],
             'transaction_pin' => ['required', 'digits:4'],
         ]);
 
