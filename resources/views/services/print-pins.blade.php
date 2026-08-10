@@ -157,9 +157,13 @@
                         </div>
                     </div>
 
-                    <button type="submit" :disabled="!network || !value || !quantity"
-                            class="w-full py-3.5 px-4 bg-vtu-primary hover:bg-indigo-650 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-150 flex items-center justify-center gap-2 shadow-md shadow-indigo-500/20">
-                        Generate & Pay
+                    <button type="submit" id="purchase-btn" :disabled="!network || !value || !quantity"
+                            class="w-full py-3.5 px-4 bg-vtu-primary hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-150 flex items-center justify-center gap-2 shadow-md shadow-indigo-500/20">
+                        <span id="purchase-btn-label">Generate & Pay</span>
+                        <svg id="purchase-spinner" class="hidden h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
                     </button>
 
                 </form>
@@ -172,7 +176,7 @@
             {{-- Wallet Balance Card --}}
             <div class="rounded-2xl bg-gradient-to-br from-vtu-primary to-vtu-secondary p-5 text-white shadow-lg shadow-indigo-500/20">
                 <p class="text-xs font-semibold uppercase tracking-wider opacity-70 mb-1">Wallet Balance</p>
-                <p class="text-3xl font-outfit font-bold">
+                <p class="text-3xl font-outfit font-bold" id="wallet-balance-display">
                     ₦{{ number_format((float) ($user->wallet?->balance ?? 0), 2) }}
                 </p>
                 <a href="{{ route('wallet.fund.gateway') }}"
@@ -218,7 +222,7 @@
                 <template x-for="id in selectedIds" :key="id">
                     <input type="hidden" name="ids[]" :value="id"/>
                 </template>
-                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-vtu-primary hover:bg-indigo-650 text-white rounded-xl shadow-sm">
+                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-vtu-primary hover:bg-indigo-600 text-white rounded-xl shadow-sm">
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                     </svg>
@@ -299,23 +303,99 @@
     </div>
 
 </div>
+
+{{-- ── Result Modal ───────────────────────────────────────────────────────── --}}
+<div id="result-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeResultModal()"></div>
+    <div class="relative w-full max-w-sm rounded-2xl bg-white dark:bg-vtu-darkCard border border-slate-200 dark:border-slate-700 shadow-2xl p-6 text-center">
+        <div id="result-icon" class="mx-auto mb-4 h-14 w-14 rounded-full flex items-center justify-center"></div>
+        <h3 id="result-title" class="text-lg font-outfit font-bold text-slate-900 dark:text-white mb-2"></h3>
+        <p id="result-message" class="text-sm text-slate-500 dark:text-slate-400 mb-5"></p>
+        <button onclick="closeResultModal()"
+                class="w-full py-3 rounded-xl text-sm font-semibold bg-vtu-primary hover:bg-indigo-650 text-white transition-colors">
+            Done
+        </button>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
+    const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+
     function handleVoucherSubmit(form) {
         // Intercept standard form submit and prompt for transaction PIN verification
         requirePinConfirmation(function(pin) {
-            // Append the transaction pin to the form fields
-            const pinInput = document.createElement('input');
-            pinInput.type = 'hidden';
-            pinInput.name = 'transaction_pin';
-            pinInput.value = pin;
-            form.appendChild(pinInput);
-            
-            // Programmatically submit the form
-            form.submit();
+            doVoucherGeneration(form, pin);
         });
     }
+
+    async function doVoucherGeneration(form, pin) {
+        setBtnLoading(true);
+
+        const formData = new FormData(form);
+        formData.append('transaction_pin', pin);
+
+        try {
+            const res = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': CSRF
+                },
+                body: formData
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                // Update displayed wallet balance
+                document.getElementById('wallet-balance-display').textContent = data.balance;
+                document.querySelectorAll('.balance-display').forEach(el => {
+                    el.textContent = data.balance;
+                    el.dataset.amount = data.balance;
+                });
+
+                showResultModal(true, 'Vouchers Generated!', data.message);
+            } else {
+                showResultModal(false, 'Generation Failed', data.message || 'Verification or API connection failed.');
+            }
+        } catch (err) {
+            showResultModal(false, 'Network Error', 'Could not reach the server. Please check your connection.');
+        }
+
+        setBtnLoading(false);
+    }
+
+    function setBtnLoading(loading) {
+        const btn   = document.getElementById('purchase-btn');
+        const label = document.getElementById('purchase-btn-label');
+        const spin  = document.getElementById('purchase-spinner');
+        btn.disabled = loading;
+        label.textContent = loading ? 'Processing…' : 'Generate & Pay';
+        spin.classList.toggle('hidden', !loading);
+    }
+
+    function showResultModal(success, title, message) {
+        const icon = document.getElementById('result-icon');
+        icon.className = 'mx-auto mb-4 h-14 w-14 rounded-full flex items-center justify-center ' +
+            (success ? 'bg-emerald-100 dark:bg-emerald-500/10' : 'bg-red-100 dark:bg-red-500/10');
+        icon.innerHTML = success
+            ? `<svg class="h-7 w-7 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`
+            : `<svg class="h-7 w-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
+
+        document.getElementById('result-title').textContent = title;
+        document.getElementById('result-message').textContent = message;
+        document.getElementById('result-modal').classList.remove('hidden');
+    }
+
+    function closeResultModal() {
+        document.getElementById('result-modal').classList.add('hidden');
+        if (document.getElementById('result-title').textContent === 'Vouchers Generated!') {
+            window.location.reload(); // Refresh to update the PIN history table
+        }
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeResultModal(); });
 </script>
 @endsection

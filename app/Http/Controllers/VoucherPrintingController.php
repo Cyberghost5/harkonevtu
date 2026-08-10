@@ -6,6 +6,7 @@ use App\Models\AppSetting;
 use App\Models\PrintedVoucher;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
@@ -45,7 +46,7 @@ class VoucherPrintingController extends Controller implements HasMiddleware
         return view('services.print-pins', compact('user', 'type', 'vouchers'));
     }
 
-    public function generate(Request $request): RedirectResponse
+    public function generate(Request $request): JsonResponse
     {
         $request->validate([
             'type'            => ['required', 'string', 'in:airtime,data'],
@@ -58,7 +59,11 @@ class VoucherPrintingController extends Controller implements HasMiddleware
 
         $user = auth()->user();
         if (!$user->verifyPin($request->transaction_pin)) {
-            return back()->with('error', 'Invalid transaction PIN.');
+            return response()->json([
+                'success'   => false,
+                'message'   => 'Incorrect transaction PIN. Please try again.',
+                'pin_error' => true,
+            ], 422);
         }
 
         $type = $request->type;
@@ -70,7 +75,10 @@ class VoucherPrintingController extends Controller implements HasMiddleware
         $totalCost = $value * $quantity;
 
         if (!$user->wallet || !$user->wallet->hasSufficientBalance($totalCost)) {
-            return back()->with('error', 'Insufficient wallet balance for this voucher generation.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient wallet balance for this voucher generation.',
+            ], 422);
         }
 
         $ref = 'VCH-' . strtoupper(Str::random(12));
@@ -194,11 +202,18 @@ class VoucherPrintingController extends Controller implements HasMiddleware
                 ]);
             }
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         }
 
-        return redirect()->route('services.print-pins', ['type' => $type])
-            ->with('success', "Successfully generated {$quantity} vouchers!");
+        $walletBalance = '₦' . number_format($user->wallet->balance, 2);
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully generated {$quantity} vouchers!",
+            'balance' => $walletBalance,
+        ]);
     }
 
     public function printVouchers(Request $request): View|RedirectResponse
