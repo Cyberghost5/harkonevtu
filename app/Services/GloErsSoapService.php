@@ -275,9 +275,18 @@ class GloErsSoapService
             Log::error('Glo ERS SOAP Request Exception', ['reference' => $reference, 'error' => $e->getMessage()]);
         } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $service = 'airtime';
+            if (str_contains($xmlPayload, 'DATA_BUNDLE')) {
+                $service = 'data';
+            } elseif (str_contains($xmlPayload, 'VOICE_BUNDLE')) {
+                $service = 'voice';
+            } elseif (str_contains($soapAction, 'Purchase') || str_contains($xmlPayload, 'requestPurchase')) {
+                $service = 'voucher';
+            }
+
             ApiLog::record([
                 'user_id'          => auth()->id(),
-                'service'          => str_contains($soapAction, 'Purchase') ? 'voucher' : 'airtime',
+                'service'          => $service,
                 'provider'         => 'glo_ers',
                 'reference'        => $reference,
                 'endpoint'         => $this->endpoint,
@@ -309,11 +318,11 @@ class GloErsSoapService
     /**
      * Dispatch Data Bundle Subscription (Option 2).
      */
-    public function vendData(string $phone, string $productId, string $reference): array
+    public function vendData(string $phone, float $amount, string $productId, string $reference): array
     {
         $target = $this->formatMsisdn($phone);
         // productId is the Glo product SKU, and accountTypeId is DATA_BUNDLE for data
-        $xml = $this->buildTopupXml($reference, $target, 0.0, $productId, 'DATA_BUNDLE');
+        $xml = $this->buildTopupXml($reference, $target, $amount, $productId, 'DATA_BUNDLE');
         return $this->sendRequest('', $xml, $reference);
     }
 
@@ -437,9 +446,18 @@ class GloErsSoapService
             }
         }
 
+        $service = 'airtime';
+        if (str_contains($xmlPayload, 'DATA_BUNDLE')) {
+            $service = 'data';
+        } elseif (str_contains($xmlPayload, 'VOICE_BUNDLE')) {
+            $service = 'voice';
+        } elseif (str_contains($soapAction, 'Purchase') || str_contains($xmlPayload, 'requestPurchase')) {
+            $service = 'voucher';
+        }
+
         ApiLog::record([
             'user_id'          => auth()->id(),
-            'service'          => str_contains($soapAction, 'Purchase') ? 'voucher' : 'airtime',
+            'service'          => $service,
             'provider'         => 'glo_ers',
             'reference'        => $reference,
             'endpoint'         => $this->endpoint . ' (Sandbox Mock)',

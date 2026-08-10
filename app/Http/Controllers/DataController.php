@@ -323,7 +323,7 @@ class DataController extends Controller
         $ersService = app(\App\Services\GloErsSoapService::class);
         $productId = $plan->idForApi('glo_ers');
         
-        $result = $ersService->vendData($phone, $productId, $reference);
+        $result = $ersService->vendData($phone, (float) $plan->amount, $productId, $reference);
 
         $success = $result['success'];
         $data = $result['response'] ?? ['message' => $result['message'] ?? 'Failed to communicate with Glo ERS SOAP Gateway'];
