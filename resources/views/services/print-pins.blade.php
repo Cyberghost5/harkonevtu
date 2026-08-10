@@ -41,26 +41,42 @@
     <div class="flex border-b border-slate-200 dark:border-slate-800">
         <a href="{{ route('services.print-pins', ['type' => 'airtime']) }}"
            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all"
-           :class="type === 'airtime' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-white'">
+           :class="type === 'airtime' ? 'border-vtu-primary text-vtu-primary' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-white'">
             Airtime Vouchers
         </a>
         <a href="{{ route('services.print-pins', ['type' => 'data']) }}"
            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all"
-           :class="type === 'data' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-white'">
+           :class="type === 'data' ? 'border-vtu-primary text-vtu-primary' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-white'">
             Data Vouchers
         </a>
     </div>
 
     <div class="grid lg:grid-cols-5 gap-6">
 
-        {{-- ══ LEFT: Generator Form (2 cols) ════════════════════════════════ --}}
+        {{-- ══ LEFT: Generator Form & Wallet (2 cols) ═══════════════════════ --}}
         <div class="lg:col-span-2 space-y-4">
+            
+            {{-- Wallet Balance Card --}}
+            <div class="rounded-2xl bg-gradient-to-br from-vtu-primary to-vtu-secondary p-5 text-white shadow-lg shadow-indigo-500/20 animate-fade-in">
+                <p class="text-xs font-semibold uppercase tracking-wider opacity-70 mb-1">Wallet Balance</p>
+                <p class="text-3xl font-outfit font-bold">
+                    ₦{{ number_format((float) ($user->wallet?->balance ?? 0), 2) }}
+                </p>
+                <a href="{{ route('wallet.fund.gateway') }}"
+                   class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold opacity-80 hover:opacity-100 transition">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Fund Wallet
+                </a>
+            </div>
+
             <div class="rounded-2xl bg-white dark:bg-vtu-darkCard border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700">
                     <h2 class="text-base font-semibold text-slate-900 dark:text-white">Generate Vouchers</h2>
                 </div>
 
-                <form method="POST" action="{{ route('services.print-pins.generate') }}" class="p-6 space-y-5">
+                <form id="generate-voucher-form" method="POST" action="{{ route('services.print-pins.generate') }}" class="p-6 space-y-5" onsubmit="event.preventDefault(); handleVoucherSubmit(this);">
                     @csrf
                     <input type="hidden" name="type" :value="type"/>
 
@@ -79,13 +95,13 @@
                             ] as $key => $net)
                             <button type="button" @click="network = '{{ $key }}'"
                                     class="relative flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-xl border-2 transition-all duration-150 group"
-                                    :class="network === '{{ $key }}' ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20' : 'border-slate-200 dark:border-slate-700 hover:{{ $net['border'] }}'">
+                                    :class="network === '{{ $key }}' ? 'border-vtu-primary dark:border-vtu-primary ring-2 ring-vtu-primary/20' : 'border-slate-200 dark:border-slate-700 hover:{{ $net['border'] }}'">
                                 <div class="h-8 w-8 rounded-lg {{ $net['bg'] }} flex items-center justify-center shadow-sm">
                                     <span class="text-[9px] font-black {{ $net['text'] }} leading-none">{{ strtoupper(substr($net['name'],0,3)) }}</span>
                                 </div>
                                 <span class="text-[10px] font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">{{ $net['name'] }}</span>
                                 
-                                <div class="absolute top-1 right-1 h-3.5 w-3.5 rounded-full bg-indigo-600 flex items-center justify-center" x-show="network === '{{ $key }}'">
+                                <div class="absolute top-1 right-1 h-3.5 w-3.5 rounded-full bg-vtu-primary flex items-center justify-center" x-show="network === '{{ $key }}'">
                                     <svg class="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                                     </svg>
@@ -102,7 +118,7 @@
                             Voucher Value <span class="text-red-500">*</span>
                         </label>
                         <select id="value" name="value" x-model="value" required
-                                class="w-full px-3 py-3.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                                class="w-full px-3 py-3.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-vtu-primary focus:border-transparent transition">
                             <option value="">-- Choose Value --</option>
                             <template x-if="type === 'airtime'">
                                 <optgroup label="Airtime Denominations">
@@ -130,7 +146,7 @@
                             Quantity to Generate <span class="text-red-500">*</span>
                         </label>
                         <input id="quantity" type="number" name="quantity" min="1" max="50" x-model="quantity" required
-                               class="w-full px-3.5 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"/>
+                               class="w-full px-3.5 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-vtu-primary focus:border-transparent transition"/>
                         <p class="mt-1 text-[10px] text-slate-400">Min 1, Max 50 per batch.</p>
                         @error('quantity')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                     </div>
@@ -141,7 +157,7 @@
                             Custom Business Name (Prints on voucher)
                         </label>
                         <input id="name_on_card" type="text" name="name_on_card" x-model="nameOnCard" placeholder="e.g. Joy Telecoms"
-                               class="w-full px-3.5 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"/>
+                               class="w-full px-3.5 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-vtu-primary focus:border-transparent transition"/>
                         @error('name_on_card')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                     </div>
 
@@ -153,12 +169,12 @@
                         </div>
                         <div class="flex justify-between text-sm font-bold border-t border-slate-200 dark:border-slate-700 pt-2">
                             <span class="text-slate-800 dark:text-white">Total Wallet Debit:</span>
-                            <span class="text-indigo-600 dark:text-indigo-400 font-outfit" x-text="'₦' + ((parseFloat(value) || 0) * (parseInt(quantity) || 0)).toLocaleString()">₦0</span>
+                            <span class="text-vtu-primary dark:text-indigo-400 font-outfit" x-text="'₦' + ((parseFloat(value) || 0) * (parseInt(quantity) || 0)).toLocaleString()">₦0</span>
                         </div>
                     </div>
 
                     <button type="submit" :disabled="!network || !value || !quantity"
-                            class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-750 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-sm transition-all duration-150 flex items-center justify-center gap-2">
+                            class="w-full py-3.5 px-4 bg-vtu-primary hover:bg-indigo-650 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-150 flex items-center justify-center gap-2 shadow-md shadow-indigo-500/20">
                         Generate & Pay
                     </button>
 
@@ -179,7 +195,7 @@
                         <template x-for="id in selectedIds" :key="id">
                             <input type="hidden" name="ids[]" :value="id"/>
                         </template>
-                        <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl shadow-sm">
+                        <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-vtu-primary hover:bg-indigo-600 text-white rounded-xl shadow-sm">
                             <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                             </svg>
@@ -194,7 +210,7 @@
                         <thead>
                             <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                 <th class="px-6 py-3.5 w-12 text-center">
-                                    <input type="checkbox" @click="toggleAll()" :checked="selectAll" class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                                    <input type="checkbox" @click="toggleAll()" :checked="selectAll" class="rounded border-slate-300 dark:border-slate-700 text-vtu-primary focus:ring-vtu-primary">
                                 </th>
                                 <th class="px-6 py-3.5">Details</th>
                                 <th class="px-6 py-3.5">Pin / Serial</th>
@@ -206,7 +222,7 @@
                             @forelse($vouchers as $v)
                             <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
                                 <td class="px-6 py-4 text-center">
-                                    <input type="checkbox" :checked="selectedIds.includes('{{ $v->id }}')" @click="toggleRow('{{ $v->id }}')" value="{{ $v->id }}" class="row-checkbox rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                                    <input type="checkbox" :checked="selectedIds.includes('{{ $v->id }}')" @click="toggleRow('{{ $v->id }}')" value="{{ $v->id }}" class="row-checkbox rounded border-slate-300 dark:border-slate-700 text-vtu-primary focus:ring-vtu-primary">
                                 </td>
                                 <td class="px-6 py-4">
                                     <span class="font-bold text-slate-700 dark:text-slate-300 uppercase">{{ $v->network }}</span>
@@ -219,7 +235,7 @@
                                 <td class="px-6 py-4 font-bold text-slate-900 dark:text-white">₦{{ number_format($v->value, 2) }}</td>
                                 <td class="px-6 py-4">
                                     <a href="{{ route('services.print-pins.print', ['ids' => [$v->id]]) }}" target="_blank"
-                                       class="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-500 hover:text-indigo-700">
+                                       class="inline-flex items-center gap-1 text-[10px] font-semibold text-vtu-primary hover:text-indigo-700">
                                         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                                         </svg>
@@ -250,4 +266,23 @@
     </div>
 
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    function handleVoucherSubmit(form) {
+        // Intercept standard form submit and prompt for transaction PIN verification
+        requirePinConfirmation(function(pin) {
+            // Append the transaction pin to the form fields
+            const pinInput = document.createElement('input');
+            pinInput.type = 'hidden';
+            pinInput.name = 'transaction_pin';
+            pinInput.value = pin;
+            form.appendChild(pinInput);
+            
+            // Programmatically submit the form
+            form.submit();
+        });
+    }
+</script>
 @endsection

@@ -48,14 +48,19 @@ class VoucherPrintingController extends Controller implements HasMiddleware
     public function generate(Request $request): RedirectResponse
     {
         $request->validate([
-            'type'         => ['required', 'string', 'in:airtime,data'],
-            'network'      => ['required', 'string', 'in:mtn,airtel,glo,9mobile'],
-            'value'        => ['required', 'numeric', 'min:50'],
-            'quantity'     => ['required', 'integer', 'min:1', 'max:50'],
-            'name_on_card' => ['nullable', 'string', 'max:50'],
+            'type'            => ['required', 'string', 'in:airtime,data'],
+            'network'         => ['required', 'string', 'in:mtn,airtel,glo,9mobile'],
+            'value'           => ['required', 'numeric', 'min:50'],
+            'quantity'        => ['required', 'integer', 'min:1', 'max:50'],
+            'name_on_card'    => ['nullable', 'string', 'max:50'],
+            'transaction_pin' => ['required', 'digits:4'],
         ]);
 
         $user = auth()->user();
+        if (!$user->verifyPin($request->transaction_pin)) {
+            return back()->with('error', 'Invalid transaction PIN.');
+        }
+
         $type = $request->type;
         $network = $request->network;
         $value = (float) $request->value;
@@ -76,17 +81,20 @@ class VoucherPrintingController extends Controller implements HasMiddleware
         $ersOriginator = $ersService->formatMsisdn($ersService->getOriginatorMsisdn());
 
         try {
-            DB::transaction(function () use ($user, $type, $network, $value, $quantity, $nameOnCard, $totalCost, $ref, $useErs, $ersService, $ersOriginator, $useGloErs) {
-                // Debit wallet
+            // 1. Debit wallet first in a short-lived transaction
+            DB::transaction(function () use ($user, $totalCost, $network, $type, $quantity, $value, $ref) {
                 $user->wallet->debit(
                     $totalCost,
                     "Voucher generation: {$quantity}x {$network} " . ucfirst($type) . " ₦" . number_format($value, 2),
                     $ref,
                     ['source' => 'voucher_printing']
                 );
+            });
 
-                // Generate pins & serial numbers
-                for ($i = 0; $i < $quantity; $i++) {
+            $pins = [];
+            // 2. Perform external API HTTP requests outside the database transaction
+            for ($i = 0; $i < $quantity; $i++) {
+                try {
                     if ($useErs) {
                         // Request voucher from ERS SOAP API
                         $result = $ersService->vend($ersOriginator, $value, 7); // 7 = Voucher
@@ -152,18 +160,39 @@ class VoucherPrintingController extends Controller implements HasMiddleware
                         $serial = str_pad((string) random_int(1000000000, 9999999999), 10, '0', STR_PAD_LEFT);
                     }
 
-                    PrintedVoucher::create([
-                        'user_id'       => $user->id,
-                        'type'          => $type,
-                        'network'       => $network,
-                        'name_on_card'  => $nameOnCard,
-                        'value'         => $value,
-                        'pin'           => $pin,
-                        'serial_number' => $serial,
-                        'status'        => 'unused',
-                    ]);
+                    $pins[] = [
+                        'pin' => $pin,
+                        'serial' => $serial,
+                    ];
+                } catch (\Exception $e) {
+                    // Refund the wallet for the failed and remaining unsent quantity of pins
+                    $remainingCount = $quantity - count($pins);
+                    $refundAmount = $remainingCount * $value;
+                    if ($refundAmount > 0) {
+                        $user->wallet->credit(
+                            $refundAmount,
+                            "Refund for failed voucher generation: {$remainingCount}x {$network} " . ucfirst($type),
+                            $ref . '-REFUND',
+                            ['source' => 'voucher_printing']
+                        );
+                    }
+                    throw $e;
                 }
-            });
+            }
+
+            // 3. Save successfully generated vouchers to the database
+            foreach ($pins as $p) {
+                PrintedVoucher::create([
+                    'user_id'       => $user->id,
+                    'type'          => $type,
+                    'network'       => $network,
+                    'name_on_card'  => $nameOnCard,
+                    'value'         => $value,
+                    'pin'           => $p['pin'],
+                    'serial_number' => $p['serial'],
+                    'status'        => 'unused',
+                ]);
+            }
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
