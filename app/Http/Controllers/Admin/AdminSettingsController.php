@@ -150,6 +150,7 @@ class AdminSettingsController extends Controller
             'etisalat_sme','etisalat_gifting',
             'airtime_net_mtn','airtime_net_airtel','airtime_net_glo','airtime_net_etisalat',
             'airtime_api','datacard_api','airtime_pin_api',
+            'airtime_pin_net_mtn','airtime_pin_net_airtel','airtime_pin_net_glo','airtime_pin_net_etisalat',
             'epins_api','electricity_api','cable_api','betting_api',
             'dealing_charge',
             'betting_charge','betting_min_amount','betting_daily_limit',

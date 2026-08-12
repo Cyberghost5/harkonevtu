@@ -83,8 +83,22 @@ class VoucherPrintingController extends Controller implements HasMiddleware
 
         $ref = 'VCH-' . strtoupper(Str::random(12));
 
-        $useErs = ($network === 'mtn' && AppSetting::get('airtime_pin_api') === 'mtn_ers');
-        $useGloErs = ($network === 'glo' && AppSetting::get('airtime_pin_api') === 'glo_ers');
+        $netKey = ($network === '9mobile') ? 'etisalat' : $network;
+        $netApi = AppSetting::get('airtime_pin_net_' . $netKey);
+        
+        if (empty($netApi)) {
+            $netApi = AppSetting::get('airtime_pin_api');
+        }
+
+        if ($netApi === 'Disable') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Voucher printing for ' . strtoupper($network) . ' is currently disabled.'
+            ], 422);
+        }
+
+        $useErs = ($network === 'mtn' && $netApi === 'mtn_ers');
+        $useGloErs = ($network === 'glo' && $netApi === 'glo_ers');
         $ersService = app(\App\Services\MtnErsSoapService::class);
         $ersOriginator = $ersService->formatMsisdn($ersService->getOriginatorMsisdn());
 

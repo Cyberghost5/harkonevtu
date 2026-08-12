@@ -203,6 +203,28 @@
                 </div>
             </div>
 
+            {{-- ── Airtime PIN Network Settings ─────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-xl font-bold text-slate-800 mb-1">Airtime PIN (Voucher) Network Settings</h4>
+                <p class="text-xs text-slate-400 mb-5">Route network airtime PIN (recharge card) generations to a specific provider</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @foreach(['airtime_pin_net_mtn'=>'MTN PINs','airtime_pin_net_airtel'=>'Airtel PINs','airtime_pin_net_glo'=>'Glo PINs','airtime_pin_net_etisalat'=>'9Mobile PINs'] as $key=>$label)
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">{{ $label }}</label>
+                        <select name="{{ $key }}" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <option value="" {{ ($s[$key] ?? '') === '' ? 'selected' : '' }}>Default (Use Global API)</option>
+                            <option value="Disable" {{ ($s[$key] ?? '') === 'Disable' ? 'selected' : '' }}>Disable</option>
+                            @foreach($airtimePinProviders as $p)
+                            <option value="{{ $p }}" {{ ($s[$key] ?? '') === $p ? 'selected' : '' }}>
+                                Use {{ ucfirst($p) }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+
             {{-- ── Other Service APIs ───────────────────────────────────── --}}
             <div class="px-6 py-6">
                 <h4 class="text-xl font-bold text-slate-800 mb-1">Service API Routing</h4>
