@@ -344,7 +344,7 @@ class DataController extends Controller
             $formattedPhone = '0' . substr($phone, 3);
         }
 
-        $tariffTypeId = (int) $plan->mtn_ers_id;
+        $tariffTypeId = $plan->mtn_ers_id;
 
         $result = $ersService->vend($formattedPhone, $plan->amount, $tariffTypeId);
 
