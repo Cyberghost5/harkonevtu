@@ -42,12 +42,12 @@
         <a href="{{ route('services.print-pins', ['type' => 'airtime']) }}"
            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all"
            :class="type === 'airtime' ? 'border-vtu-primary text-vtu-primary' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-white'">
-            Airtime Vouchers
+            Airtime PINS
         </a>
         <a href="{{ route('services.print-pins', ['type' => 'data']) }}"
            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all"
            :class="type === 'data' ? 'border-vtu-primary text-vtu-primary' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-white'">
-            Data Vouchers
+            Data PINS
         </a>
     </div>
 
