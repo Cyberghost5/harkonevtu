@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\Models\AppSetting;
 use App\Models\ApiLog;
+use App\Models\MtnErsSequence;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class MtnErsSoapService
 {
@@ -34,9 +34,21 @@ class MtnErsSoapService
     }
 
     /**
-     * Format MSISDN to standard international format starting with 234.
+     * Format MSISDN to start with 0 (expected for destination subscriber destMsisdn).
      */
     public function formatMsisdn(string $phone): string
+    {
+        $cleaned = preg_replace('/[^0-9]/', '', $phone);
+        if (str_starts_with($cleaned, '234') && strlen($cleaned) === 13) {
+            return '0' . substr($cleaned, 3);
+        }
+        return $cleaned;
+    }
+
+    /**
+     * Format MSISDN to start with 234 (expected for originator/merchant origMsisdn).
+     */
+    public function formatMsisdn234(string $phone): string
     {
         $cleaned = preg_replace('/[^0-9]/', '', $phone);
         if (str_starts_with($cleaned, '0') && strlen($cleaned) === 11) {
@@ -68,10 +80,10 @@ class MtnErsSoapService
             }
 
             $responseNode = null;
-            if (isset($body->requestTopupResponse)) {
-                $responseNode = $body->requestTopupResponse;
-            } elseif (isset($body->requestPurchaseResponse)) {
-                $responseNode = $body->requestPurchaseResponse;
+            if (isset($body->vendResponse)) {
+                $responseNode = $body->vendResponse;
+            } elseif (isset($body->queryTxResponse)) {
+                $responseNode = $body->queryTxResponse;
             }
 
             if (!$responseNode) {
@@ -82,13 +94,8 @@ class MtnErsSoapService
                 return ['status' => false, 'message' => 'No matching response elements found inside body.'];
             }
 
-            $returnNode = $responseNode->return ?? null;
-            if (!$returnNode) {
-                return ['status' => false, 'message' => 'Response structure is missing <return> element.'];
-            }
-
             $data = [];
-            foreach ($returnNode->children() as $child) {
+            foreach ($responseNode->children() as $child) {
                 $data[$child->getName()] = (string) $child;
             }
 
@@ -106,137 +113,49 @@ class MtnErsSoapService
     }
 
     /**
-     * Build SOAP requestTopup request XML.
+     * Build SOAP Vend request XML matching the ERS 360 HOSTIF API document.
      */
-    public function buildTopupXml(string $reference, string $destMsisdn, float $amount, string $productId, string $accountTypeId): string
+    public function buildVendXml(string $origMsisdn, string $destMsisdn, float $amount, int $sequence, int $tariffTypeId): string
     {
-        $properties = '';
-        if ($accountTypeId === 'DATA_BUNDLE') {
-            $properties = '
-       <transactionProperties>
-         <entry>
-           <key>TRANSACTION_TYPE</key>
-           <value>PRODUCT_RECHARGE</value>
-         </entry>
-       </transactionProperties>';
-        }
-
         return '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ext="http://external.interfaces.ers.seamless.com/">
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://hostif.vtm.prism.co.za/xsd">
  <soapenv:Header/>
  <soapenv:Body>
-   <ext:requestTopup>
-     <context>
-       <channel>WSClient</channel>
-       <clientComment>Topup via PayPulse</clientComment>
-       <clientId>ERS</clientId>
-       <clientReference>' . htmlspecialchars($reference) . '</clientReference>
-       <clientRequestTimeout>30000</clientRequestTimeout>
-       <initiatorPrincipalId>
-         <id>' . htmlspecialchars($this->username) . '</id>
-         <type>RESELLERUSER</type>
-         <userId>9900</userId>
-       </initiatorPrincipalId>
-       <password>' . htmlspecialchars($this->pin) . '</password>' . $properties . '
-     </context>
-     <senderPrincipalId>
-       <id>' . htmlspecialchars($this->username) . '</id>
-       <type>RESELLERUSER</type>
-       <userId>9900</userId>
-     </senderPrincipalId>
-     <topupPrincipalId>
-       <id>' . htmlspecialchars($destMsisdn) . '</id>
-       <type>SUBSCRIBERMSISDN</type>
-     </topupPrincipalId>
-     <senderAccountSpecifier>
-       <accountId>' . htmlspecialchars($this->username) . '</accountId>
-       <accountTypeId>RESELLER</accountTypeId>
-     </senderAccountSpecifier>
-     <topupAccountSpecifier>
-       <accountId>' . htmlspecialchars($destMsisdn) . '</accountId>
-       <accountTypeId>' . htmlspecialchars($accountTypeId) . '</accountTypeId>
-     </topupAccountSpecifier>
-     <productId>' . htmlspecialchars($productId) . '</productId>
-     <amount>
-       <currency>NGN</currency>
-       <value>' . htmlspecialchars($amount) . '</value>
-     </amount>
-   </ext:requestTopup>
+   <xsd:vend>
+     <xsd:origMsisdn>' . htmlspecialchars($origMsisdn) . '</xsd:origMsisdn>
+     <xsd:destMsisdn>' . htmlspecialchars($destMsisdn) . '</xsd:destMsisdn>
+     <xsd:amount>' . htmlspecialchars($amount) . '</xsd:amount>
+     <xsd:sequence>' . htmlspecialchars($sequence) . '</xsd:sequence>
+     <xsd:tariffTypeId>' . htmlspecialchars($tariffTypeId) . '</xsd:tariffTypeId>
+     <xsd:serviceproviderId>1</xsd:serviceproviderId>
+   </xsd:vend>
  </soapenv:Body>
 </soapenv:Envelope>';
     }
 
     /**
-     * Build SOAP requestPurchase request XML (For Voucher Printing).
+     * Build SOAP QueryTx request XML matching the ERS 360 HOSTIF API document.
      */
-    public function buildPurchaseXml(string $reference, string $receiverMsisdn, float $amount, string $productSku): string
+    public function buildQueryTxXml(int $sequence): string
     {
         return '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ext="http://external.interfaces.ers.seamless.com/">
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://hostif.vtm.prism.co.za/xsd">
  <soapenv:Header/>
  <soapenv:Body>
-   <ext:requestPurchase>
-     <context>
-       <channel>WSClient</channel>
-       <prepareOnly>false</prepareOnly>
-       <clientReference>' . htmlspecialchars($reference) . '</clientReference>
-       <clientRequestTimeout>30000</clientRequestTimeout>
-       <initiatorPrincipalId>
-         <id>' . htmlspecialchars($this->username) . '</id>
-         <type>RESELLERUSER</type>
-         <userId>9900</userId>
-       </initiatorPrincipalId>
-       <password>' . htmlspecialchars($this->pin) . '</password>
-       <transactionProperties>
-         <entry>
-           <key>preferredLanguage</key>
-           <value>en</value>
-         </entry>
-         <entry>
-           <key>productSKU</key>
-           <value>' . htmlspecialchars($productSku) . '</value>
-         </entry>
-         <entry>
-           <key>currency</key>
-           <value>NGN</value>
-         </entry>
-         <entry>
-           <key>purchaseAmount</key>
-           <value>' . htmlspecialchars($amount) . '</value>
-         </entry>
-       </transactionProperties>
-     </context>
-     <senderPrincipalId>
-       <id>' . htmlspecialchars($this->username) . '</id>
-       <type>RESELLERUSER</type>
-       <userId>9900</userId>
-     </senderPrincipalId>
-     <receiverPrincipalId>
-       <id>' . htmlspecialchars($receiverMsisdn) . '</id>
-       <type>SUBSCRIBERMSISDN</type>
-     </receiverPrincipalId>
-     <senderAccountSpecifier>
-       <accountTypeId>RESELLER</accountTypeId>
-     </senderAccountSpecifier>
-     <purchaseOrder>
-       <productSpecifier>
-         <productId>' . htmlspecialchars($productSku) . '</productId>
-         <productIdType>VOD</productIdType>
-       </productSpecifier>
-       <purchaseCount>1</purchaseCount>
-     </purchaseOrder>
-   </ext:requestPurchase>
+   <xsd:querytx>
+     <xsd:sequence>' . htmlspecialchars($sequence) . '</xsd:sequence>
+   </xsd:querytx>
  </soapenv:Body>
 </soapenv:Envelope>';
     }
 
     /**
-     * Dispatch SOAP request. Supports sandbox mock modes.
+     * Dispatch SOAP request. Supports sandbox mock modes and auto-retry sequence sync recovery.
      */
-    public function sendRequest(string $soapAction, string $xmlPayload, string $reference): array
+    public function sendRequest(string $soapAction, string $xmlPayload, int $sequenceAttempt, string $originatorMsisdn, callable $retryAction = null): array
     {
         if ($this->mode === 'sandbox' || !$this->isConfigured()) {
-            return $this->handleSandboxMock($soapAction, $xmlPayload, $reference);
+            return $this->handleSandboxMock($soapAction, $xmlPayload, $sequenceAttempt, $originatorMsisdn);
         }
 
         $start = hrtime(true);
@@ -246,9 +165,12 @@ class MtnErsSoapService
         $success = false;
 
         try {
+            $basicAuth = base64_encode("{$this->username}:{$this->pin}");
+
             $response = Http::withHeaders([
-                'Content-Type' => 'text/xml; charset=utf-8',
-                'SOAPAction'   => $soapAction,
+                'Authorization' => "Basic {$basicAuth}",
+                'Content-Type'  => 'text/xml; charset=utf-8',
+                'SoapAction'    => $soapAction,
             ])->timeout(30)->send('POST', $this->endpoint, [
                 'body' => $xmlPayload
             ]);
@@ -256,36 +178,50 @@ class MtnErsSoapService
             $httpStatus = $response->status();
             $responseHeaders = $response->headers();
 
-            $parsed = $this->parseResponse($response->body());
+            if ($response->successful()) {
+                $parsed = $this->parseResponse($response->body());
+                if ($parsed['status']) {
+                    $data = $parsed['data'];
+                    $responseCode = (int) ($data['responseCode'] ?? -1);
 
-            if ($parsed['status']) {
-                $data = $parsed['data'];
-                $resultCode = (int) ($data['resultCode'] ?? -1);
-                $success = ($resultCode === 0);
-                if (!$success) {
-                    $data['message'] = $data['resultDescription'] ?? 'MTN ERS returned failure code: ' . $resultCode;
+                    // Handle out-of-sync sequence (Code 106) with auto-retry
+                    if ($responseCode === 106 && $retryAction) {
+                        $lastSeq = (int) ($data['lastseq'] ?? $data['sequence'] ?? 0);
+                        if ($lastSeq > 0) {
+                            MtnErsSequence::setNextSequence($originatorMsisdn, $lastSeq + 2);
+                            Log::info("MTN ERS sequence auto-synced to " . ($lastSeq + 2));
+                            return $retryAction($lastSeq + 1); // retry with new sequence
+                        }
+                    }
+
+                    $success = ($responseCode === 0);
+                    if (!$success) {
+                        $data['message'] = $data['responseMessage'] ?? 'MTN ERS failure response code: ' . $responseCode;
+                    }
+                } else {
+                    $data = ['message' => $parsed['message']];
                 }
             } else {
-                $data = ['message' => $parsed['message'] ?? 'MTN SOAP HTTP transaction failed with status ' . $response->status()];
+                $data = ['message' => 'MTN SOAP HTTP transaction failed with status ' . $response->status()];
             }
 
         } catch (\Exception $e) {
             $data = ['message' => 'Connection to MTN ERS timeout or failed: ' . $e->getMessage()];
-            Log::error('MTN ERS SOAP Request Exception', ['reference' => $reference, 'error' => $e->getMessage()]);
+            Log::error('MTN ERS SOAP Request Exception', ['sequence' => $sequenceAttempt, 'error' => $e->getMessage()]);
         } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             $service = 'airtime';
-            if (str_contains($xmlPayload, 'DATA_BUNDLE')) {
-                $service = 'data';
-            } elseif (str_contains($xmlPayload, 'requestPurchase')) {
+            if (str_contains($xmlPayload, '<xsd:tariffTypeId>7</xsd:tariffTypeId>')) {
                 $service = 'voucher';
+            } elseif (str_contains($xmlPayload, '<xsd:tariffTypeId>9') || str_contains($xmlPayload, '<xsd:tariffTypeId>10') || str_contains($xmlPayload, '<xsd:tariffTypeId>11')) {
+                $service = 'data';
             }
 
             ApiLog::record([
                 'user_id'          => auth()->id(),
                 'service'          => $service,
                 'provider'         => 'mtn_ers',
-                'reference'        => $reference,
+                'reference'        => $reference ?? 'SEQ-' . $sequenceAttempt,
                 'endpoint'         => $this->endpoint,
                 'method'           => 'POST',
                 'payload'          => ['xml' => $xmlPayload],
@@ -298,23 +234,9 @@ class MtnErsSoapService
             ]);
         }
 
-        // Set txRefId so controller checks succeed
-        $data['txRefId'] = $data['ersReference'] ?? null;
-
-        // Parse voucher details if successful voucher purchase
-        if ($success && $service === 'voucher' && isset($data['resultDescription'])) {
-            $desc = $data['resultDescription'];
-            if (preg_match('/Pin:\s*([0-9]+)/i', $desc, $matches)) {
-                $data['voucherPIN'] = $matches[1];
-            }
-            if (preg_match('/Serial:\s*([0-9]+)/i', $desc, $matches)) {
-                $data['voucherSerial'] = $matches[1];
-            }
-        }
-
         return [
             'status'  => $success,
-            'message' => $data['message'] ?? $data['resultDescription'] ?? 'Success',
+            'message' => $data['message'] ?? $data['responseMessage'] ?? 'Success',
             'data'    => $data
         ];
     }
@@ -324,79 +246,115 @@ class MtnErsSoapService
      */
     public function vend(string $destMsisdn, float $amount, $productId): array
     {
+        $originator = $this->formatMsisdn234($this->originatorMsisdn ?: '09062058470');
         $target = $this->formatMsisdn($destMsisdn);
-        $reference = 'MTN' . date('YmdHis') . strtoupper(Str::random(8));
 
-        // Map request types based on $productId
+        // Map product to correct tariffTypeId
+        $tariffTypeId = 1; // Airtime default
         if ($productId === 7 || $productId === '7') {
-            // Voucher
-            $xml = $this->buildPurchaseXml($reference, $target, $amount, 'VOT');
+            $tariffTypeId = 7; // Voucher
         } elseif ($productId === 1 || $productId === '1') {
-            // Airtime
-            $xml = $this->buildTopupXml($reference, $target, $amount, 'TOPUP', 'AIRTIME');
+            $tariffTypeId = 1; // Airtime
         } else {
-            // Data SKU
-            $xml = $this->buildTopupXml($reference, $target, $amount, $productId, 'DATA_BUNDLE');
+            $tariffTypeId = (int) $productId; // Data Bundle ID
         }
 
-        return $this->sendRequest('', $xml, $reference);
+        $execute = function (int $seq) use ($originator, $target, $amount, $tariffTypeId, &$execute) {
+            $xml = $this->buildVendXml($originator, $target, $amount, $seq, $tariffTypeId);
+            return $this->sendRequest(
+                'urn:Vend', 
+                $xml, 
+                $seq, 
+                $originator, 
+                function ($nextSeq) use ($execute) {
+                    return $execute($nextSeq);
+                }
+            );
+        };
+
+        $sequence = MtnErsSequence::getAndIncrement($originator);
+        return $execute($sequence);
     }
 
     /**
-     * Sandbox mock simulation matching Seamless ERS specifications.
+     * Queries status of a specific transaction sequence.
      */
-    protected function handleSandboxMock(string $soapAction, string $xmlPayload, string $reference): array
+    public function queryTx(int $sequence): array
+    {
+        $xml = $this->buildQueryTxXml($sequence);
+        $originator = $this->formatMsisdn234($this->originatorMsisdn ?: '09062058470');
+        return $this->sendRequest('urn:QyeryTx', $xml, $sequence, $originator);
+    }
+
+    /**
+     * Sandbox mock simulation matching Seamless ERS HOSTIF specifications.
+     */
+    protected function handleSandboxMock(string $soapAction, string $xmlPayload, int $sequence, string $originator): array
     {
         // Parse receiver/dest msisdn
-        $destMsisdn = '2349062058617';
-        if (preg_match('/<id>(.*?)<\/id>/', $xmlPayload, $matches)) {
-            $destMsisdn = $matches[count($matches) - 1];
+        $destMsisdn = '09062058617';
+        if (preg_match('/<xsd:destMsisdn>(.*?)<\/xsd:destMsisdn>/', $xmlPayload, $matches)) {
+            $destMsisdn = $matches[1];
         }
 
-        $service = 'airtime';
-        if (str_contains($xmlPayload, 'DATA_BUNDLE')) {
-            $service = 'data';
-        } elseif (str_contains($xmlPayload, 'requestPurchase')) {
-            $service = 'voucher';
+        $tariffTypeId = 1;
+        if (preg_match('/<xsd:tariffTypeId>(.*?)<\/xsd:tariffTypeId>/', $xmlPayload, $matches)) {
+            $tariffTypeId = (int) $matches[1];
+        }
+
+        $amount = 100.0;
+        if (preg_match('/<xsd:amount>(.*?)<\/xsd:amount>/', $xmlPayload, $matches)) {
+            $amount = (float) $matches[1];
         }
 
         $success = !str_contains($destMsisdn, '9999');
 
         if ($success) {
-            $resultDescription = 'SUCCESS';
-            if ($service === 'voucher') {
-                $pin = str_pad((string) random_int(100000000000000, 999999999999999), 15, '0', STR_PAD_LEFT);
-                $serial = str_pad((string) random_int(1000000000, 9999999999), 10, '0', STR_PAD_LEFT);
-                $resultDescription = "You have sold one voucher:- Amount: {$amount} NGN Expiry Date: 2028-12-31 Ref.:{$reference} Balance: 95000 NGN. Pin: {$pin} Serial:{$serial}";
+            $voucherXml = '';
+            if ($tariffTypeId === 7) {
+                $voucherXml = "\n     <voucherPIN>" . str_pad((string) random_int(100000000000000, 999999999999999), 15, '0', STR_PAD_LEFT) . "</voucherPIN>\n     <voucherSerial>" . str_pad((string) random_int(1000000000, 9999999999), 10, '0', STR_PAD_LEFT) . "</voucherSerial>";
             }
-            $data = [
-                'resultCode'        => '0',
-                'resultDescription' => $resultDescription,
-                'ersReference'      => 'MTN-ERS-' . uniqid(),
-                'txRefId'           => 'MTN-ERS-' . uniqid(),
-            ];
+
+            $mockResponse = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+ <soapenv:Body>
+   <vendResponse>
+     <destBalance>5000.0</destBalance>
+     <destMsisdn>' . $destMsisdn . '</destMsisdn>
+     <origBalance>95000.0</origBalance>
+     <origMsisdn>' . $originator . '</origMsisdn>
+     <responseCode>0</responseCode>
+     <responseMessage>Successful</responseMessage>
+     <sequence>' . $sequence . '</sequence>
+     <statusId>0</statusId>
+     <txRefId>ERS-MOCK-SUCCESS-' . uniqid() . '</txRefId>' . $voucherXml . '
+   </vendResponse>
+ </soapenv:Body>
+</soapenv:Envelope>';
         } else {
-            $data = [
-                'resultCode'        => '37',
-                'resultDescription' => 'INITIATOR_PRINCIPAL_NOT_FOUND',
-                'message'           => 'INITIATOR_PRINCIPAL_NOT_FOUND',
-            ];
+            $mockResponse = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+ <soapenv:Body>
+   <vendResponse>
+     <destBalance>0.0</destBalance>
+     <origBalance>0.0</origBalance>
+     <responseCode>301</responseCode>
+     <responseMessage>Insufficient Airtime</responseMessage>
+     <sequence>' . $sequence . '</sequence>
+     <statusId>540</statusId>
+     <txRefId>ERS-MOCK-FAIL-' . uniqid() . '</txRefId>
+   </vendResponse>
+ </soapenv:Body>
+</soapenv:Envelope>';
         }
 
-        // Parse voucher details if successful voucher purchase
-        if ($success && $service === 'voucher' && isset($data['resultDescription'])) {
-            $desc = $data['resultDescription'];
-            if (preg_match('/Pin:\s*([0-9]+)/i', $desc, $matches)) {
-                $data['voucherPIN'] = $matches[1];
-            }
-            if (preg_match('/Serial:\s*([0-9]+)/i', $desc, $matches)) {
-                $data['voucherSerial'] = $matches[1];
-            }
+        $parsed = $this->parseResponse($mockResponse);
+        if (!$parsed['status']) {
+            return $parsed;
         }
 
+        $data = $parsed['data'];
         return [
-            'status'  => $success,
-            'message' => $data['message'] ?? $data['resultDescription'] ?? 'Success',
+            'status'  => ((int)$data['responseCode']) === 0,
+            'message' => $data['responseMessage'] ?? 'Success',
             'data'    => $data
         ];
     }
