@@ -83,8 +83,8 @@ class VoucherPrintingController extends Controller implements HasMiddleware
 
         $ref = 'VCH-' . strtoupper(Str::random(12));
 
-        $useErs = ($network === 'mtn' && AppSetting::get('epins_api') === 'mtn_ers');
-        $useGloErs = ($network === 'glo' && AppSetting::get('epins_api') === 'glo_ers');
+        $useErs = ($network === 'mtn' && AppSetting::get('airtime_pin_api') === 'mtn_ers');
+        $useGloErs = ($network === 'glo' && AppSetting::get('airtime_pin_api') === 'glo_ers');
         $ersService = app(\App\Services\MtnErsSoapService::class);
         $ersOriginator = $ersService->formatMsisdn($ersService->getOriginatorMsisdn());
 

@@ -225,7 +225,7 @@ class AdminSettingsController extends Controller
         $cableIntegrated     = ['vtpass', 'easyaccess', 'payscribe'];
         $cableProviders      = array_values(array_intersect($availableProviders, $cableIntegrated));
 
-        $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller', 'mtn_ers', 'glo_ers'];
+        $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller'];
         $epinsProviders      = array_values(array_intersect($availableProviders, $epinsIntegrated));
 
         $datacardIntegrated  = ['vtpass'];

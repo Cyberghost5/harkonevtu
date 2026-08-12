@@ -102,12 +102,14 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function initials(): string
     {
-        $parts = explode(' ', $this->name);
-        return strtoupper(
-            count($parts) >= 2
-                ? $parts[0][0] . $parts[1][0]
-                : substr($parts[0], 0, 2)
-        );
+        $parts = array_values(array_filter(explode(' ', trim($this->name ?? ''))));
+        if (count($parts) >= 2) {
+            return strtoupper(
+                mb_substr($parts[0], 0, 1) . mb_substr($parts[1], 0, 1)
+            );
+        }
+        $fallback = $parts[0] ?? $this->username ?? 'U';
+        return strtoupper(mb_substr($fallback, 0, 2));
     }
 
     // ─── Custom Notifications ─────────────────────────────────────────────────
