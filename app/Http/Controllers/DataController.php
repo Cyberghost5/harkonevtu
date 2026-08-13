@@ -351,24 +351,6 @@ class DataController extends Controller
         $success = $result['status'];
         $data = $result['data'] ?? ['message' => $result['message']];
         $apiRef = $data['txRefId'] ?? $reference;
-        
-        $duration = (int) ((hrtime(true) - $start) / 1e6);
-
-        ApiLog::record([
-            'user_id'          => auth()->id(),
-            'service'          => 'data',
-            'provider'         => 'mtn_ers',
-            'reference'        => $reference,
-            'endpoint'         => AppSetting::get('mtn_ers_endpoint', 'https://ers.seamless.se/services/ERSExchange3GPort'),
-            'method'           => 'POST',
-            'payload'          => ['phone' => $formattedPhone, 'amount' => $plan->amount, 'tariffTypeId' => $tariffTypeId, 'plan' => $plan->plan_name],
-            'request_headers'  => ['Content-Type' => 'application/xml', 'SoapAction' => 'urn:Vend'],
-            'response'         => $data,
-            'http_status'      => $success ? 200 : 500,
-            'response_headers' => null,
-            'duration_ms'      => $duration,
-            'success'          => $success,
-        ]);
 
         return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
     }

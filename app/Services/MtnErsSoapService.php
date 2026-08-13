@@ -247,7 +247,7 @@ class MtnErsSoapService
     public function vend(string $destMsisdn, float $amount, $productId): array
     {
         $originator = $this->formatMsisdn234($this->originatorMsisdn ?: '09062058470');
-        $target = $this->formatMsisdn($destMsisdn);
+        $target = $this->formatMsisdn234($destMsisdn);
 
         // Map product to correct tariffTypeId
         $tariffTypeId = 1; // Airtime default

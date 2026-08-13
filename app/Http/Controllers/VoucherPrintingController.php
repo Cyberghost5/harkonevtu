@@ -121,21 +121,6 @@ class VoucherPrintingController extends Controller implements HasMiddleware
                         // Request voucher from ERS SOAP API
                         $result = $ersService->vend($ersOriginator, $value, 7); // 7 = Voucher
                         if (!$result['status']) {
-                            \App\Models\ApiLog::record([
-                                'user_id'          => $user->id,
-                                'service'          => 'voucher',
-                                'provider'         => 'mtn_ers',
-                                'reference'        => $ref . '-' . $i,
-                                'endpoint'         => AppSetting::get('mtn_ers_endpoint', 'https://ers.seamless.se/services/ERSExchange3GPort'),
-                                'method'           => 'POST',
-                                'payload'          => ['value' => $value, 'tariffTypeId' => 7],
-                                'request_headers'  => ['SoapAction' => 'urn:Vend'],
-                                'response'         => $result,
-                                'http_status'      => 500,
-                                'response_headers' => null,
-                                'duration_ms'      => 0,
-                                'success'          => false,
-                            ]);
                             throw new \Exception('MTN ERS Voucher generation failed: ' . ($result['message'] ?? 'Unknown Error'));
                         }
                         $pin = $result['data']['voucherPIN'] ?? null;
@@ -144,22 +129,6 @@ class VoucherPrintingController extends Controller implements HasMiddleware
                         if (empty($pin) || empty($serial)) {
                             throw new \Exception('MTN ERS response is missing voucher PIN or Serial.');
                         }
-
-                        \App\Models\ApiLog::record([
-                            'user_id'          => $user->id,
-                            'service'          => 'voucher',
-                            'provider'         => 'mtn_ers',
-                            'reference'        => $ref . '-' . $i,
-                            'endpoint'         => AppSetting::get('mtn_ers_endpoint', 'https://ers.seamless.se/services/ERSExchange3GPort'),
-                            'method'           => 'POST',
-                            'payload'          => ['value' => $value, 'tariffTypeId' => 7],
-                            'request_headers'  => ['SoapAction' => 'urn:Vend'],
-                            'response'         => $result['data'] ?? $result,
-                            'http_status'      => 200,
-                            'response_headers' => null,
-                            'duration_ms'      => 0,
-                            'success'          => true,
-                        ]);
                     } elseif ($useGloErs) {
                         // Request voucher from Glo ERS SOAP API (using requestPurchase with VOT)
                         $gloErsService = app(\App\Services\GloErsSoapService::class);
