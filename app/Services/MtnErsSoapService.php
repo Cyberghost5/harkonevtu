@@ -171,7 +171,7 @@ class MtnErsSoapService
                 'Authorization' => "Basic {$basicAuth}",
                 'Content-Type'  => 'text/xml; charset=utf-8',
                 'SoapAction'    => $soapAction,
-            ])->timeout(30)->send('POST', $this->endpoint, [
+            ])->connectTimeout(0)->timeout(30)->send('POST', $this->endpoint, [
                 'body' => $xmlPayload
             ]);
 
