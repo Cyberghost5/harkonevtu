@@ -165,12 +165,19 @@ class MtnErsSoapService
         $success = false;
 
         try {
+            $curlOptions = [];
+            if (defined('CURLOPT_HTTP09_ALLOWED')) {
+                $curlOptions[CURLOPT_HTTP09_ALLOWED] = true;
+            }
+
             $basicAuth = base64_encode("{$this->username}:{$this->pin}");
 
             $response = Http::withHeaders([
                 'Authorization' => "Basic {$basicAuth}",
                 'Content-Type'  => 'text/xml; charset=utf-8',
                 'SoapAction'    => $soapAction,
+            ])->withOptions([
+                'curl' => $curlOptions,
             ])->connectTimeout(0)->timeout(30)->send('POST', $this->endpoint, [
                 'body' => $xmlPayload
             ]);
