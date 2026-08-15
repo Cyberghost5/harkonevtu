@@ -176,11 +176,15 @@ class MtnErsSoapService
                 'Authorization' => "Basic {$basicAuth}",
                 'Content-Type'  => 'text/xml; charset=utf-8',
                 'SoapAction'    => $soapAction,
+                'Expect'        => '',
             ])->withOptions([
-                'curl' => $curlOptions,
-            ])->connectTimeout(0)->timeout(30)->send('POST', $this->endpoint, [
-                'body' => $xmlPayload
-            ]);
+                'curl'        => $curlOptions,
+                'version'     => 1.0,
+                'http_errors' => false,
+            ])->connectTimeout(0)
+              ->timeout(30)
+              ->withBody($xmlPayload, 'text/xml; charset=utf-8')
+              ->post($this->endpoint);
 
             $httpStatus = $response->status();
             $responseHeaders = $response->headers();
