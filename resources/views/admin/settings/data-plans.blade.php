@@ -203,7 +203,7 @@
                 <div class="col-span-2 pt-2">
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">API Provider IDs</p>
                     <div class="grid grid-cols-2 gap-3">
-                        @foreach(['vtpass_id'=>'VTPass','clubkonnect_id'=>'Clubkonnect','easyaccess_id'=>'EasyAccess','aabaxztech_id'=>'Aabaxztech','legitdataway_id'=>'LegitDataway','globacom_id'=>'Globacom','glo_ers_id'=>'Glo ERS (Product SKU)','autopilot_id'=>'AutoPilot','merrybills_product_id'=>'Merrybills Product','merrybills_id'=>'Merrybills ID','mtn_ers_id'=>'MTN ERS (Tariff Type ID)'] as $field => $lbl)
+                        @foreach(['vtpass_id'=>'VTPass','clubkonnect_id'=>'Clubkonnect','easyaccess_id'=>'EasyAccess','aabaxztech_id'=>'Aabaxztech','legitdataway_id'=>'LegitDataway','globacom_id'=>'Globacom','glo_ers_id'=>'Glo ERS (Product SKU)','autopilot_id'=>'AutoPilot','merrybills_product_id'=>'Merrybills Product','merrybills_id'=>'Merrybills ID','mtn_ers_id'=>'MTN ERS (Tariff ID / CIS Product ID)'] as $field => $lbl)
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">{{ $lbl }}</label>
                             <input type="text" name="{{ $field }}" placeholder="-"
@@ -283,7 +283,7 @@
                 <div class="col-span-2 pt-2">
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">API Provider IDs</p>
                     <div class="grid grid-cols-2 gap-3">
-                        @foreach(['vtpass_id'=>'VTPass','clubkonnect_id'=>'Clubkonnect','easyaccess_id'=>'EasyAccess','aabaxztech_id'=>'Aabaxztech','legitdataway_id'=>'LegitDataway','globacom_id'=>'Globacom','glo_ers_id'=>'Glo ERS (Product SKU)','autopilot_id'=>'AutoPilot','merrybills_product_id'=>'Merrybills Product','merrybills_id'=>'Merrybills ID','mtn_ers_id'=>'MTN ERS (Tariff Type ID)'] as $field => $lbl)
+                        @foreach(['vtpass_id'=>'VTPass','clubkonnect_id'=>'Clubkonnect','easyaccess_id'=>'EasyAccess','aabaxztech_id'=>'Aabaxztech','legitdataway_id'=>'LegitDataway','globacom_id'=>'Globacom','glo_ers_id'=>'Glo ERS (Product SKU)','autopilot_id'=>'AutoPilot','merrybills_product_id'=>'Merrybills Product','merrybills_id'=>'Merrybills ID','mtn_ers_id'=>'MTN ERS (Tariff ID / CIS Product ID)'] as $field => $lbl)
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">{{ $lbl }}</label>
                             <input type="text" id="edit_{{ $field }}" name="{{ $field }}"
