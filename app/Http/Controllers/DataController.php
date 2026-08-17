@@ -345,9 +345,8 @@ class DataController extends Controller
         }
 
         $tariffTypeId = $plan->mtn_ers_id;
-        $cisProductId = $plan->mtn_ers_cis_id;
 
-        $result = $ersService->vend($formattedPhone, $plan->amount, $tariffTypeId, $cisProductId);
+        $result = $ersService->vend($formattedPhone, $plan->amount, $tariffTypeId);
 
         $success = $result['status'];
         $data = $result['data'] ?? ['message' => $result['message']];
