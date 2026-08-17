@@ -71,27 +71,42 @@ class MtnErsSoapService
     public function parseResponse(string $xmlString): array
     {
         try {
-            $cleanXml = preg_replace('/(<\/?)(\w+):([^>]*>)/', '$1$3', $xmlString);
-            $xml = new \SimpleXMLElement($cleanXml);
-
-            $body = $xml->Body;
-            if (!$body) {
-                return ['status' => false, 'message' => 'Invalid SOAP envelope response.'];
+            $trimXml = trim($xmlString);
+            if (empty($trimXml)) {
+                return ['status' => false, 'message' => 'Empty response received from MTN ERS server.'];
             }
 
+            $cleanXml = preg_replace('/(<\/?)(\w+):([^>]*>)/', '$1$3', $trimXml);
+            $xml = @simplexml_load_string($cleanXml);
+
+            if (!$xml) {
+                return ['status' => false, 'message' => 'Malformed XML response: ' . substr(strip_tags($trimXml), 0, 200)];
+            }
+
+            // Determine if wrapped in Body or root directly
+            $root = isset($xml->Body) ? $xml->Body : $xml;
+
+            $nodeNames = ['vendResponse', 'queryTxResponse', 'LookupResponse', 'lookupResponse', 'transferResponse'];
             $responseNode = null;
-            if (isset($body->vendResponse)) {
-                $responseNode = $body->vendResponse;
-            } elseif (isset($body->queryTxResponse)) {
-                $responseNode = $body->queryTxResponse;
+
+            // Check if root itself is one of the response nodes
+            if (in_array($root->getName(), $nodeNames, true)) {
+                $responseNode = $root;
+            } else {
+                foreach ($nodeNames as $name) {
+                    if (isset($root->$name)) {
+                        $responseNode = $root->$name;
+                        break;
+                    }
+                }
             }
 
             if (!$responseNode) {
-                if (isset($body->Fault)) {
-                    $faultString = (string) ($body->Fault->faultstring ?? 'SOAP Fault occurred.');
+                if (isset($root->Fault)) {
+                    $faultString = (string) ($root->Fault->faultstring ?? 'SOAP Fault occurred.');
                     return ['status' => false, 'message' => $faultString];
                 }
-                return ['status' => false, 'message' => 'No matching response elements found inside body.'];
+                return ['status' => false, 'message' => 'Unrecognized ERS response node: ' . $root->getName() . '. Response snippet: ' . substr(strip_tags($trimXml), 0, 200)];
             }
 
             $data = [];
