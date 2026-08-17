@@ -258,9 +258,10 @@ class MtnErsSoapService
                 if ($parsed['status']) {
                     $data = $parsed['data'];
                     $responseCode = (int) ($data['responseCode'] ?? -1);
+                    $statusId = (int) ($data['statusId'] ?? 0);
 
-                    // Handle out-of-sync sequence (Code 106) with auto-retry
-                    if ($responseCode === 106 && $retryAction) {
+                    // Handle out-of-sync sequence (Code 106 or statusId 106) with auto-retry
+                    if (($responseCode === 106 || $statusId === 106) && $retryAction) {
                         $lastSeq = (int) ($data['lastseq'] ?? $data['sequence'] ?? 0);
                         if ($lastSeq > 0) {
                             MtnErsSequence::setNextSequence($originatorMsisdn, $lastSeq + 2);
@@ -269,9 +270,13 @@ class MtnErsSoapService
                         }
                     }
 
-                    $success = ($responseCode === 0);
+                    $respMsg = strtolower($data['responseMessage'] ?? '');
+                    $hasErrorKeyword = str_contains($respMsg, 'invalid') || str_contains($respMsg, 'failed') || str_contains($respMsg, 'insufficient') || str_contains($respMsg, 'error');
+
+                    $success = ($responseCode === 0 && ($statusId === 0 || !isset($data['statusId'])) && !$hasErrorKeyword);
+
                     if (!$success) {
-                        $data['message'] = $data['responseMessage'] ?? 'MTN ERS failure response code: ' . $responseCode;
+                        $data['message'] = $data['responseMessage'] ?? ('MTN ERS failure statusId: ' . $statusId);
                     }
                 } else {
                     $data = ['message' => $parsed['message']];
@@ -286,10 +291,13 @@ class MtnErsSoapService
         } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
             $service = 'airtime';
-            if (str_contains($xmlPayload, '<xsd:tariffTypeId>7</xsd:tariffTypeId>')) {
-                $service = 'voucher';
-            } elseif (str_contains($xmlPayload, '<xsd:tariffTypeId>9') || str_contains($xmlPayload, '<xsd:tariffTypeId>10') || str_contains($xmlPayload, '<xsd:tariffTypeId>11')) {
-                $service = 'data';
+            if (preg_match('/<xsd:tariffTypeId>(.*?)<\/xsd:tariffTypeId>/i', $xmlPayload, $m)) {
+                $tId = trim($m[1]);
+                if ($tId === '7') {
+                    $service = 'voucher';
+                } elseif ($tId !== '1') {
+                    $service = 'data';
+                }
             }
 
             ApiLog::record([
