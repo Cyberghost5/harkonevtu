@@ -324,14 +324,14 @@ class MtnErsSoapService
         $originator = $this->formatMsisdn234($this->originatorMsisdn ?: '09062058470');
         $target = $this->formatMsisdn234($destMsisdn);
 
-        // Map product to correct tariffTypeId
+        // Map product to correct tariffTypeId or string CIS Product ID
         $tariffTypeId = 1; // Airtime default
         if ($productId === 7 || $productId === '7') {
             $tariffTypeId = 7; // Voucher
         } elseif ($productId === 1 || $productId === '1') {
             $tariffTypeId = 1; // Airtime
         } else {
-            $tariffTypeId = (int) $productId; // Data Bundle ID
+            $tariffTypeId = $productId; // Data Bundle Tariff ID or CIS Product ID string
         }
 
         $execute = function (int $seq) use ($originator, $target, $amount, $tariffTypeId, &$execute) {
