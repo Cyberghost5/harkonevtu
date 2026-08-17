@@ -173,7 +173,11 @@ class MtnErsSoapService
             $basicAuth = base64_encode("{$this->username}:{$this->pin}");
 
             $caBundle = storage_path('certs/ca-bundle.pem');
-            $verifyOption = file_exists($caBundle) ? $caBundle : false;
+            $host = parse_url($this->endpoint, PHP_URL_HOST);
+            $isIpAddress = filter_var($host, FILTER_VALIDATE_IP) !== false;
+
+            // Disable SSL verification for raw IP endpoints or missing/unreadable cert files to prevent cURL error 77
+            $verifyOption = (!$isIpAddress && file_exists($caBundle) && is_readable($caBundle)) ? $caBundle : false;
 
             $response = Http::withHeaders([
                 'Authorization' => "Basic {$basicAuth}",
