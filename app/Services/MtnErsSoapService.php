@@ -76,10 +76,37 @@ class MtnErsSoapService
                 return ['status' => false, 'message' => 'Empty response received from MTN ERS server.'];
             }
 
+            // Strip XML declarations and clean namespaces
             $cleanXml = preg_replace('/(<\/?)(\w+):([^>]*>)/', '$1$3', $trimXml);
+            
+            // Try standard SimpleXML parsing
             $xml = @simplexml_load_string($cleanXml);
 
+            // Fallback parsing via DOMDocument if simplexml failed (handles un-prefixed/malformed SOAP nodes)
             if (!$xml) {
+                $doc = new \DOMDocument();
+                @$doc->loadXML($trimXml, LIBXML_NOERROR | LIBXML_NOWARNING);
+                if ($doc->documentElement) {
+                    $cleanXml = preg_replace('/(<\/?)(\w+):([^>]*>)/', '$1$3', $doc->saveXML());
+                    $xml = @simplexml_load_string($cleanXml);
+                }
+            }
+
+            // Fallback 2: Direct Regex Extraction for key fields if XML parser was strictly blocked
+            if (!$xml) {
+                $data = [];
+                $fields = ['responseCode', 'responseMessage', 'sequence', 'statusId', 'txRefId', 'destBalance', 'origBalance', 'voucherPIN', 'voucherSerial'];
+                foreach ($fields as $field) {
+                    if (preg_match("/<.*?:?{$field}>(.*?)<\/.*?:?{$field}>/i", $trimXml, $m)) {
+                        $data[$field] = trim($m[1]);
+                    }
+                }
+                if (isset($data['responseCode']) || isset($data['txRefId'])) {
+                    return [
+                        'status' => true,
+                        'data'   => $data
+                    ];
+                }
                 return ['status' => false, 'message' => 'Malformed XML response: ' . substr(strip_tags($trimXml), 0, 200)];
             }
 
@@ -106,6 +133,20 @@ class MtnErsSoapService
                     $faultString = (string) ($root->Fault->faultstring ?? 'SOAP Fault occurred.');
                     return ['status' => false, 'message' => $faultString];
                 }
+
+                // If node was not matched in array, parse all child tags of root
+                $data = [];
+                foreach ($root->children() as $child) {
+                    $data[$child->getName()] = (string) $child;
+                }
+
+                if (!empty($data)) {
+                    return [
+                        'status' => true,
+                        'data'   => $data
+                    ];
+                }
+
                 return ['status' => false, 'message' => 'Unrecognized ERS response node: ' . $root->getName() . '. Response snippet: ' . substr(strip_tags($trimXml), 0, 200)];
             }
 
