@@ -172,6 +172,9 @@ class MtnErsSoapService
 
             $basicAuth = base64_encode("{$this->username}:{$this->pin}");
 
+            $caBundle = storage_path('certs/ca-bundle.pem');
+            $verifyOption = file_exists($caBundle) ? $caBundle : false;
+
             $response = Http::withHeaders([
                 'Authorization' => "Basic {$basicAuth}",
                 'Content-Type'  => 'text/xml; charset=utf-8',
@@ -179,6 +182,7 @@ class MtnErsSoapService
                 'Expect'        => '',
             ])->withOptions([
                 'curl'        => $curlOptions,
+                'verify'      => $verifyOption,
                 'version'     => 1.0,
                 'http_errors' => false,
             ])->connectTimeout(0)
