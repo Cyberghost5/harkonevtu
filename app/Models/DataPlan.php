@@ -22,6 +22,7 @@ class DataPlan extends Model
         'merrybills_product_id',
         'merrybills_id',
         'mtn_ers_id',
+        'mtn_ers_cis_id',
         'amount',
         'amount_agent',
         'enabled',

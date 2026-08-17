@@ -171,8 +171,10 @@ class MtnErsSoapService
     /**
      * Build SOAP Vend request XML matching the ERS 360 HOSTIF API document.
      */
-    public function buildVendXml(string $origMsisdn, string $destMsisdn, float $amount, int $sequence, int $tariffTypeId): string
+    public function buildVendXml(string $origMsisdn, string $destMsisdn, float $amount, int $sequence, $tariffTypeId, ?string $cisProductId = null): string
     {
+        $productIdTag = !empty($cisProductId) ? "\n     <xsd:productId>" . htmlspecialchars($cisProductId) . "</xsd:productId>" : '';
+
         return '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://hostif.vtm.prism.co.za/xsd">
  <soapenv:Header/>
@@ -182,7 +184,7 @@ class MtnErsSoapService
      <xsd:destMsisdn>' . htmlspecialchars($destMsisdn) . '</xsd:destMsisdn>
      <xsd:amount>' . htmlspecialchars($amount) . '</xsd:amount>
      <xsd:sequence>' . htmlspecialchars($sequence) . '</xsd:sequence>
-     <xsd:tariffTypeId>' . htmlspecialchars($tariffTypeId) . '</xsd:tariffTypeId>
+     <xsd:tariffTypeId>' . htmlspecialchars($tariffTypeId) . '</xsd:tariffTypeId>' . $productIdTag . '
      <xsd:serviceproviderId>1</xsd:serviceproviderId>
    </xsd:vend>
  </soapenv:Body>
@@ -319,7 +321,7 @@ class MtnErsSoapService
     /**
      * Executes airtime/data/voucher disbursements using automatic sequence tracking.
      */
-    public function vend(string $destMsisdn, float $amount, $productId): array
+    public function vend(string $destMsisdn, float $amount, $productId, ?string $cisProductId = null): array
     {
         $originator = $this->formatMsisdn234($this->originatorMsisdn ?: '09062058470');
         $target = $this->formatMsisdn234($destMsisdn);
@@ -331,11 +333,11 @@ class MtnErsSoapService
         } elseif ($productId === 1 || $productId === '1') {
             $tariffTypeId = 1; // Airtime
         } else {
-            $tariffTypeId = $productId; // Data Bundle Tariff ID or CIS Product ID string
+            $tariffTypeId = $productId; // Data Bundle Tariff ID
         }
 
-        $execute = function (int $seq) use ($originator, $target, $amount, $tariffTypeId, &$execute) {
-            $xml = $this->buildVendXml($originator, $target, $amount, $seq, $tariffTypeId);
+        $execute = function (int $seq) use ($originator, $target, $amount, $tariffTypeId, $cisProductId, &$execute) {
+            $xml = $this->buildVendXml($originator, $target, $amount, $seq, $tariffTypeId, $cisProductId);
             return $this->sendRequest(
                 'urn:Vend', 
                 $xml, 
