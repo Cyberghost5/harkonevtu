@@ -167,13 +167,15 @@
 @section('scripts')
 <script>
     // ── Config (from PHP) ────────────────────────────────────────────────────
-    const GATEWAY       = @json($activeGateway);
-    const PUBLIC_KEY    = @json($publicKey ?? '');
-    const CHARGE_TYPE   = @json($chargeType);
-    const CHARGE_VALUE  = {{ $chargeValue }};
-    const USER_EMAIL    = @json(auth()->user()->email);
-    const USER_NAME     = @json(auth()->user()->name);
-    const CSRF          = document.querySelector('meta[name="csrf-token"]').content;
+    const GATEWAY             = @json($activeGateway);
+    const PUBLIC_KEY          = @json($publicKey ?? '');
+    const MONNIFY_CONTRACT_NO = @json($monnifyContractNo ?? '');
+    const MONNIFY_MODE        = @json($monnifyMode ?? 'sandbox');
+    const CHARGE_TYPE         = @json($chargeType);
+    const CHARGE_VALUE        = {{ $chargeValue }};
+    const USER_EMAIL          = @json(auth()->user()->email);
+    const USER_NAME           = @json(auth()->user()->name);
+    const CSRF                = document.querySelector('meta[name="csrf-token"]').content;
 
     // ── Charge calculation ───────────────────────────────────────────────────
     function computeCharge() {
@@ -239,23 +241,38 @@
         }
     }
 
-    // ── Open Paystack or Flutterwave popup ───────────────────────────────────
+    // ── Open Paystack, Flutterwave, or Monnify popup ─────────────────────────
     function openGateway(data) {
-        if (GATEWAY === 'flutterwave') {
+        if (GATEWAY === 'monnify') {
+            MonnifySDK.initialize({
+                amount:             data.total,
+                currency:           'NGN',
+                reference:          data.reference,
+                customerFullName:   USER_NAME,
+                customerEmail:      USER_EMAIL,
+                apiKey:             PUBLIC_KEY,
+                contractCode:       MONNIFY_CONTRACT_NO,
+                paymentDescription: 'Wallet Funding',
+                isTestMode:         MONNIFY_MODE === 'sandbox',
+                onComplete: function(response) {
+                    verifyPayment('monnify', data.reference, response.transactionReference);
+                },
+                onClose: function(data) {
+                    setBtnLoading(false);
+                }
+            });
+        } else if (GATEWAY === 'flutterwave') {
             FlutterwaveCheckout({
                 public_key:      PUBLIC_KEY,
                 tx_ref:          data.reference,
                 amount:          data.total,
                 currency:        'NGN',
                 payment_options: 'card,banktransfer,ussd',
-                // Fallback for bank-transfer redirect flows - server verifies and redirects to dashboard
                 redirect_url:    '{{ route("wallet.fund.gateway.flutterwave.callback") }}',
                 customer: { email: USER_EMAIL, name: USER_NAME },
                 customizations: { title: '{{ $siteName }} Wallet', description: 'Wallet top-up' },
                 callback: function(response) {
-                    // Flutterwave uses 'transaction_id' in docs but 'id' in some payment flows
                     const txId = response.transaction_id || response.id;
-                    // Don't close the modal before the AJAX completes - redirect will handle it
                     verifyPayment('flutterwave', data.reference, txId);
                 },
                 onclose: function() { setBtnLoading(false); }
@@ -282,9 +299,11 @@
             const body = { reference };
             if (gateway === 'flutterwave') body.transaction_id = transactionId;
 
-            const endpoint = gateway === 'flutterwave'
-                ? '/wallet/fund/gateway/verify/flutterwave'
-                : '/wallet/fund/gateway/verify/paystack';
+            const endpoint = gateway === 'monnify'
+                ? '/wallet/fund/gateway/verify/monnify'
+                : (gateway === 'flutterwave'
+                    ? '/wallet/fund/gateway/verify/flutterwave'
+                    : '/wallet/fund/gateway/verify/paystack');
 
             const res  = await fetch(endpoint, {
                 method: 'POST',
@@ -321,7 +340,9 @@
 </script>
 
 {{-- Load the correct gateway SDK --}}
-@if(($activeGateway ?? 'paystack') === 'flutterwave')
+@if(($activeGateway ?? 'paystack') === 'monnify')
+    <script src="https://sdk.monnify.com/plugin/monnify.js"></script>
+@elseif(($activeGateway ?? 'paystack') === 'flutterwave')
     <script src="https://checkout.flutterwave.com/v3.js"></script>
 @else
     <script src="https://js.paystack.co/v1/inline.js"></script>

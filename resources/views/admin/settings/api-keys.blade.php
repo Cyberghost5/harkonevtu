@@ -193,6 +193,7 @@
                         <select name="active_gateway" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                             <option value="paystack" {{ ($s['active_gateway'] ?? 'paystack') === 'paystack' ? 'selected' : '' }}>Paystack</option>
                             <option value="flutterwave" {{ ($s['active_gateway'] ?? 'paystack') === 'flutterwave' ? 'selected' : '' }}>Flutterwave</option>
+                            <option value="monnify" {{ ($s['active_gateway'] ?? 'paystack') === 'monnify' ? 'selected' : '' }}>Monnify</option>
                         </select>
                     </div>
                 </div>

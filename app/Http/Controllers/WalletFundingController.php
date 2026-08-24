@@ -62,9 +62,15 @@ class WalletFundingController extends Controller implements HasMiddleware
         $chargeType    = $settings['transaction_charge_type'] ?? 'flat';
         $chargeValue   = (float) ($settings['transaction_charge_value'] ?? 0);
 
-        $publicKey = $activeGateway === 'flutterwave'
-            ? config('services.flutterwave.public_key')
-            : config('services.paystack.public_key');
+        $monnifyApiKey     = AppSetting::get('monnify_api_key');
+        $monnifyContractNo = AppSetting::get('monnify_contract_no');
+        $monnifyMode       = AppSetting::get('monnify_mode', 'sandbox');
+
+        $publicKey = match ($activeGateway) {
+            'flutterwave' => config('services.flutterwave.public_key'),
+            'monnify'     => $monnifyApiKey,
+            default       => config('services.paystack.public_key'),
+        };
 
         $previousTx = WalletTransaction::where('user_id', $user->id)
             ->where('type', 'credit')
@@ -73,7 +79,7 @@ class WalletFundingController extends Controller implements HasMiddleware
             ->paginate(10);
 
         return view('wallet.fund-gateway', compact(
-            'user', 'activeGateway', 'chargeType', 'chargeValue', 'publicKey', 'previousTx'
+            'user', 'activeGateway', 'chargeType', 'chargeValue', 'publicKey', 'monnifyApiKey', 'monnifyContractNo', 'monnifyMode', 'previousTx'
         ));
     }
 
@@ -320,7 +326,11 @@ class WalletFundingController extends Controller implements HasMiddleware
             : (float) $chargeValue;
         $total    = $amount + $charge;
         $gateway  = AppSetting::get('active_gateway', 'paystack');
-        $prefix   = $gateway === 'flutterwave' ? 'FLW' : 'PST';
+        $prefix   = match($gateway) {
+            'flutterwave' => 'FLW',
+            'monnify'     => 'MNY',
+            default       => 'PST',
+        };
         $reference = $prefix . strtoupper(Str::random(10)) . time();
 
         // Store intent in cache - no pending tx written to DB
@@ -443,6 +453,61 @@ class WalletFundingController extends Controller implements HasMiddleware
         }
 
         return $this->creditAndRespond($request->reference, $intent);
+    }
+
+    public function verifyMonnify(Request $request): JsonResponse
+    {
+        $request->validate(['reference' => ['required', 'string', 'max:100']]);
+
+        $intent = Cache::get('funding_intent_' . $request->reference);
+
+        if (!$intent || $intent['user_id'] !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Invalid or expired payment reference.'], 404);
+        }
+
+        try {
+            $accessToken = \App\Services\MonnifyService::getAccessToken();
+            if (!$accessToken) {
+                return response()->json(['success' => false, 'message' => 'Could not authenticate with Monnify.'], 500);
+            }
+
+            $mode = AppSetting::get('monnify_mode', 'sandbox');
+            $baseUrl = $mode === 'production' ? 'https://api.monnify.com' : 'https://sandbox.monnify.com';
+            $url = $baseUrl . '/api/v2/transactions/find-by-ref?paymentReference=' . urlencode($request->reference);
+
+            $startTime = hrtime(true);
+            $response = Http::withToken($accessToken)
+                ->timeout(15)
+                ->get($url);
+            $durationMs = (int) round((hrtime(true) - $startTime) / 1e6);
+
+            $body = $response->json() ?? [];
+            $paymentStatus = strtoupper($body['responseBody']['paymentStatus'] ?? $body['responseBody']['paymentResult'] ?? '');
+            $success = $response->successful() && ($paymentStatus === 'PAID' || $paymentStatus === 'SUCCESSFUL');
+
+            \App\Models\ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'funding',
+                'provider'         => 'monnify',
+                'reference'        => $request->reference,
+                'endpoint'         => $url,
+                'method'           => 'GET',
+                'payload'          => ['reference' => $request->reference],
+                'response'         => $body,
+                'http_status'      => $response->status(),
+                'duration_ms'      => $durationMs,
+                'success'          => $success
+            ]);
+
+            if (!$success) {
+                return response()->json(['success' => false, 'message' => 'Monnify payment verification failed or pending.'], 400);
+            }
+
+            return $this->creditAndRespond($request->reference, $intent);
+        } catch (\Exception $e) {
+            Log::error('Monnify verification exception', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Monnify verification error: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -893,6 +958,19 @@ class WalletFundingController extends Controller implements HasMiddleware
                         Log::error('Monnify webhook processing failed', ['error' => $e->getMessage()]);
                     }
                 }
+            } else {
+                $paymentRef = $eventData['paymentReference'] ?? null;
+                if ($paymentRef) {
+                    $intent = Cache::get('funding_intent_' . $paymentRef);
+                    if ($intent) {
+                        try {
+                            $this->performCredit($paymentRef, $intent);
+                        } catch (\RuntimeException $e) {
+                            Log::error('Monnify online checkout webhook failed', ['error' => $e->getMessage()]);
+                        }
+                    }
+                }
+            }
             }
         }
 

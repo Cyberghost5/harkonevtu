@@ -100,6 +100,7 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked']
         Route::post('/gateway/initiate',           [WalletFundingController::class, 'initiateGateway'])->name('gateway.initiate');
         Route::post('/gateway/verify/paystack',    [WalletFundingController::class, 'verifyPaystack'])->name('gateway.verify.paystack');
         Route::post('/gateway/verify/flutterwave', [WalletFundingController::class, 'verifyFlutterwave'])->name('gateway.verify.flutterwave');
+        Route::post('/gateway/verify/monnify',     [WalletFundingController::class, 'verifyMonnify'])->name('gateway.verify.monnify');
         Route::get('/gateway/flutterwave/callback',[WalletFundingController::class, 'flutterwaveRedirectCallback'])->name('gateway.flutterwave.callback');
 
         // Manual proof of payment
