@@ -105,7 +105,10 @@ class DataController extends Controller
             ->forNetwork($networkKey)
             ->forType($dataType)
             ->forApi($api)
+            ->orderBy('amount', 'asc')
             ->get()
+            ->sortBy(fn (DataPlan $p) => $p->priceFor($user))
+            ->values()
             ->map(fn (DataPlan $p) => [
                 'id'       => $p->id,
                 'name'     => $p->plan_name,
