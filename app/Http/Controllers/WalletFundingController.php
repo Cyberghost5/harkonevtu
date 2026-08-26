@@ -971,7 +971,6 @@ class WalletFundingController extends Controller implements HasMiddleware
                     }
                 }
             }
-            }
         }
 
         return response('ok');
