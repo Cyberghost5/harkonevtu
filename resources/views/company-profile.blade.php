@@ -59,8 +59,9 @@
                 <a href="#sectors" class="px-7 py-3.5 rounded-xl bg-vtu-primary hover:bg-vtu-primary/90 text-white font-semibold text-sm shadow-lg shadow-vtu-primary/30 transition-all hover:scale-105">
                     Explore Our Sectors
                 </a>
-                <a href="/Company Profile.pdf" target="_blank" download class="px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-sm backdrop-blur-md transition-all">
-                    📄 Download Profile (PDF)
+                <a href="/Company Profile.pdf" target="_blank" download class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-sm backdrop-blur-md transition-all">
+                    <svg class="w-4 h-4 text-vtu-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>Download Profile (PDF)</span>
                 </a>
                 <a href="{{ route('login') }}" class="px-7 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-sm transition-all">
                     Client Services Portal →
@@ -117,19 +118,19 @@
                 {{-- Key Features List --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-medium text-slate-700">
                     <div class="flex items-center gap-2.5">
-                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">✓</span>
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">✓</span>
                         Unrivaled Engineering Quality
                     </div>
                     <div class="flex items-center gap-2.5">
-                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">✓</span>
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">✓</span>
                         Optimal Value at Least Cost
                     </div>
                     <div class="flex items-center gap-2.5">
-                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">✓</span>
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">✓</span>
                         Zero Hazard Safety Standards
                     </div>
                     <div class="flex items-center gap-2.5">
-                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">✓</span>
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">✓</span>
                         Environmental Impact Minimization
                     </div>
                 </div>
@@ -140,8 +141,8 @@
                 
                 {{-- Vision Card --}}
                 <div class="bg-white p-8 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="w-12 h-12 rounded-xl bg-vtu-primary/10 text-vtu-primary flex items-center justify-center text-2xl mb-4">
-                        🎯
+                    <div class="w-12 h-12 rounded-xl bg-vtu-primary/10 text-vtu-primary flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <h3 class="text-xl font-bold font-outfit text-slate-900 mb-2">Our Vision</h3>
                     <p class="text-slate-600 text-sm leading-relaxed">
@@ -151,8 +152,8 @@
 
                 {{-- Mission Card --}}
                 <div class="bg-white p-8 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="w-12 h-12 rounded-xl bg-vtu-secondary/10 text-vtu-secondary flex items-center justify-center text-2xl mb-4">
-                        🚀
+                    <div class="w-12 h-12 rounded-xl bg-vtu-secondary/10 text-vtu-secondary flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </div>
                     <h3 class="text-xl font-bold font-outfit text-slate-900 mb-2">Our Mission</h3>
                     <p class="text-slate-600 text-sm leading-relaxed">
@@ -190,8 +191,8 @@
             {{-- Sector 1: ICT & Telecom --}}
             <div class="sector-card bg-slate-50 p-8 rounded-3xl border border-slate-200/70 flex flex-col justify-between">
                 <div>
-                    <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-blue-600/30 mb-6">
-                        📱
+                    <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 mb-6">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                     </div>
                     <h3 class="text-xl font-bold font-outfit text-slate-900 mb-3">
                         Information & Communication Technology (ICT)
@@ -201,17 +202,26 @@
                     </p>
                 </div>
                 <ul class="space-y-2 text-xs font-medium text-slate-700 border-t border-slate-200/80 pt-4">
-                    <li class="flex items-center gap-2">🔹 Automated VTU & Payment Infrastructure</li>
-                    <li class="flex items-center gap-2">🔹 Enterprise Data & Airtime APIs</li>
-                    <li class="flex items-center gap-2">🔹 Network & System Consultancy</li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Automated VTU & Payment Infrastructure</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Enterprise Data & Airtime APIs</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Network & System Consultancy</span>
+                    </li>
                 </ul>
             </div>
 
             {{-- Sector 2: Civil Engineering --}}
             <div class="sector-card bg-slate-50 p-8 rounded-3xl border border-slate-200/70 flex flex-col justify-between">
                 <div>
-                    <div class="w-14 h-14 rounded-2xl bg-amber-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-amber-600/30 mb-6">
-                        🏗️
+                    <div class="w-14 h-14 rounded-2xl bg-amber-600 text-white flex items-center justify-center shadow-lg shadow-amber-600/30 mb-6">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V11m0 10V11m0 0h4m-4 0H7"/></svg>
                     </div>
                     <h3 class="text-xl font-bold font-outfit text-slate-900 mb-3">
                         Civil Engineering & Construction
@@ -221,17 +231,26 @@
                     </p>
                 </div>
                 <ul class="space-y-2 text-xs font-medium text-slate-700 border-t border-slate-200/80 pt-4">
-                    <li class="flex items-center gap-2">🔹 Road Construction & Drainage Networks</li>
-                    <li class="flex items-center gap-2">🔹 Structural & Bridge Engineering</li>
-                    <li class="flex items-center gap-2">🔹 Major Interest Buildings Procurement</li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Road Construction & Drainage Networks</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Structural & Bridge Engineering</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Major Interest Buildings Procurement</span>
+                    </li>
                 </ul>
             </div>
 
             {{-- Sector 3: Solar Energy --}}
             <div class="sector-card bg-slate-50 p-8 rounded-3xl border border-slate-200/70 flex flex-col justify-between">
                 <div>
-                    <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-emerald-600/30 mb-6">
-                        ☀️
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/30 mb-6">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     </div>
                     <h3 class="text-xl font-bold font-outfit text-slate-900 mb-3">
                         Solar Power Management
@@ -241,9 +260,18 @@
                     </p>
                 </div>
                 <ul class="space-y-2 text-xs font-medium text-slate-700 border-t border-slate-200/80 pt-4">
-                    <li class="flex items-center gap-2">🔹 Industrial Solar Installations</li>
-                    <li class="flex items-center gap-2">🔹 Renewable Grid Power Management</li>
-                    <li class="flex items-center gap-2">🔹 Zero-Hazard Energy System Audits</li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Industrial Solar Installations</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Renewable Grid Power Management</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Zero-Hazard Energy System Audits</span>
+                    </li>
                 </ul>
             </div>
 
@@ -338,7 +366,8 @@
         {{-- Full Board Roster Grid --}}
         <div class="glass-card p-8 rounded-3xl border border-slate-800">
             <h4 class="text-base font-bold font-outfit text-white mb-6 uppercase tracking-wider flex items-center gap-2">
-                <span>🏛️</span> Full Board Roster & Officers
+                <svg class="w-5 h-5 text-vtu-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4"/></svg>
+                <span>Full Board Roster & Officers</span>
             </h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 
@@ -398,7 +427,7 @@
                     {{-- Address --}}
                     <div class="bg-white p-5 rounded-2xl border border-slate-200/80 flex items-start gap-4">
                         <div class="w-10 h-10 rounded-xl bg-vtu-primary/10 text-vtu-primary flex items-center justify-center text-lg flex-shrink-0">
-                            📍
+                            <svg class="w-5 h-5 text-vtu-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         </div>
                         <div>
                             <div class="text-xs font-bold uppercase text-slate-400 tracking-wider">Corporate Address</div>
@@ -411,7 +440,7 @@
                     {{-- Phone --}}
                     <div class="bg-white p-5 rounded-2xl border border-slate-200/80 flex items-start gap-4">
                         <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg flex-shrink-0">
-                            📞
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                         </div>
                         <div>
                             <div class="text-xs font-bold uppercase text-slate-400 tracking-wider">Phone Lines</div>
@@ -424,7 +453,7 @@
                     {{-- Email --}}
                     <div class="bg-white p-5 rounded-2xl border border-slate-200/80 flex items-start gap-4">
                         <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg flex-shrink-0">
-                            ✉️
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         </div>
                         <div>
                             <div class="text-xs font-bold uppercase text-slate-400 tracking-wider">Email Address</div>
