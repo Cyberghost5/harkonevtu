@@ -603,7 +603,7 @@
                 <div class="p-5">
                     <h4 class="text-lg font-bold font-outfit text-white">Abubakar Ibrahim Idris</h4>
                     <p class="text-xs font-semibold text-teal-400 uppercase tracking-wider mt-0.5">Managing Director</p>
-                    <span class="inline-block mt-2 px-2.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300">Executive Director</span>
+                    <span class="inline-block mt-2 px-2.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300">Nigerian</span>
                 </div>
             </div>
 
