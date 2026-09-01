@@ -583,7 +583,7 @@
                     <img src="{{ asset('assets/images/directors/director1.png') }}" 
                          alt="Umar Ibrahim Idris" 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 from-slate-900 via-transparent to-transparent"></div>
                 </div>
                 <div class="p-5">
                     <h4 class="text-lg font-bold font-outfit text-white">Umar Ibrahim Idris</h4>
@@ -598,7 +598,7 @@
                     <img src="{{ asset('assets/images/directors/director2.png') }}" 
                          alt="Abubakar Ibrahim Idris" 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 from-slate-900 via-transparent to-transparent"></div>
                 </div>
                 <div class="p-5">
                     <h4 class="text-lg font-bold font-outfit text-white">Abubakar Ibrahim Idris</h4>
@@ -613,7 +613,7 @@
                     <img src="{{ asset('assets/images/directors/director4.png') }}" 
                          alt="Nur Moh’d Idris" 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 from-slate-900 via-transparent to-transparent"></div>
                 </div>
                 <div class="p-5">
                     <h4 class="text-lg font-bold font-outfit text-white">Nur Moh’d Idris</h4>
@@ -628,7 +628,7 @@
                     <img src="{{ asset('assets/images/directors/director3.png') }}" 
                          alt="Mustapha Moh’d Idris" 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 from-slate-900 via-transparent to-transparent"></div>
                 </div>
                 <div class="p-5">
                     <h4 class="text-lg font-bold font-outfit text-white">Mustapha Moh’d Idris</h4>
@@ -643,7 +643,7 @@
                     <img src="{{ asset('assets/images/directors/director5.png') }}" 
                          alt="Idris Ahmed Idris " 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 from-slate-900 via-transparent to-transparent"></div>
                 </div>
                 <div class="p-5">
                     <h4 class="text-lg font-bold font-outfit text-white">Idris Ahmed Idris </h4>
@@ -658,7 +658,7 @@
                     <img src="{{ asset('assets/images/directors/director6.png') }}" 
                          alt="Mustapha Mohammed" 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 from-slate-900 via-transparent to-transparent"></div>
                 </div>
                 <div class="p-5">
                     <h4 class="text-lg font-bold font-outfit text-white">Mustapha Mohammed</h4>
