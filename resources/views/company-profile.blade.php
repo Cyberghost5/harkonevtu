@@ -281,6 +281,281 @@
 </section>
 
 {{-- ═══════════════════════════════════════════════════════
+     WHY CHOOSE US - OUR COMPETITIVE ADVANTAGES
+═══════════════════════════════════════════════════════ --}}
+<section id="why-choose-us" class="py-20 bg-slate-900 text-white relative overflow-hidden">
+    {{-- Glow Accents --}}
+    <div class="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-vtu-primary/10 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-vtu-secondary/10 blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-vtu-accent text-xs font-semibold uppercase tracking-wider mb-3">
+                Value Proposition
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-bold font-outfit tracking-tight">
+                Why Partner With New Millennium Resources
+            </h2>
+            <p class="text-slate-400 text-sm mt-3">
+                Our core operational principles ensure high efficiency, zero hazards, and supreme technical delivery.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            {{-- Advantage 1 --}}
+            <div class="glass-card p-8 rounded-3xl border border-slate-800 hover:border-vtu-primary/50 transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-vtu-primary/20 text-vtu-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold font-outfit text-white mb-2">Unrivaled Quality</h3>
+                <p class="text-slate-400 text-xs leading-relaxed">
+                    Executing engineering, solar, and ICT projects with zero compromise on international engineering standards and precision.
+                </p>
+            </div>
+
+            {{-- Advantage 2 --}}
+            <div class="glass-card p-8 rounded-3xl border border-slate-800 hover:border-teal-500/50 transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold font-outfit text-white mb-2">Least Cost Value</h3>
+                <p class="text-slate-400 text-xs leading-relaxed">
+                    Delivering maximum yield and infrastructure durability at optimal, transparent budget structures for clients.
+                </p>
+            </div>
+
+            {{-- Advantage 3 --}}
+            <div class="glass-card p-8 rounded-3xl border border-slate-800 hover:border-amber-500/50 transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold font-outfit text-white mb-2">Zero Hazard HSE</h3>
+                <p class="text-slate-400 text-xs leading-relaxed">
+                    Rigorous Health, Safety, and Environment (HSE) protocols ensuring zero casualties and zero site hazards.
+                </p>
+            </div>
+
+            {{-- Advantage 4 --}}
+            <div class="glass-card p-8 rounded-3xl border border-slate-800 hover:border-emerald-500/50 transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h1.5a2.5 2.5 0 002.5-2.5V11a2 2 0 012-2h1.055M11 20.055V18a2 2 0 00-2-2h-1a2 2 0 01-2-2v-1a2 2 0 00-2-2H3.055"/></svg>
+                </div>
+                <h3 class="text-lg font-bold font-outfit text-white mb-2">Environmental Care</h3>
+                <p class="text-slate-400 text-xs leading-relaxed">
+                    Eco-friendly execution methods and clean renewable solar power options reducing long-term carbon footprint.
+                </p>
+            </div>
+
+            {{-- Advantage 5 --}}
+            <div class="glass-card p-8 rounded-3xl border border-slate-800 hover:border-blue-500/50 transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a2 2 0 00-1.96.808l-.447.597a15.056 15.056 0 01-6.592-6.592l.597-.447a2 2 0 00.808-1.96l-.477-2.387a2 2 0 00-.547-1.022L7.027 3.512A2 2 0 005.61 3H4a2 2 0 00-2 2 16 16 0 0016 16v-1.61a2 2 0 00-.512-1.417l-.89-1.072z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold font-outfit text-white mb-2">Elite Consultancy</h3>
+                <p class="text-slate-400 text-xs leading-relaxed">
+                    Seasoned engineers and project managers offering expert technical advisory and end-to-end supervision.
+                </p>
+            </div>
+
+            {{-- Advantage 6 --}}
+            <div class="glass-card p-8 rounded-3xl border border-slate-800 hover:border-indigo-500/50 transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold font-outfit text-white mb-2">Community Harmony</h3>
+                <p class="text-slate-400 text-xs leading-relaxed">
+                    Building long-term cooperation and mutual respect with host communities to ensure smooth project operations.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+{{-- ═══════════════════════════════════════════════════════
+     PROJECTS CAROUSEL SHOWCASE
+═══════════════════════════════════════════════════════ --}}
+<section id="projects" class="py-20 bg-slate-50 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+            <div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-vtu-primary/10 text-vtu-primary text-xs font-semibold uppercase tracking-wider mb-3">
+                    Project Portfolio
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-bold font-outfit text-slate-900 tracking-tight">
+                    Featured Projects & Execution
+                </h2>
+                <p class="text-slate-500 text-sm mt-2">
+                    Showcasing completed civil construction, solar energy power installations, and ICT telecom infrastructure.
+                </p>
+            </div>
+
+            {{-- Carousel Nav Controls --}}
+            <div class="flex items-center gap-3 mt-6 md:mt-0">
+                <button id="project-prev" class="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-700 hover:bg-vtu-primary hover:text-white hover:border-vtu-primary flex items-center justify-center transition-all shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button id="project-next" class="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-700 hover:bg-vtu-primary hover:text-white hover:border-vtu-primary flex items-center justify-center transition-all shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>
+
+        {{-- Carousel Container --}}
+        <div class="relative overflow-hidden rounded-3xl">
+            <div id="project-slider" class="flex transition-transform duration-500 ease-out">
+                
+                @php
+                    $projects = [
+                        [
+                            'title' => 'Civil Highway & Drainage Engineering',
+                            'category' => 'Civil Engineering',
+                            'color' => 'amber',
+                            'location' => 'Borno State, Nigeria',
+                            'desc' => 'Procurement and full-scale EPC execution of major road drainage channels and highway infrastructure.',
+                            'image' => asset('assets/images/projects/project1.jpg')
+                        ],
+                        [
+                            'title' => 'Industrial Solar Mini-Grid Facility',
+                            'category' => 'Solar Power',
+                            'color' => 'emerald',
+                            'location' => 'Maiduguri Commercial Hub',
+                            'desc' => 'High-capacity renewable solar power battery bank installation providing 24/7 off-grid electricity.',
+                            'image' => asset('assets/images/projects/project2.jpg')
+                        ],
+                        [
+                            'title' => 'Automated Telecom VTU & API Gateway',
+                            'category' => 'ICT & Telecoms',
+                            'color' => 'blue',
+                            'location' => 'Enterprise System',
+                            'desc' => 'Deploying direct carrier integrations for MTN 8915, Glo ERS, Airtel, and 9mobile VTU disbursement.',
+                            'image' => asset('assets/images/projects/project3.jpg')
+                        ],
+                        [
+                            'title' => 'Commercial Building Construction',
+                            'category' => 'Civil Engineering',
+                            'color' => 'amber',
+                            'location' => 'Northern Region',
+                            'desc' => 'Structural engineering and architectural construction of high-capacity corporate office facilities.',
+                            'image' => asset('assets/images/projects/project4.jpg')
+                        ],
+                        [
+                            'title' => 'Rural Solar Energy Electrification',
+                            'category' => 'Solar Power',
+                            'color' => 'emerald',
+                            'location' => 'Community Project',
+                            'desc' => 'Deploying zero-hazard solar street lights and decentralized power kits for community centers.',
+                            'image' => asset('assets/images/projects/project5.jpg')
+                        ],
+                        [
+                            'title' => 'Enterprise Fiber Network Installation',
+                            'category' => 'ICT & Telecoms',
+                            'color' => 'blue',
+                            'location' => 'Regional Office',
+                            'desc' => 'Structured network cabling, fiber optic links, and enterprise IT infrastructure management.',
+                            'image' => asset('assets/images/projects/project6.jpg')
+                        ],
+                        [
+                            'title' => 'Highway Culvert & Bridge Construction',
+                            'category' => 'Civil Engineering',
+                            'color' => 'amber',
+                            'location' => 'Transit Corridor',
+                            'desc' => 'Reinforced concrete bridge and storm-water culvert construction under zero safety hazard standards.',
+                            'image' => asset('assets/images/projects/project7.jpg')
+                        ],
+                        [
+                            'title' => 'Hybrid Solar & Grid Energy Management',
+                            'category' => 'Solar Power',
+                            'color' => 'emerald',
+                            'location' => 'Commercial Facility',
+                            'desc' => 'Smart automated inverter switching units balancing solar energy generation with main grid power.',
+                            'image' => asset('assets/images/projects/project8.jpg')
+                        ],
+                        [
+                            'title' => 'Secure Corporate Data Center Setup',
+                            'category' => 'ICT & Telecoms',
+                            'color' => 'blue',
+                            'location' => 'Head Office',
+                            'desc' => 'Server rack mounting, firewall deployment, biometric access controls, and power backup units.',
+                            'image' => asset('assets/images/projects/project9.jpg')
+                        ],
+                        [
+                            'title' => 'Urban Road Rehabilitation & Paving',
+                            'category' => 'Civil Engineering',
+                            'color' => 'amber',
+                            'location' => 'Metropolitan Zone',
+                            'desc' => 'Asphaltic concrete road surfacing, lane marking, and pedestrian safety pathway construction.',
+                            'image' => asset('assets/images/projects/project10.jpg')
+                        ],
+                    ];
+                @endphp
+
+                @foreach($projects as $index => $project)
+                    <div class="w-full md:w-1/2 lg:w-1/3 flex-shrink-0 p-3">
+                        <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col justify-between group">
+                            
+                            {{-- Image Banner / Visual Block --}}
+                            <div class="h-52 bg-slate-800 relative overflow-hidden flex items-center justify-center">
+                                <img src="{{ $project['image'] }}" 
+                                     alt="{{ $project['title'] }}" 
+                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                     onerror="this.onerror=null; this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                                
+                                {{-- Fallback Gradient Card if image not loaded --}}
+                                <div class="hidden absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-white/50 text-xs font-mono">
+                                        <span>NMRNL PROJECT #{{ sprintf('%02d', $index + 1) }}</span>
+                                        <svg class="w-6 h-6 text-vtu-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4"/></svg>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs font-bold uppercase tracking-wider text-vtu-accent block mb-1">{{ $project['category'] }}</span>
+                                        <h4 class="text-base font-bold font-outfit text-white">{{ $project['title'] }}</h4>
+                                    </div>
+                                </div>
+
+                                {{-- Category Pill --}}
+                                <div class="absolute top-4 left-4">
+                                    <span class="px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[11px] font-semibold border border-white/10 shadow-sm">
+                                        {{ $project['category'] }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{-- Card Details --}}
+                            <div class="p-6 flex-grow flex flex-col justify-between">
+                                <div>
+                                    <div class="text-[11px] font-semibold uppercase text-slate-400 tracking-wider mb-1">
+                                        📍 {{ $project['location'] }}
+                                    </div>
+                                    <h3 class="text-lg font-bold font-outfit text-slate-900 mb-3 group-hover:text-vtu-primary transition-colors">
+                                        {{ $project['title'] }}
+                                    </h3>
+                                    <p class="text-slate-600 text-xs leading-relaxed">
+                                        {{ $project['desc'] }}
+                                    </p>
+                                </div>
+
+                                <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-vtu-primary">
+                                    <span>Verified Execution</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                @endforeach
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{{-- ═══════════════════════════════════════════════════════
      BOARD OF DIRECTORS & LEADERSHIP
 ═══════════════════════════════════════════════════════ --}}
 <section id="leadership" class="py-20 bg-slate-900 text-white">
@@ -504,5 +779,63 @@
 
     </div>
 </section>
+
+{{-- Carousel Script --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const slider = document.getElementById('project-slider');
+        const prevBtn = document.getElementById('project-prev');
+        const nextBtn = document.getElementById('project-next');
+        if (!slider || !prevBtn || !nextBtn) return;
+
+        let currentIndex = 0;
+
+        function getVisibleCards() {
+            if (window.innerWidth >= 1024) return 3;
+            if (window.innerWidth >= 768) return 2;
+            return 1;
+        }
+
+        function updateSlider() {
+            const totalCards = 10;
+            const visible = getVisibleCards();
+            const maxIndex = Math.max(0, totalCards - visible);
+
+            if (currentIndex > maxIndex) currentIndex = maxIndex;
+            if (currentIndex < 0) currentIndex = 0;
+
+            const percentage = (100 / visible) * currentIndex;
+            slider.style.transform = `translateX(-${percentage}%)`;
+        }
+
+        nextBtn.addEventListener('click', function () {
+            const totalCards = 10;
+            const visible = getVisibleCards();
+            const maxIndex = Math.max(0, totalCards - visible);
+
+            if (currentIndex < maxIndex) {
+                currentIndex++;
+            } else {
+                currentIndex = 0; // loop back
+            }
+            updateSlider();
+        });
+
+        prevBtn.addEventListener('click', function () {
+            const totalCards = 10;
+            const visible = getVisibleCards();
+            const maxIndex = Math.max(0, totalCards - visible);
+
+            if (currentIndex > 0) {
+                currentIndex--;
+            } else {
+                currentIndex = maxIndex;
+            }
+            updateSlider();
+        });
+
+        window.addEventListener('resize', updateSlider);
+    });
+</script>
 
 @endsection

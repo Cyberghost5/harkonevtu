@@ -17,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
             if (Schema::hasTable('app_settings')) {
                 $s = AppSetting::getMany([
                     'site_name', 'site_description', 'site_keywords', 'admin_email', 'support_phone', 'support_email',
-                    'copyright', 'location', 'favicon', 'logo1', 'logo2', 'theme_color',
+                    'copyright', 'location', 'favicon', 'logo1', 'logo2', 'theme_color', 'landing_page_layout',
                     'easyaccess_api_key',
                     'vtpass_api_key', 'vtpass_public_key', 'vtpass_secret_key',
                     'clubkonnect_api_key', 'clubkonnect_user_id',
@@ -105,6 +105,7 @@ class AppServiceProvider extends ServiceProvider
         View::share('siteFavicon',        $s['favicon']          ?? '');
         View::share('siteLogo1',          $s['logo1']            ?? '');
         View::share('siteLogo2',          $s['logo2']            ?? '');
+        View::share('landingPageLayout', $s['landing_page_layout'] ?? 'vtu_default');
         View::share('themeColor',         $c['primary']);
         View::share('themeSecondary',     $c['secondary']);
         View::share('themeDark',          $c['dark']);
