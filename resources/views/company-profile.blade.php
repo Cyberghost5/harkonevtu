@@ -607,31 +607,31 @@
                 </div>
             </div>
 
-            {{-- Director: Nur Moh'd Idris --}}
+            {{-- Director: Nur Mohammed Idris --}}
             <div class="glass-card rounded-2xl overflow-hidden group hover:border-vtu-primary transition-all">
                 <div class="h-64 overflow-hidden bg-slate-800 relative">
                     <img src="{{ asset('assets/images/directors/director4.png') }}" 
-                         alt="Nur Moh’d Idris" 
+                         alt="Nur Mohammed Idris" 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
                     <div class="absolute inset-0 from-slate-900 via-transparent to-transparent"></div>
                 </div>
                 <div class="p-5">
-                    <h4 class="text-lg font-bold font-outfit text-white">Nur Moh’d Idris</h4>
+                    <h4 class="text-lg font-bold font-outfit text-white">Nur Mohammed Idris</h4>
                     <p class="text-xs font-semibold text-vtu-secondary uppercase tracking-wider mt-0.5">Director</p>
                     <span class="inline-block mt-2 px-2.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300">Nigerian</span>
                 </div>
             </div>
 
-            {{-- Director: Mustapha Moh'd Idris --}}
+            {{-- Director: Mustapha Mohammed Idris --}}
             <div class="glass-card rounded-2xl overflow-hidden group hover:border-vtu-primary transition-all">
                 <div class="h-64 overflow-hidden bg-slate-800 relative">
                     <img src="{{ asset('assets/images/directors/director3.png') }}" 
-                         alt="Mustapha Moh’d Idris" 
+                         alt="Mustapha Mohammed Idris" 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
                     <div class="absolute inset-0 from-slate-900 via-transparent to-transparent"></div>
                 </div>
                 <div class="p-5">
-                    <h4 class="text-lg font-bold font-outfit text-white">Mustapha Moh’d Idris</h4>
+                    <h4 class="text-lg font-bold font-outfit text-white">Mustapha Mohammed Idris</h4>
                     <p class="text-xs font-semibold text-amber-400 uppercase tracking-wider mt-0.5">Director</p>
                     <span class="inline-block mt-2 px-2.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300">Nigerian</span>
                 </div>
@@ -678,7 +678,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 
                 <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50">
-                    <div class="font-bold text-sm text-white">Ibrahim Moh’d Idris</div>
+                    <div class="font-bold text-sm text-white">Ibrahim Mohammed Idris</div>
                     <div class="text-xs text-slate-400">Director • Nigerian</div>
                 </div>
 
@@ -693,7 +693,7 @@
                 </div>
 
                 <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50">
-                    <div class="font-bold text-sm text-white">Yakub Moh'd Idris</div>
+                    <div class="font-bold text-sm text-white">Yakub Mohammed Idris</div>
                     <div class="text-xs text-slate-400">Director • Nigerian</div>
                 </div>
 
