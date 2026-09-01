@@ -738,7 +738,7 @@
                         <div>
                             <div class="text-xs font-bold uppercase text-slate-400 tracking-wider">Corporate Address</div>
                             <div class="text-sm font-medium text-slate-800 mt-1">
-                                29 Mamman Lawan Strt. opposite Kofa Biyu, along Kashim Ibrahim Expressway, Maiduguri, Borno State, Nigeria.
+                                Suite E106, Ramat Shopping Complex, Sir Kashim Ibrahim Way, P.O Box 2309, Maiduguri, Borno State, Nigeria
                             </div>
                         </div>
                     </div>
@@ -751,7 +751,7 @@
                         <div>
                             <div class="text-xs font-bold uppercase text-slate-400 tracking-wider">Phone Lines</div>
                             <a href="tel:+2347087111000" class="text-sm font-medium text-slate-800 hover:text-vtu-primary transition-colors block mt-1">
-                                +234 708 711 1000
+                                +234 708 711 1000 | +234 803 203 1611
                             </a>
                         </div>
                     </div>
