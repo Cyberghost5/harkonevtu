@@ -16,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
         try {
             if (Schema::hasTable('app_settings')) {
                 $s = AppSetting::getMany([
-                    'site_name', 'site_description', 'site_keywords', 'admin_email',
+                    'site_name', 'site_description', 'site_keywords', 'admin_email', 'support_phone', 'support_email',
                     'copyright', 'location', 'favicon', 'logo1', 'logo2', 'theme_color',
                     'easyaccess_api_key',
                     'vtpass_api_key', 'vtpass_public_key', 'vtpass_secret_key',
@@ -98,6 +98,8 @@ class AppServiceProvider extends ServiceProvider
         View::share('siteDescription',    $s['site_description'] ?? '');
         View::share('siteKeywords',       $s['site_keywords']    ?? '');
         View::share('adminEmail',         $s['admin_email']      ?? '');
+        View::share('supportPhone',       $s['support_phone']    ?? '');
+        View::share('supportEmail',       $s['support_email']    ?? '');
         View::share('siteCopyright',      $s['copyright']        ?? '');
         View::share('siteLocation',       $s['location']         ?? '');
         View::share('siteFavicon',        $s['favicon']          ?? '');
