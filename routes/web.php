@@ -39,6 +39,8 @@ Route::view('/vtu-home', 'index')->name('vtu-home');
 Route::get('/docs', [\App\Http\Controllers\ApiDocController::class, 'index']);
 Route::get('/api/docs', [\App\Http\Controllers\ApiDocController::class, 'index'])->name('api.docs');
 
+Route::post('/contact/send', [SupportController::class, 'send'])->name('contact.send');
+
 Route::view('/privacy-policy', 'privacy')->name('privacy-policy');
 Route::view('/terms-and-conditions', 'terms-conditions')->name('terms-conditions');
 Route::view('/terms-of-service', 'terms-of-service')->name('terms-of-service');

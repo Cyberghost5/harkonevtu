@@ -442,6 +442,12 @@
                 <h3 class="text-xl font-bold font-outfit text-slate-900 mb-2">Write to Us</h3>
                 <p class="text-xs text-slate-500 mb-6">Send us a direct message and our team will get back to you within 24 hours.</p>
 
+                @if(session('success'))
+                    <div class="mb-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">
+                        ✓ {{ session('success') }}
+                    </div>
+                @endif
+
                 <form action="{{ route('contact.send') }}" method="POST" class="space-y-4">
                     @csrf
                     <div>
