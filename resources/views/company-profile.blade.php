@@ -580,7 +580,7 @@
             {{-- Chairman/CEO --}}
             <div class="glass-card rounded-2xl overflow-hidden group hover:border-vtu-primary transition-all">
                 <div class="h-64 overflow-hidden bg-slate-800 relative">
-                    <img src="{{ asset('assets/images/directors/Umar Ibrahim Idris.jpeg') }}" 
+                    <img src="{{ asset('assets/images/directors/director1.png') }}" 
                          alt="Umar Ibrahim Idris" 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
@@ -595,7 +595,7 @@
             {{-- Managing Director --}}
             <div class="glass-card rounded-2xl overflow-hidden group hover:border-vtu-primary transition-all">
                 <div class="h-64 overflow-hidden bg-slate-800 relative">
-                    <img src="{{ asset('assets/images/directors/Abubakar Ibrahim Idris.jpeg') }}" 
+                    <img src="{{ asset('assets/images/directors/director2.png') }}" 
                          alt="Abubakar Ibrahim Idris" 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
@@ -610,7 +610,7 @@
             {{-- Director: Nur Moh'd Idris --}}
             <div class="glass-card rounded-2xl overflow-hidden group hover:border-vtu-primary transition-all">
                 <div class="h-64 overflow-hidden bg-slate-800 relative">
-                    <img src="{{ asset('assets/images/directors/Nur Mohammed Idris.jpeg') }}" 
+                    <img src="{{ asset('assets/images/directors/director4.png') }}" 
                          alt="Nur Moh’d Idris" 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
@@ -625,14 +625,44 @@
             {{-- Director: Mustapha Moh'd Idris --}}
             <div class="glass-card rounded-2xl overflow-hidden group hover:border-vtu-primary transition-all">
                 <div class="h-64 overflow-hidden bg-slate-800 relative">
-                    <img src="{{ asset('assets/images/directors/Mustapha Mohammed Idris.jpeg') }}" 
+                    <img src="{{ asset('assets/images/directors/director3.png') }}" 
                          alt="Mustapha Moh’d Idris" 
                          class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
                 </div>
                 <div class="p-5">
                     <h4 class="text-lg font-bold font-outfit text-white">Mustapha Moh’d Idris</h4>
-                    <p class="text-xs font-semibold text-amber-400 uppercase tracking-wider mt-0.5">Director & Secretary</p>
+                    <p class="text-xs font-semibold text-amber-400 uppercase tracking-wider mt-0.5">Director</p>
+                    <span class="inline-block mt-2 px-2.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300">Nigerian</span>
+                </div>
+            </div>
+
+            {{-- Director: Idris Ahmed Idris  --}}
+            <div class="glass-card rounded-2xl overflow-hidden group hover:border-vtu-primary transition-all">
+                <div class="h-64 overflow-hidden bg-slate-800 relative">
+                    <img src="{{ asset('assets/images/directors/director5.png') }}" 
+                         alt="Idris Ahmed Idris " 
+                         class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+                </div>
+                <div class="p-5">
+                    <h4 class="text-lg font-bold font-outfit text-white">Idris Ahmed Idris </h4>
+                    <p class="text-xs font-semibold text-amber-400 uppercase tracking-wider mt-0.5">Director</p>
+                    <span class="inline-block mt-2 px-2.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300">Nigerian</span>
+                </div>
+            </div>
+
+            {{-- Director: Mustapha Mohammed --}}
+            <div class="glass-card rounded-2xl overflow-hidden group hover:border-vtu-primary transition-all">
+                <div class="h-64 overflow-hidden bg-slate-800 relative">
+                    <img src="{{ asset('assets/images/directors/director6.png') }}" 
+                         alt="Mustapha Mohammed" 
+                         class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+                </div>
+                <div class="p-5">
+                    <h4 class="text-lg font-bold font-outfit text-white">Mustapha Mohammed</h4>
+                    <p class="text-xs font-semibold text-amber-400 uppercase tracking-wider mt-0.5">Secretary</p>
                     <span class="inline-block mt-2 px-2.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300">Nigerian</span>
                 </div>
             </div>
