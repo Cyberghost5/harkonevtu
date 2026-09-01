@@ -26,8 +26,15 @@ use App\Http\Controllers\LockScreenController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    $layout = \App\Models\AppSetting::get('landing_page_layout', 'vtu_default');
+    if ($layout === 'company_profile') {
+        return view('company-profile');
+    }
     return view('index');
-});
+})->name('home');
+
+Route::view('/company-profile', 'company-profile')->name('company-profile');
+Route::view('/vtu-home', 'index')->name('vtu-home');
 
 Route::view('/privacy-policy', 'privacy')->name('privacy-policy');
 Route::view('/terms-and-conditions', 'terms-conditions')->name('terms-conditions');
