@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+Route::get('/docs', [\App\Http\Controllers\ApiDocController::class, 'index']);
+
 Route::prefix('v1')->group(function () {
 
     // ── Authentication Endpoints (Milestone 1) ───────────────────────────────

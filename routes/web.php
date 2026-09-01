@@ -36,6 +36,7 @@ Route::get('/', function () {
 Route::view('/company-profile', 'company-profile')->name('company-profile');
 Route::view('/vtu-home', 'index')->name('vtu-home');
 
+Route::get('/docs', [\App\Http\Controllers\ApiDocController::class, 'index']);
 Route::get('/api/docs', [\App\Http\Controllers\ApiDocController::class, 'index'])->name('api.docs');
 
 Route::view('/privacy-policy', 'privacy')->name('privacy-policy');
