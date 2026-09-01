@@ -78,6 +78,20 @@
                             <li><a href="#post-logout" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /auth/logout</a></li>
                         </ul>
                     </div>
+
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">Milestone 2: User Account</h3>
+                        <ul class="space-y-2 text-xs font-mono text-slate-300">
+                            <li><a href="#get-user-profile" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /user/profile</a></li>
+                            <li><a href="#put-user-profile" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">PUT</span> /user/profile</a></li>
+                            <li><a href="#put-user-password" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">PUT</span> /user/password</a></li>
+                            <li><a href="#put-user-pin" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">PUT</span> /user/pin</a></li>
+                            <li><a href="#post-user-pin-verify" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /user/pin/verify</a></li>
+                            <li><a href="#put-user-bank" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">PUT</span> /user/bank</a></li>
+                            <li><a href="#post-upgrade-agent" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /user/upgrade-agent</a></li>
+                            <li><a href="#post-dva-generate" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /user/dva/generate</a></li>
+                        </ul>
+                    </div>
                 </div>
             </aside>
 
