@@ -221,11 +221,6 @@ class MtnErsSoapService
         $success = false;
 
         try {
-            $curlOptions = [];
-            if (defined('CURLOPT_HTTP09_ALLOWED')) {
-                $curlOptions[CURLOPT_HTTP09_ALLOWED] = true;
-            }
-
             $basicAuth = base64_encode("{$this->username}:{$this->pin}");
 
             $caBundle = storage_path('certs/ca-bundle.pem');
@@ -241,7 +236,6 @@ class MtnErsSoapService
                 'SoapAction'    => $soapAction,
                 'Expect'        => '',
             ])->withOptions([
-                'curl'        => $curlOptions,
                 'verify'      => $verifyOption,
                 'version'     => 1.0,
                 'http_errors' => false,
