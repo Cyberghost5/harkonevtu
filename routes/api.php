@@ -49,6 +49,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/networks',          [\App\Http\Controllers\Api\v1\Airtime\AirtimeController::class, 'networks']);
         Route::post('/network-lookup',   [\App\Http\Controllers\Api\v1\Airtime\AirtimeController::class, 'lookup']);
         Route::post('/purchase',         [\App\Http\Controllers\Api\v1\Airtime\AirtimeController::class, 'purchase']);
+        Route::get('/history',           [\App\Http\Controllers\Api\v1\Airtime\AirtimeController::class, 'history']);
+        Route::get('/transactions',      [\App\Http\Controllers\Api\v1\Airtime\AirtimeController::class, 'history']);
     });
 
     // ── Data Services Endpoints (Milestone 3) ─────────────────────────────────
@@ -56,6 +58,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/networks',          [\App\Http\Controllers\Api\v1\Data\DataApiController::class, 'networks']);
         Route::post('/plans',            [\App\Http\Controllers\Api\v1\Data\DataApiController::class, 'plans']);
         Route::post('/purchase',         [\App\Http\Controllers\Api\v1\Data\DataApiController::class, 'purchase']);
+        Route::get('/history',           [\App\Http\Controllers\Api\v1\Data\DataApiController::class, 'history']);
+        Route::get('/transactions',      [\App\Http\Controllers\Api\v1\Data\DataApiController::class, 'history']);
     });
 
     // ── Bills & Utilities Services Endpoints (Milestone 4) ────────────────────

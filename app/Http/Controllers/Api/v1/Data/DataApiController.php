@@ -452,4 +452,22 @@ class DataApiController extends Controller
             return ['success' => false, 'reference' => null, 'response' => ['message' => $e->getMessage()]];
         }
     }
+
+    /**
+     * Get paginated data purchase transactions for authenticated user.
+     */
+    public function history(Request $request): JsonResponse
+    {
+        $perPage = (int) $request->input('per_page', 20);
+        $transactions = ServiceTransaction::where('user_id', $request->user()->id)
+            ->where('service_type', 'data')
+            ->latest()
+            ->paginate($perPage);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Data transaction history retrieved successfully.',
+            'data'    => $transactions,
+        ]);
+    }
 }

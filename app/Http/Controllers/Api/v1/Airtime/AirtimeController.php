@@ -440,4 +440,22 @@ class AirtimeController extends Controller
             return ['success' => false, 'reference' => null, 'response' => ['message' => $e->getMessage()]];
         }
     }
+
+    /**
+     * Get paginated airtime purchase transactions for authenticated user.
+     */
+    public function history(Request $request): JsonResponse
+    {
+        $perPage = (int) $request->input('per_page', 20);
+        $transactions = ServiceTransaction::where('user_id', $request->user()->id)
+            ->where('service_type', 'airtime')
+            ->latest()
+            ->paginate($perPage);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Airtime transaction history retrieved successfully.',
+            'data'    => $transactions,
+        ]);
+    }
 }
