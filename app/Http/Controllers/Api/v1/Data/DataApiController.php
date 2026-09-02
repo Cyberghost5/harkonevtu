@@ -335,7 +335,8 @@ class DataApiController extends Controller
     {
         try {
             $service = app(MtnErsSoapService::class);
-            $res = $service->vend($phone, $plan->user_price, $plan->api_plan_id ?: 1);
+            $amount = (float) ($plan->user_price ?? $plan->amount ?? 0);
+            $res = $service->vend($phone, $amount, $plan->api_plan_id ?: 1);
             return [
                 'success'   => $res['status'] ?? false,
                 'reference' => $res['data']['txRefId'] ?? $reference,

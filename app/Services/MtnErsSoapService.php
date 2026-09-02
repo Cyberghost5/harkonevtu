@@ -321,8 +321,9 @@ class MtnErsSoapService
     /**
      * Executes airtime/data/voucher disbursements using automatic sequence tracking.
      */
-    public function vend(string $destMsisdn, float $amount, $productId): array
+    public function vend(string $destMsisdn, float|int|string|null $amount, $productId = 1): array
     {
+        $amountFloat = (float) ($amount ?? 0.0);
         $originator = $this->formatMsisdn234($this->originatorMsisdn ?: '09062058470');
         $target = $this->formatMsisdn234($destMsisdn);
 
@@ -356,7 +357,7 @@ class MtnErsSoapService
     /**
      * Helper for airtime vends matching vendor signature.
      */
-    public function vendAirtime(string $phone, float $amount, ?string $reference = null): array
+    public function vendAirtime(string $phone, float|int|string|null $amount, ?string $reference = null): array
     {
         $res = $this->vend($phone, $amount, 1);
         return [
