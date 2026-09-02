@@ -76,4 +76,19 @@ Route::prefix('v1')->group(function () {
         Route::post('/exam-pins/purchase',         [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'purchaseExamPin']);
     });
 
+    // ── Wallet & Payment Gateway Endpoints (Milestone 5) ──────────────────────
+    Route::prefix('wallet')->middleware('auth:sanctum')->group(function () {
+        Route::get('/balance',                     [\App\Http\Controllers\Api\v1\Wallet\WalletApiController::class, 'balance']);
+        Route::get('/transactions',                [\App\Http\Controllers\Api\v1\Wallet\WalletApiController::class, 'transactions']);
+        Route::get('/transactions/{reference}',    [\App\Http\Controllers\Api\v1\Wallet\WalletApiController::class, 'transactionDetails']);
+    });
+
+    Route::prefix('payments')->middleware('auth:sanctum')->group(function () {
+        Route::post('/initialize',                 [\App\Http\Controllers\Api\v1\Payment\PaymentApiController::class, 'initializePayment']);
+        Route::post('/verify',                     [\App\Http\Controllers\Api\v1\Payment\PaymentApiController::class, 'verifyPayment']);
+        Route::get('/dva-accounts',                [\App\Http\Controllers\Api\v1\Payment\PaymentApiController::class, 'dvaAccounts']);
+        Route::post('/manual-request',             [\App\Http\Controllers\Api\v1\Payment\PaymentApiController::class, 'manualFundingRequest']);
+        Route::post('/redeem-coupon',              [\App\Http\Controllers\Api\v1\Payment\PaymentApiController::class, 'redeemCoupon']);
+    });
+
 });

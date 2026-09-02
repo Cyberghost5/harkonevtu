@@ -119,6 +119,19 @@
                             <li><a href="#post-exam-purchase" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /bills/exam-pins/purchase</a></li>
                         </ul>
                     </div>
+
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">Milestone 5: Wallet & Payments</h3>
+                        <ul class="space-y-2 text-xs font-mono text-slate-300">
+                            <li><a href="#get-wallet-balance" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /wallet/balance</a></li>
+                            <li><a href="#get-wallet-transactions" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /wallet/transactions</a></li>
+                            <li><a href="#post-initialize-payment" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /payments/initialize</a></li>
+                            <li><a href="#post-verify-payment" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /payments/verify</a></li>
+                            <li><a href="#get-dva-accounts" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /payments/dva-accounts</a></li>
+                            <li><a href="#post-manual-request" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /payments/manual-request</a></li>
+                            <li><a href="#post-redeem-coupon" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /payments/redeem-coupon</a></li>
+                        </ul>
+                    </div>
                 </div>
             </aside>
 
@@ -911,6 +924,131 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Purchase exam scratch card tokens and receive pin/serial numbers.</p>
+                    </div>
+
+                </div>
+
+                <!-- Milestone 5: Wallet & Payments Services Section -->
+                <div id="milestone-5" class="space-y-6">
+                    <h2 class="text-2xl font-bold text-white font-outfit border-b border-slate-800 pb-3 flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Milestone 5: Wallet & Payments Services APIs
+                    </h2>
+
+                    <!-- GET /wallet/balance -->
+                    <div id="get-wallet-balance" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/wallet/balance</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Retrieve current live wallet balance, total funded amount, and total spent amount.</p>
+                        <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Wallet balance retrieved successfully.",
+  "data": {
+    "balance": 15000.00,
+    "total_funded": 20000.00,
+    "total_spent": 5000.00,
+    "formatted": "₦15,000.00"
+  }
+}</code></pre>
+                    </div>
+
+                    <!-- GET /wallet/transactions -->
+                    <div id="get-wallet-transactions" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/wallet/transactions</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Fetch paginated transaction history with optional filters for type (`credit`/`debit`) and service_type (`airtime`, `data`, `electricity`, `cable`, `epin`, `funding`, `refund`).</p>
+                    </div>
+
+                    <!-- POST /payments/initialize -->
+                    <div id="post-initialize-payment" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/payments/initialize</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Initialize online card or bank transfer wallet funding via Paystack / Monnify.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "amount": 1000,
+  "gateway": "paystack"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Payment initialized successfully.",
+  "data": {
+    "gateway": "paystack",
+    "reference": "PAY20260902104803NPMVZM7B",
+    "authorization_url": "https://checkout.paystack.com/...",
+    "amount": 1000
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- POST /payments/verify -->
+                    <div id="post-verify-payment" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/payments/verify</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Verify status of online payment transaction after user completes checkout.</p>
+                    </div>
+
+                    <!-- GET /payments/dva-accounts -->
+                    <div id="get-dva-accounts" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/payments/dva-accounts</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Retrieve assigned Dedicated Virtual Bank Accounts (Monnify/Paystack) for automated bank transfer top-up.</p>
+                    </div>
+
+                    <!-- POST /payments/manual-request -->
+                    <div id="post-manual-request" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/payments/manual-request</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Submit manual bank deposit notification to administrator for review and approval.</p>
+                    </div>
+
+                    <!-- POST /payments/redeem-coupon -->
+                    <div id="post-redeem-coupon" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/payments/redeem-coupon</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Redeem promo code / voucher coupon to credit user wallet instantly.</p>
                     </div>
 
                 </div>
