@@ -7,8 +7,8 @@ use App\Models\AppSetting;
 use App\Models\NetworkAirtime;
 use App\Models\ServiceTransaction;
 use App\Models\Wallet;
-use App\Services\GloErsService;
-use App\Services\MtnErsService;
+use App\Services\GloErsSoapService;
+use App\Services\MtnErsSoapService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -305,11 +305,11 @@ class AirtimeController extends Controller
     private function callGloErs(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
         try {
-            $service = app(GloErsService::class);
+            $service = app(GloErsSoapService::class);
             $res = $service->vendAirtime($phone, $amount, $reference);
             return [
                 'success'   => $res['success'] ?? false,
-                'reference' => $res['tx_id'] ?? $reference,
+                'reference' => $res['reference'] ?? $reference,
                 'response'  => $res,
             ];
         } catch (\Throwable $e) {
@@ -320,11 +320,11 @@ class AirtimeController extends Controller
     private function callMtnErs(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
         try {
-            $service = app(MtnErsService::class);
-            $res = $service->vendAirtime($phone, $amount, $reference);
+            $service = app(MtnErsSoapService::class);
+            $res = $service->vend($phone, $amount, 1);
             return [
-                'success'   => $res['success'] ?? false,
-                'reference' => $res['transaction_id'] ?? $reference,
+                'success'   => $res['status'] ?? false,
+                'reference' => $res['data']['txRefId'] ?? $reference,
                 'response'  => $res,
             ];
         } catch (\Throwable $e) {

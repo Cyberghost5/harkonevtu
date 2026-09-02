@@ -8,7 +8,7 @@ use App\Models\DataPlan;
 use App\Models\NetworkAirtime;
 use App\Models\ServiceTransaction;
 use App\Models\Wallet;
-use App\Services\MtnErsService;
+use App\Services\MtnErsSoapService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -334,11 +334,11 @@ class DataApiController extends Controller
     private function callMtnErsData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
         try {
-            $service = app(MtnErsService::class);
-            $res = $service->vendData($phone, $plan->api_plan_id, $reference);
+            $service = app(MtnErsSoapService::class);
+            $res = $service->vend($phone, $plan->user_price, $plan->api_plan_id ?: 1);
             return [
-                'success'   => $res['success'] ?? false,
-                'reference' => $res['transaction_id'] ?? $reference,
+                'success'   => $res['status'] ?? false,
+                'reference' => $res['data']['txRefId'] ?? $reference,
                 'response'  => $res,
             ];
         } catch (\Throwable $e) {

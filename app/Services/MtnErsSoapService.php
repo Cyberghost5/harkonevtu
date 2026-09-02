@@ -360,6 +360,32 @@ class MtnErsSoapService
     }
 
     /**
+     * Helper for airtime vends matching vendor signature.
+     */
+    public function vendAirtime(string $phone, float $amount, ?string $reference = null): array
+    {
+        $res = $this->vend($phone, $amount, 1);
+        return [
+            'success'        => $res['status'] ?? false,
+            'transaction_id' => $res['data']['txRefId'] ?? $reference,
+            'response'       => $res,
+        ];
+    }
+
+    /**
+     * Helper for data vends matching vendor signature.
+     */
+    public function vendData(string $phone, $planId, ?string $reference = null): array
+    {
+        $res = $this->vend($phone, 0, $planId);
+        return [
+            'success'        => $res['status'] ?? false,
+            'transaction_id' => $res['data']['txRefId'] ?? $reference,
+            'response'       => $res,
+        ];
+    }
+
+    /**
      * Queries status of a specific transaction sequence.
      */
     public function queryTx(int $sequence): array
