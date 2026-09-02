@@ -92,9 +92,11 @@ Route::prefix('v1')->group(function () {
     });
 
     // ── Milestone 6: Specialized Services & Support APIs ─────────────────────
-    // Public App Config & Pricing
+    // Public App Config, Onboarding & Pricing
     Route::get('/app-config',                      [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'appConfig']);
     Route::get('/config',                          [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'appConfig']);
+    Route::get('/onboarding',                      [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'onboardingSlides']);
+    Route::get('/onboarding-slides',               [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'onboardingSlides']);
     Route::get('/pricing',                         [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'publicPricing']);
 
     // Authenticated Extra Services

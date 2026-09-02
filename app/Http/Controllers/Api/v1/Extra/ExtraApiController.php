@@ -9,6 +9,7 @@ use App\Models\BettingPlatform;
 use App\Models\DataPlan;
 use App\Models\Network;
 use App\Models\NetworkAirtime;
+use App\Models\OnboardingSlide;
 use App\Models\PrintedVoucher;
 use App\Models\ServiceTransaction;
 use App\Models\User;
@@ -676,7 +677,35 @@ class ExtraApiController extends Controller
                     'betting_charge'      => (float) AppSetting::get('betting_charge', 50),
                     'card_funding_charge' => (float) AppSetting::get('transaction_charge_value', 0),
                 ],
+
+                'onboarding_slides' => OnboardingSlide::active()->get()->map(fn (OnboardingSlide $s) => [
+                    'id'          => $s->id,
+                    'title'       => $s->title,
+                    'description' => $s->description,
+                    'image_url'   => $s->image_url,
+                    'sort_order'  => $s->sort_order,
+                ]),
             ],
+        ]);
+    }
+
+    /**
+     * Public endpoint returning onboarding slides for mobile app first launch.
+     */
+    public function onboardingSlides(Request $request): JsonResponse
+    {
+        $slides = OnboardingSlide::active()->get()->map(fn (OnboardingSlide $s) => [
+            'id'          => $s->id,
+            'title'       => $s->title,
+            'description' => $s->description,
+            'image_url'   => $s->image_url,
+            'sort_order'  => $s->sort_order,
+        ]);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Onboarding slides retrieved successfully.',
+            'data'    => $slides,
         ]);
     }
 }

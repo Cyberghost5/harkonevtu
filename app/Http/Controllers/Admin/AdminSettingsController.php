@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
+use App\Models\OnboardingSlide;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -444,5 +445,75 @@ class AdminSettingsController extends Controller
     {
         \App\Models\DataPlan::findOrFail($id)->delete();
         return back()->with('success', 'Data plan deleted.');
+    }
+
+    // ── Onboarding Slides Settings ───────────────────────────────────────────
+
+    public function onboardingSlides()
+    {
+        $slides = OnboardingSlide::orderBy('sort_order')->orderBy('id')->get();
+        return view('admin.settings.onboarding', compact('slides'));
+    }
+
+    public function storeOnboardingSlide(Request $request)
+    {
+        $request->validate([
+            'title'       => 'required|string|max:150',
+            'description' => 'required|string|max:500',
+            'image'       => 'nullable|image|max:2048',
+            'sort_order'  => 'nullable|integer|min:0',
+        ]);
+
+        $imagePath = null;
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $imagePath = $request->file('image')->store('onboarding', 'public');
+        }
+
+        OnboardingSlide::create([
+            'title'       => $request->title,
+            'description' => $request->description,
+            'image'       => $imagePath,
+            'sort_order'  => $request->sort_order ?? 0,
+            'is_active'   => $request->boolean('is_active', true),
+        ]);
+
+        return back()->with('success', 'Onboarding slide created successfully.');
+    }
+
+    public function updateOnboardingSlide(Request $request, $id)
+    {
+        $slide = OnboardingSlide::findOrFail($id);
+        $request->validate([
+            'title'       => 'required|string|max:150',
+            'description' => 'required|string|max:500',
+            'image'       => 'nullable|image|max:2048',
+            'sort_order'  => 'nullable|integer|min:0',
+        ]);
+
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            if ($slide->image && Storage::disk('public')->exists($slide->image)) {
+                Storage::disk('public')->delete($slide->image);
+            }
+            $slide->image = $request->file('image')->store('onboarding', 'public');
+        }
+
+        $slide->update([
+            'title'       => $request->title,
+            'description' => $request->description,
+            'sort_order'  => $request->sort_order ?? $slide->sort_order,
+            'is_active'   => $request->boolean('is_active', false),
+        ]);
+
+        return back()->with('success', 'Onboarding slide updated successfully.');
+    }
+
+    public function destroyOnboardingSlide($id)
+    {
+        $slide = OnboardingSlide::findOrFail($id);
+        if ($slide->image && Storage::disk('public')->exists($slide->image)) {
+            Storage::disk('public')->delete($slide->image);
+        }
+        $slide->delete();
+        return back()->with('success', 'Onboarding slide deleted.');
     }
 }

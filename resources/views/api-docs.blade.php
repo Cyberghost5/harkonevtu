@@ -66,7 +66,7 @@
                     </div>
 
                     <div>
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">Milestone 1: Authentication</h3>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">1: Authentication</h3>
                         <ul class="space-y-2 text-xs font-mono text-slate-300">
                             <li><a href="#post-register" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /auth/register</a></li>
                             <li><a href="#post-login" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /auth/login</a></li>
@@ -80,7 +80,7 @@
                     </div>
 
                     <div>
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">Milestone 2: User Account</h3>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">2: User Account</h3>
                         <ul class="space-y-2 text-xs font-mono text-slate-300">
                             <li><a href="#get-user-profile" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /user/profile</a></li>
                             <li><a href="#put-user-profile" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">PUT</span> /user/profile</a></li>
@@ -94,7 +94,7 @@
                     </div>
 
                     <div>
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">Milestone 3: Airtime & Data</h3>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">3: Airtime & Data</h3>
                         <ul class="space-y-2 text-xs font-mono text-slate-300">
                             <li><a href="#get-airtime-networks" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /airtime/networks</a></li>
                             <li><a href="#post-network-lookup" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /airtime/network-lookup</a></li>
@@ -106,7 +106,7 @@
                     </div>
 
                     <div>
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">Milestone 4: Bills & Utilities</h3>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">4: Bills & Utilities</h3>
                         <ul class="space-y-2 text-xs font-mono text-slate-300">
                             <li><a href="#get-electricity-discos" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /bills/electricity/discos</a></li>
                             <li><a href="#post-validate-meter" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /bills/electricity/validate-meter</a></li>
@@ -121,7 +121,7 @@
                     </div>
 
                     <div>
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">Milestone 5: Wallet & Payments</h3>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">5: Wallet & Payments</h3>
                         <ul class="space-y-2 text-xs font-mono text-slate-300">
                             <li><a href="#get-wallet-balance" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /wallet/balance</a></li>
                             <li><a href="#get-wallet-transactions" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /wallet/transactions</a></li>
@@ -134,9 +134,10 @@
                     </div>
 
                     <div>
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">Milestone 6: Extra Services</h3>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">6: Extra Services</h3>
                         <ul class="space-y-2 text-xs font-mono text-slate-300">
                             <li><a href="#get-app-config" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /app-config</a></li>
+                            <li><a href="#get-onboarding" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /onboarding</a></li>
                             <li><a href="#get-pricing" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /pricing</a></li>
                             <li><a href="#get-betting-platforms" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /betting/platforms</a></li>
                             <li><a href="#post-betting-validate" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /betting/validate-account</a></li>
@@ -200,10 +201,10 @@
                     </div>
                 </section>
 
-                <!-- Milestone 1 Endpoints -->
+                <!-- 1 Endpoints -->
                 <div class="space-y-8">
                     <h2 class="text-2xl font-bold text-white tracking-tight border-b border-slate-800 pb-3">
-                        Milestone 1: Authentication Endpoints
+                        1: Authentication Endpoints
                     </h2>
 
                     <!-- 1. POST /auth/register -->
@@ -411,11 +412,11 @@ Accept: application/json</code></pre>
 
                 </div>
 
-                <!-- Milestone 2: User Profile & Account Management Section -->
+                <!-- 2: User Profile & Account Management Section -->
                 <div id="milestone-2" class="space-y-6">
                     <h2 class="text-2xl font-bold text-white font-outfit border-b border-slate-800 pb-3 flex items-center gap-3">
                         <span class="w-3 h-3 rounded-full bg-indigo-500 animate-pulse"></span>
-                        Milestone 2: User Profile & Account Management APIs
+                        2: User Profile & Account Management APIs
                     </h2>
 
                     <!-- 1. GET /user/profile -->
@@ -660,11 +661,11 @@ Accept: application/json</code></pre>
                     </div>
                 </div>
 
-                <!-- Milestone 3: Airtime & Data Services Section -->
+                <!-- 3: Airtime & Data Services Section -->
                 <div id="milestone-3" class="space-y-6">
                     <h2 class="text-2xl font-bold text-white font-outfit border-b border-slate-800 pb-3 flex items-center gap-3">
                         <span class="w-3 h-3 rounded-full bg-vtu-primary animate-pulse"></span>
-                        Milestone 3: Airtime & Data Services APIs
+                        3: Airtime & Data Services APIs
                     </h2>
 
                     <!-- GET /airtime/networks -->
@@ -857,11 +858,11 @@ Accept: application/json</code></pre>
 
                 </div>
 
-                <!-- Milestone 4: Bills & Utilities Services Section -->
+                <!-- 4: Bills & Utilities Services Section -->
                 <div id="milestone-4" class="space-y-6">
                     <h2 class="text-2xl font-bold text-white font-outfit border-b border-slate-800 pb-3 flex items-center gap-3">
                         <span class="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span>
-                        Milestone 4: Bills & Utilities Services APIs
+                        4: Bills & Utilities Services APIs
                     </h2>
 
                     <!-- GET /bills/electricity/discos -->
@@ -1146,11 +1147,11 @@ Accept: application/json</code></pre>
 
                 </div>
 
-                <!-- Milestone 5: Wallet & Payments Services Section -->
+                <!-- 5: Wallet & Payments Services Section -->
                 <div id="milestone-5" class="space-y-6">
                     <h2 class="text-2xl font-bold text-white font-outfit border-b border-slate-800 pb-3 flex items-center gap-3">
                         <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
-                        Milestone 5: Wallet & Payments Services APIs
+                        5: Wallet & Payments Services APIs
                     </h2>
 
                     <!-- GET /wallet/balance -->
@@ -1366,11 +1367,11 @@ Accept: application/json</code></pre>
 
                 </div>
 
-                <!-- Milestone 6: Specialized Services & Support Section -->
+                <!-- 6: Specialized Services & Support Section -->
                 <div id="milestone-6" class="space-y-6">
                     <h2 class="text-2xl font-bold text-white font-outfit border-b border-slate-800 pb-3 flex items-center gap-3">
                         <span class="w-3 h-3 rounded-full bg-purple-400 animate-pulse"></span>
-                        Milestone 6: Specialized Services & Support APIs
+                        6: Specialized Services & Support APIs
                     </h2>
 
                     <!-- GET /app-config -->
@@ -1407,6 +1408,32 @@ Accept: application/json</code></pre>
       "paystack_public_key": "pk_test_..."
     }
   }
+}</code></pre>
+                    </div>
+
+                    <!-- GET /onboarding -->
+                    <div id="get-onboarding" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/onboarding</code>
+                                <span class="text-slate-400 font-mono text-xs">(or <code class="text-indigo-300">/onboarding-slides</code>)</span>
+                            </div>
+                            <span class="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded font-mono">Public Access</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Public endpoint returning active first-launch mobile onboarding slides, headlines, descriptions, slide order, and uploaded banner illustrations.</p>
+                        <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Onboarding slides retrieved successfully.",
+  "data": [
+    {
+      "id": 1,
+      "title": "Instant Airtime & Cheap Data",
+      "description": "Top up airtime and buy SME & Gifting data bundles instantly across MTN, Airtel, Glo, and 9mobile at wholesale prices.",
+      "image_url": "https://yourdomain.com/storage/onboarding/slide1.png",
+      "sort_order": 1
+    }
+  ]
 }</code></pre>
                     </div>
 

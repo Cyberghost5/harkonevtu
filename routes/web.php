@@ -277,6 +277,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::patch('/settings/data-plans/{id}',      [AdminSettingsController::class, 'updateDataPlan'])->name('settings.data-plans.update');
     Route::delete('/settings/data-plans/{id}',     [AdminSettingsController::class, 'destroyDataPlan'])->name('settings.data-plans.destroy');
 
+    // Onboarding Slides Settings
+    Route::get('/settings/onboarding',             [AdminSettingsController::class, 'onboardingSlides'])->name('settings.onboarding');
+    Route::post('/settings/onboarding',            [AdminSettingsController::class, 'storeOnboardingSlide'])->name('settings.onboarding.store');
+    Route::patch('/settings/onboarding/{id}',      [AdminSettingsController::class, 'updateOnboardingSlide'])->name('settings.onboarding.update');
+    Route::delete('/settings/onboarding/{id}',     [AdminSettingsController::class, 'destroyOnboardingSlide'])->name('settings.onboarding.destroy');
+
     // Coupons
     Route::get('/coupons',             [AdminCouponController::class, 'index'])->name('coupons.index');
     Route::post('/coupons',            [AdminCouponController::class, 'store'])->name('coupons.store');

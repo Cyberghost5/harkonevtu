@@ -225,6 +225,7 @@
                     @php
                         $settingsSubs = [
                             ['route' => 'admin.settings.general',    'label' => 'General Settings'],
+                            ['route' => 'admin.settings.onboarding', 'label' => 'Onboarding Slides'],
                             ['route' => 'admin.settings.email',       'label' => 'Email Settings'],
                             ['route' => 'admin.settings.api-keys',    'label' => 'API Keys Settings'],
                             ['route' => 'admin.settings.api',         'label' => 'API Settings'],
