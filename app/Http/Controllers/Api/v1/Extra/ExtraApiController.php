@@ -626,12 +626,20 @@ class ExtraApiController extends Controller
         $siteName      = AppSetting::get('site_name', config('app.name', 'Harkone VTU'));
         $activeGateway = AppSetting::get('active_gateway', 'paystack');
 
+        $favicon = AppSetting::get('favicon');
+        $logo1   = AppSetting::get('logo1');
+        $logo2   = AppSetting::get('logo2');
+
         return response()->json([
             'status'  => true,
             'message' => 'App configuration retrieved successfully.',
             'data'    => [
                 'app_name'            => $siteName,
                 'site_name'           => $siteName,
+                'theme_color'         => AppSetting::get('theme_color', '#4caf50'),
+                'favicon_url'         => $favicon && Storage::disk('public')->exists($favicon) ? asset(Storage::url($favicon)) : null,
+                'logo1_url'           => $logo1 && Storage::disk('public')->exists($logo1) ? asset(Storage::url($logo1)) : null,
+                'logo2_url'           => $logo2 && Storage::disk('public')->exists($logo2) ? asset(Storage::url($logo2)) : null,
                 'currency'            => 'NGN',
                 'currency_symbol'     => '₦',
                 'app_version'         => AppSetting::get('app_version', '1.0.0'),
