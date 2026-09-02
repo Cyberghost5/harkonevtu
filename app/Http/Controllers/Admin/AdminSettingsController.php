@@ -23,6 +23,8 @@ class AdminSettingsController extends Controller
             'support_whatsapp','support_phone','support_email','support_hours','support_ticket_url',
             'agent_upgrade_fee','kyc_fee',
             'session_idle_timeout','landing_page_layout',
+            'app_min_version','app_force_update','app_maintenance_mode','app_maintenance_message',
+            'whatsapp_group_link','telegram_channel_link',
         ];
         $s = AppSetting::getMany($keys);
         return view('admin.settings.general', compact('s'));
@@ -38,6 +40,8 @@ class AdminSettingsController extends Controller
             'support_whatsapp','support_phone','support_email','support_hours','support_ticket_url',
             'agent_upgrade_fee','kyc_fee',
             'session_idle_timeout','landing_page_layout',
+            'app_min_version','app_force_update','app_maintenance_mode','app_maintenance_message',
+            'whatsapp_group_link','telegram_channel_link',
         ];
 
         foreach ($textFields as $key) {

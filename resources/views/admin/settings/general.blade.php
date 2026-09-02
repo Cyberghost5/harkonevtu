@@ -170,17 +170,69 @@
                 </div>
             </div>
 
-            {{-- Theme Color + App Version --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Theme Color</label>
-                    <input type="color" name="theme_color" value="{{ $s['theme_color'] ?? '#4caf50' }}"
-                           class="h-10 w-full rounded-lg border border-slate-200 cursor-pointer p-1 bg-white">
+            {{-- Theme Color --}}
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">Theme Color</label>
+                <input type="color" name="theme_color" value="{{ $s['theme_color'] ?? '#4caf50' }}"
+                       class="h-10 w-full rounded-lg border border-slate-200 cursor-pointer p-1 bg-white">
+            </div>
+
+            {{-- Mobile App Control & Versioning --}}
+            <div class="border-t border-slate-100 pt-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    Mobile App Control & Versioning (API Config)
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Latest App Version</label>
+                        <input type="text" name="app_version" value="{{ $s['app_version'] ?? '1.0.0' }}"
+                               placeholder="1.0.0"
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Minimum Supported Version</label>
+                        <input type="text" name="app_min_version" value="{{ $s['app_min_version'] ?? '1.0.0' }}"
+                               placeholder="1.0.0"
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Force Update Mobile App</label>
+                        <select name="app_force_update" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                            <option value="0" {{ ($s['app_force_update'] ?? '0') == '0' ? 'selected' : '' }}>No (Optional Update)</option>
+                            <option value="1" {{ ($s['app_force_update'] ?? '0') == '1' ? 'selected' : '' }}>Yes (Enforce Update)</option>
+                        </select>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">App Version</label>
-                    <input type="text" name="app_version" value="{{ $s['app_version'] ?? '1.0.0' }}"
-                           class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">App Maintenance Mode</label>
+                        <select name="app_maintenance_mode" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                            <option value="0" {{ ($s['app_maintenance_mode'] ?? '0') == '0' ? 'selected' : '' }}>Disabled (App Active)</option>
+                            <option value="1" {{ ($s['app_maintenance_mode'] ?? '0') == '1' ? 'selected' : '' }}>Enabled (Under Maintenance)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">App Maintenance Notice</label>
+                        <input type="text" name="app_maintenance_message" value="{{ $s['app_maintenance_message'] ?? 'Platform is under routine maintenance. Please check back shortly.' }}"
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">WhatsApp Community / Group Link</label>
+                        <input type="url" name="whatsapp_group_link" value="{{ $s['whatsapp_group_link'] ?? '' }}"
+                               placeholder="https://chat.whatsapp.com/..."
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Telegram Channel Link</label>
+                        <input type="url" name="telegram_channel_link" value="{{ $s['telegram_channel_link'] ?? '' }}"
+                               placeholder="https://t.me/..."
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                    </div>
                 </div>
             </div>
 
