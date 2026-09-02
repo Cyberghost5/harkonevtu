@@ -92,7 +92,9 @@ Route::prefix('v1')->group(function () {
     });
 
     // ── Milestone 6: Specialized Services & Support APIs ─────────────────────
-    // Public Pricing
+    // Public App Config & Pricing
+    Route::get('/app-config',                      [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'appConfig']);
+    Route::get('/config',                          [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'appConfig']);
     Route::get('/pricing',                         [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'publicPricing']);
 
     // Authenticated Extra Services

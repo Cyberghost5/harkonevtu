@@ -614,4 +614,69 @@ class ExtraApiController extends Controller
             ], 500);
         }
     }
+
+    // ─── 8. MOBILE APP CONFIGURATION ─────────────────────────────────────────
+
+    /**
+     * Public endpoint returning mobile application settings, service toggles, versioning, and gateway keys.
+     */
+    public function appConfig(Request $request): JsonResponse
+    {
+        $siteName      = AppSetting::get('site_name', config('app.name', 'Harkone VTU'));
+        $activeGateway = AppSetting::get('active_gateway', 'paystack');
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'App configuration retrieved successfully.',
+            'data'    => [
+                'app_name'            => $siteName,
+                'site_name'           => $siteName,
+                'currency'            => 'NGN',
+                'currency_symbol'     => '₦',
+                'app_version'         => AppSetting::get('app_version', '1.0.0'),
+                'min_version'         => AppSetting::get('app_min_version', '1.0.0'),
+                'force_update'        => AppSetting::get('app_force_update', '0') === '1',
+                'maintenance_mode'    => AppSetting::get('app_maintenance_mode', '0') === '1',
+                'maintenance_message' => AppSetting::get('app_maintenance_message', 'Platform is under routine maintenance. Please check back shortly.'),
+                
+                'services' => [
+                    'airtime'                => AppSetting::get('service_airtime', '1') === '1',
+                    'data'                   => AppSetting::get('service_data', '1') === '1',
+                    'electricity'            => AppSetting::get('service_electricity', '1') === '1',
+                    'cable'                  => AppSetting::get('service_cable', '1') === '1',
+                    'epin'                   => AppSetting::get('service_epin', '1') === '1',
+                    'betting'                => AppSetting::get('service_betting', '1') === '1',
+                    'airtime_to_cash'        => AppSetting::get('service_airtime_to_cash', '1') === '1',
+                    'recharge_card_printing' => AppSetting::get('service_recharge_card_printing', '1') === '1',
+                    'card_payment'           => AppSetting::get('service_funding_gateway', '1') === '1',
+                    'auto_bank_transfer'     => AppSetting::get('service_funding_auto_bank', '1') === '1',
+                    'manual_bank_transfer'   => AppSetting::get('service_funding_manual', '1') === '1',
+                    'coupon_funding'         => AppSetting::get('service_funding_coupon', '1') === '1',
+                ],
+
+                'payment_gateways' => [
+                    'active_gateway'      => $activeGateway,
+                    'paystack_public_key' => config('services.paystack.public_key') ?: AppSetting::get('paystack_public_key', ''),
+                    'monnify_api_key'     => AppSetting::get('monnify_api_key', ''),
+                    'monnify_contract_no' => AppSetting::get('monnify_contract_no', ''),
+                ],
+
+                'support' => [
+                    'phone'            => AppSetting::get('support_phone', ''),
+                    'whatsapp'         => AppSetting::get('support_whatsapp', ''),
+                    'email'            => AppSetting::get('support_email', AppSetting::get('admin_email', '')),
+                    'hours'            => AppSetting::get('support_hours', '24/7 Mon-Sun'),
+                    'whatsapp_group'   => AppSetting::get('whatsapp_group_link', ''),
+                    'telegram_channel' => AppSetting::get('telegram_channel_link', ''),
+                ],
+
+                'charges' => [
+                    'agent_upgrade_fee'   => (float) AppSetting::get('agent_upgrade_fee', 2500),
+                    'kyc_fee'             => (float) AppSetting::get('kyc_fee', 0),
+                    'betting_charge'      => (float) AppSetting::get('betting_charge', 50),
+                    'card_funding_charge' => (float) AppSetting::get('transaction_charge_value', 0),
+                ],
+            ],
+        ]);
+    }
 }

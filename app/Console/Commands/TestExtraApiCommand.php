@@ -47,6 +47,11 @@ class TestExtraApiCommand extends Command
 
         $this->line("Created Test User ID: {$user->id} with Balance: ₦20,000.00 & Referral Balance: ₦1,500.00.");
 
+        // 0. Test GET /api/v1/app-config
+        $this->line("\n0. Testing GET /api/v1/app-config (Mobile App Settings & Toggles)...");
+        $res = $this->callApi('GET', '/api/v1/app-config');
+        $this->displayResult($res);
+
         // 1. Test GET /api/v1/pricing
         $this->line("\n1. Testing GET /api/v1/pricing (Public Rate Table)...");
         $res = $this->callApi('GET', '/api/v1/pricing');

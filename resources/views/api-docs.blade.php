@@ -136,6 +136,7 @@
                     <div>
                         <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">Milestone 6: Extra Services</h3>
                         <ul class="space-y-2 text-xs font-mono text-slate-300">
+                            <li><a href="#get-app-config" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /app-config</a></li>
                             <li><a href="#get-pricing" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /pricing</a></li>
                             <li><a href="#get-betting-platforms" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /betting/platforms</a></li>
                             <li><a href="#post-betting-validate" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /betting/validate-account</a></li>
@@ -1371,6 +1372,43 @@ Accept: application/json</code></pre>
                         <span class="w-3 h-3 rounded-full bg-purple-400 animate-pulse"></span>
                         Milestone 6: Specialized Services & Support APIs
                     </h2>
+
+                    <!-- GET /app-config -->
+                    <div id="get-app-config" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/app-config</code>
+                                <span class="text-slate-400 font-mono text-xs">(or <code class="text-indigo-300">/config</code>)</span>
+                            </div>
+                            <span class="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded font-mono">Public Access</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Public mobile app initialization endpoint returning app name, versioning rules, force update flags, service feature toggles, gateway keys, and support contacts.</p>
+                        <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "App configuration retrieved successfully.",
+  "data": {
+    "app_name": "Harkone VTU",
+    "currency": "NGN",
+    "currency_symbol": "₦",
+    "app_version": "1.0.0",
+    "force_update": false,
+    "maintenance_mode": false,
+    "services": {
+      "airtime": true,
+      "data": true,
+      "electricity": true,
+      "cable": true,
+      "betting": true,
+      "recharge_card_printing": true
+    },
+    "payment_gateways": {
+      "active_gateway": "paystack",
+      "paystack_public_key": "pk_test_..."
+    }
+  }
+}</code></pre>
+                    </div>
 
                     <!-- GET /pricing -->
                     <div id="get-pricing" class="glass-panel p-6 rounded-2xl space-y-4">
