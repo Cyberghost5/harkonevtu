@@ -91,4 +91,38 @@ Route::prefix('v1')->group(function () {
         Route::post('/redeem-coupon',              [\App\Http\Controllers\Api\v1\Payment\PaymentApiController::class, 'redeemCoupon']);
     });
 
+    // ── Milestone 6: Specialized Services & Support APIs ─────────────────────
+    // Public Pricing
+    Route::get('/pricing',                         [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'publicPricing']);
+
+    // Authenticated Extra Services
+    Route::middleware('auth:sanctum')->group(function () {
+        // Betting
+        Route::get('/betting/platforms',           [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'bettingPlatforms']);
+        Route::post('/betting/validate-account',   [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'validateBettingAccount']);
+        Route::post('/betting/fund',               [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'fundBettingAccount']);
+
+        // Airtime to Cash
+        Route::get('/airtime-to-cash/settings',    [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'airtimeToCashSettings']);
+        Route::post('/airtime-to-cash/submit',     [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'submitAirtimeToCash']);
+        Route::get('/airtime-to-cash/history',     [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'airtimeToCashHistory']);
+
+        // Voucher Printing
+        Route::post('/vouchers/generate',          [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'generateVouchers']);
+        Route::get('/vouchers/history',            [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'voucherHistory']);
+
+        // Referrals
+        Route::get('/referrals/summary',           [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'referralSummary']);
+        Route::get('/referrals/history',           [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'referralHistory']);
+        Route::post('/referrals/withdraw',         [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'withdrawReferral']);
+
+        // Support
+        Route::get('/support/contact',             [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'supportContact']);
+        Route::post('/support/inquiry',            [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'submitSupportInquiry']);
+
+        // KYC Verification
+        Route::get('/kyc/status',                  [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'kycStatus']);
+        Route::post('/kyc/submit',                 [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'submitKyc']);
+    });
+
 });
