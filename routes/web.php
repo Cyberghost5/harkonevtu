@@ -38,6 +38,7 @@ Route::view('/vtu-home', 'index')->name('vtu-home');
 
 Route::get('/docs', [\App\Http\Controllers\ApiDocController::class, 'index']);
 Route::get('/api/docs', [\App\Http\Controllers\ApiDocController::class, 'index'])->name('api.docs');
+Route::get('/api/docs/postman', [\App\Http\Controllers\ApiDocController::class, 'exportPostman'])->name('api.docs.postman');
 
 Route::post('/contact/send', [SupportController::class, 'send'])->name('contact.send');
 

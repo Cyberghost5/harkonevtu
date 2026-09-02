@@ -44,9 +44,14 @@
             </a>
         </div>
         <div class="flex items-center gap-3">
-            <span class="text-xs font-mono text-slate-400 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+            <span class="text-xs font-mono text-slate-400 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 hidden sm:inline-block">
                 Base URL: <code class="text-emerald-400 font-semibold">{{ $baseUrl }}</code>
             </span>
+            <a href="{{ route('api.docs.postman') }}"
+               class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 text-xs font-bold transition-all shadow-sm">
+                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+                <span>Export Postman / Hoppscotch</span>
+            </a>
         </div>
     </header>
 
@@ -169,6 +174,22 @@
                         <div><span class="text-indigo-400">Accept:</span> application/json</div>
                         <div><span class="text-indigo-400">Content-Type:</span> application/json</div>
                         <div><span class="text-indigo-400">Authorization:</span> Bearer &lt;sanctum_token&gt; <span class="text-slate-500">(For protected routes)</span></div>
+                    </div>
+
+                    <!-- Postman / Hoppscotch Quick Import Card -->
+                    <div class="bg-gradient-to-r from-orange-950/40 via-slate-900 to-indigo-950/40 p-5 rounded-2xl border border-orange-500/30 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-orange-500 text-slate-950 font-mono">1-Click Import</span>
+                                <h3 class="text-sm font-bold text-white">Postman & Hoppscotch API Collection</h3>
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed">Import all 54+ pre-configured API requests, environment variables (<code class="text-orange-300 font-mono">base_url</code>, <code class="text-orange-300 font-mono">auth_token</code>), and sample payloads into Postman or Hoppscotch.</p>
+                        </div>
+                        <a href="{{ route('api.docs.postman') }}"
+                           class="flex-shrink-0 px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-slate-950 font-bold text-xs shadow-lg transition-all flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>Download Collection JSON</span>
+                        </a>
                     </div>
 
                     <div id="response-format">
