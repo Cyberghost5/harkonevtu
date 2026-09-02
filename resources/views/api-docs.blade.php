@@ -586,6 +586,26 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Upgrade user tier to Agent status (deducts configured agent fee from wallet balance).</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "pin": "1234"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Account upgraded to Agent successfully.",
+  "data": {
+    "user_type": "agent",
+    "fee_deducted": 2500,
+    "balance_after": 12500.00
+  }
+}</code></pre>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 8. POST /user/dva/generate -->
@@ -598,6 +618,27 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Generate or re-query Dedicated Virtual Bank Accounts (DVA) for automated wallet top-up.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "bvn": "22123456789",
+  "nin": "10987654321"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Dedicated virtual accounts generated successfully.",
+  "data": {
+    "accounts": [
+      { "bank_name": "Moniepoint Microfinance Bank", "account_number": "6543210987", "account_name": "VTU-John Doe" }
+    ]
+  }
+}</code></pre>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -712,6 +753,16 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Fetch data networks and enabled data types (SME, Gifting, Corporate Gifting, Awoof).</p>
+                        <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Data networks retrieved successfully.",
+  "data": {
+    "networks": [
+      { "id": 1, "name": "MTN", "key": "mtn", "types": ["sme", "gifting", "corporate"] },
+      { "id": 2, "name": "AIRTEL", "key": "airtel", "types": ["cg", "gifting"] }
+    ]
+  }
+}</code></pre>
                     </div>
 
                     <!-- POST /data/plans -->
@@ -805,6 +856,16 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Fetch list of active Electricity Distribution Companies (IKEDC, EKEDC, AEDC, KEDCO, IBEDC, PHED, etc.).</p>
+                        <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Electricity Discos retrieved successfully.",
+  "data": {
+    "total": 12,
+    "discos": [
+      { "id": 1, "name": "Abuja Electricity Distribution Company (AEDC)", "supported_meter_types": ["prepaid", "postpaid"], "min_amount": 500, "max_amount": 100000 }
+    ]
+  }
+}</code></pre>
                     </div>
 
                     <!-- POST /bills/electricity/validate-meter -->
@@ -852,6 +913,33 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Pay electricity bill or generate prepaid token after validating PIN and wallet balance.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "disco_id": 1,
+  "meter_type": "prepaid",
+  "meter_number": "11111111111",
+  "amount": 2000,
+  "phone": "08031234567",
+  "pin": "1234"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Electricity bill payment successful.",
+  "data": {
+    "reference": "ELE20260902120000XYZ",
+    "token": "4839-2019-3819-2049-1092",
+    "units": "24.5 kWh",
+    "amount": 2000,
+    "customer_name": "JOHN DOE"
+  }
+}</code></pre>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- GET /bills/cable/providers -->
@@ -864,6 +952,17 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">List active Cable TV providers (DSTV, GOTV, Startimes).</p>
+                        <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Cable TV providers retrieved successfully.",
+  "data": {
+    "total": 3,
+    "providers": [
+      { "id": 1, "name": "DSTV", "code": "dstv" },
+      { "id": 2, "name": "GOtv", "code": "gotv" }
+    ]
+  }
+}</code></pre>
                     </div>
 
                     <!-- POST /bills/cable/plans -->
@@ -876,6 +975,29 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Fetch subscription plans for a Cable provider.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "provider_id": 1
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Cable plans retrieved successfully.",
+  "data": {
+    "provider_id": 1,
+    "provider_name": "DSTV",
+    "total_plans": 10,
+    "plans": [
+      { "id": 1, "plan_name": "DStv Padi", "amount": 3600 }
+    ]
+  }
+}</code></pre>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- POST /bills/cable/validate-card -->
@@ -888,6 +1010,27 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Validate IUC / Smartcard number and return subscriber customer name.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "provider_id": 1,
+  "smartcard": "7012345678"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Smartcard validated successfully.",
+  "data": {
+    "provider_id": 1,
+    "smartcard": "7012345678",
+    "customer_name": "JOHN DOE"
+  }
+}</code></pre>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- POST /bills/cable/purchase -->
@@ -900,6 +1043,31 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Renew Cable TV subscription for validated Smartcard.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "provider_id": 1,
+  "plan_id": 1,
+  "smartcard": "7012345678",
+  "phone": "08031234567",
+  "pin": "1234"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "DSTV DStv Padi subscription renewed successfully.",
+  "data": {
+    "reference": "CAB20260902120000XYZ",
+    "smartcard": "7012345678",
+    "plan_name": "DStv Padi",
+    "amount": 3600
+  }
+}</code></pre>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- GET /bills/exam-pins/types -->
@@ -912,6 +1080,15 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">List available exam scratch card types (WAEC, NECO, NABTEB, JAMB) and unit prices.</p>
+                        <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Exam pin types retrieved successfully.",
+  "data": {
+    "types": [
+      { "id": 1, "name": "WAEC Result Checker", "price": 3800 }
+    ]
+  }
+}</code></pre>
                     </div>
 
                     <!-- POST /bills/exam-pins/purchase -->
@@ -924,6 +1101,29 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Purchase exam scratch card tokens and receive pin/serial numbers.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "exam_type_id": 1,
+  "quantity": 1,
+  "pin": "1234"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "1 WAEC Result Checker token(s) purchased successfully.",
+  "data": {
+    "reference": "EXM20260902120000XYZ",
+    "pins": [
+      { "serial": "W123456789", "pin": "987654321012" }
+    ]
+  }
+}</code></pre>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -966,7 +1166,28 @@ Accept: application/json</code></pre>
                             </div>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
-                        <p class="text-slate-300 text-xs">Fetch paginated transaction history with optional filters for type (`credit`/`debit`) and service_type (`airtime`, `data`, `electricity`, `cable`, `epin`, `funding`, `refund`).</p>
+                        <p class="text-slate-300 text-xs">Fetch paginated transaction history with optional query filters: <code class="text-indigo-400">?type=credit&service_type=airtime&page=1</code>.</p>
+                        <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Wallet transactions retrieved successfully.",
+  "data": {
+    "total": 1,
+    "current_page": 1,
+    "transactions": [
+      {
+        "reference": "AIR20260902104801TEST2",
+        "type": "debit",
+        "amount": 1000,
+        "balance_before": 16000,
+        "balance_after": 15000,
+        "description": "MTN Airtime - 08031234567",
+        "status": "success",
+        "service_type": "airtime",
+        "date": "2026-09-02 10:48:02"
+      }
+    ]
+  }
+}</code></pre>
                     </div>
 
                     <!-- POST /payments/initialize -->
@@ -1013,6 +1234,26 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Verify status of online payment transaction after user completes checkout.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "reference": "PAY20260902104803NPMVZM7B"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "₦1,000.00 credited to your wallet successfully.",
+  "data": {
+    "reference": "PAY20260902104803NPMVZM7B",
+    "amount": 1000,
+    "balance_after": 16000.00
+  }
+}</code></pre>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- GET /payments/dva-accounts -->
@@ -1025,6 +1266,16 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Retrieve assigned Dedicated Virtual Bank Accounts (Monnify/Paystack) for automated bank transfer top-up.</p>
+                        <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Dedicated virtual bank accounts retrieved successfully.",
+  "data": {
+    "total_accounts": 1,
+    "accounts": [
+      { "id": 1, "bank_name": "Wema Bank", "account_number": "9988776655", "account_name": "VTU-John Doe" }
+    ]
+  }
+}</code></pre>
                     </div>
 
                     <!-- POST /payments/manual-request -->
@@ -1037,6 +1288,30 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Submit manual bank deposit notification to administrator for review and approval.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "bank_name": "First Bank",
+  "account_number": "3012345678",
+  "account_name": "Company Ltd",
+  "amount": 5000,
+  "reference": "DEP_998877"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Manual funding request submitted successfully.",
+  "data": {
+    "request_id": 1,
+    "amount": 5000,
+    "status": "pending"
+  }
+}</code></pre>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- POST /payments/redeem-coupon -->
@@ -1049,6 +1324,26 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Redeem promo code / voucher coupon to credit user wallet instantly.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "code": "BONUS500"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Coupon code redeemed successfully! ₦500.00 credited to your wallet.",
+  "data": {
+    "coupon_code": "BONUS500",
+    "amount_credited": 500,
+    "balance_after": 15500.00
+  }
+}</code></pre>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
