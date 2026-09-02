@@ -92,6 +92,18 @@
                             <li><a href="#post-dva-generate" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /user/dva/generate</a></li>
                         </ul>
                     </div>
+
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">Milestone 3: Airtime & Data</h3>
+                        <ul class="space-y-2 text-xs font-mono text-slate-300">
+                            <li><a href="#get-airtime-networks" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /airtime/networks</a></li>
+                            <li><a href="#post-network-lookup" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /airtime/network-lookup</a></li>
+                            <li><a href="#post-airtime-purchase" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /airtime/purchase</a></li>
+                            <li><a href="#get-data-networks" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /data/networks</a></li>
+                            <li><a href="#post-data-plans" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /data/plans</a></li>
+                            <li><a href="#post-data-purchase" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /data/purchase</a></li>
+                        </ul>
+                    </div>
                 </div>
             </aside>
 
@@ -346,6 +358,193 @@ Accept: application/json</code></pre>
                                 <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
   "status": true,
   "message": "Logged out successfully."
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Milestone 3: Airtime & Data Services Section -->
+                <div id="milestone-3" class="space-y-6">
+                    <h2 class="text-2xl font-bold text-white font-outfit border-b border-slate-800 pb-3 flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-vtu-primary animate-pulse"></span>
+                        Milestone 3: Airtime & Data Services APIs
+                    </h2>
+
+                    <!-- GET /airtime/networks -->
+                    <div id="get-airtime-networks" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/airtime/networks</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Fetch list of active telco networks and current discount/commission rates.</p>
+                        <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Airtime networks retrieved successfully.",
+  "data": {
+    "user_tier": "User",
+    "networks": [
+      { "id": 1, "name": "MTN", "network_key": "mtn", "discount_percentage": 2.0, "enabled": true }
+    ]
+  }
+}</code></pre>
+                    </div>
+
+                    <!-- POST /airtime/network-lookup -->
+                    <div id="post-network-lookup" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/airtime/network-lookup</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Auto-detect network provider from recipient phone number prefix.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "phone": "08031234567"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Network detected successfully.",
+  "data": {
+    "phone": "08031234567",
+    "prefix": "0803",
+    "network_key": "mtn",
+    "name": "MTN"
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- POST /airtime/purchase -->
+                    <div id="post-airtime-purchase" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/airtime/purchase</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Disburse VTU airtime to recipient phone number after validating 4-digit PIN and wallet balance.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "network": "mtn",
+  "phone": "08031234567",
+  "amount": 500,
+  "pin": "1234"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "₦500 MTN airtime sent to 08031234567 successfully.",
+  "data": {
+    "reference": "AIR20260902100000ABC123",
+    "network": "MTN",
+    "recipient": "08031234567",
+    "face_amount": 500,
+    "charged_amount": 490,
+    "discount_applied": 10,
+    "balance_after": 4510.50
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GET /data/networks -->
+                    <div id="get-data-networks" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/data/networks</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Fetch data networks and enabled data types (SME, Gifting, Corporate Gifting, Awoof).</p>
+                    </div>
+
+                    <!-- POST /data/plans -->
+                    <div id="post-data-plans" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/data/plans</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Fetch data plans for a network, sorted from lowest to highest price with pricing calculated for the user tier.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "network": "mtn",
+  "data_type": "sme"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Data plans retrieved successfully.",
+  "data": {
+    "network": "mtn",
+    "total_plans": 10,
+    "plans": [
+      { "id": 1, "plan_name": "1GB SME", "validity": "30 Days", "price": 280 }
+    ]
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- POST /data/purchase -->
+                    <div id="post-data-purchase" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/data/purchase</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Purchase data bundle after validating 4-digit transaction PIN and wallet balance.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "phone": "08031234567",
+  "plan_id": 1,
+  "pin": "1234"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "MTN 1GB SME sent to 08031234567 successfully.",
+  "data": {
+    "reference": "DAT20260902100000XYZ789",
+    "network": "MTN",
+    "recipient": "08031234567",
+    "plan_name": "1GB SME",
+    "amount_paid": 280,
+    "balance_after": 4230.50
+  }
 }</code></pre>
                             </div>
                         </div>
