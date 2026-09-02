@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1\Airtime;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiLog;
 use App\Models\AppSetting;
 use App\Models\NetworkAirtime;
 use App\Models\ServiceTransaction;
@@ -334,21 +335,39 @@ class AirtimeController extends Controller
 
     private function callVtpass(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
+        $endpoint = 'https://vtpass.com/api/pay';
+        $serviceIds = ['mtn' => 'mtn', 'glo' => 'glo', 'airtel' => 'airtel', 'etisalat' => 'etisalat'];
+        $payload = [
+            'request_id' => $reference,
+            'serviceID'  => $serviceIds[$network->network_key] ?? $network->network_key,
+            'amount'     => $amount,
+            'phone'      => $phone,
+        ];
+        $start = hrtime(true);
         try {
-            $serviceIds = ['mtn' => 'mtn', 'glo' => 'glo', 'airtel' => 'airtel', 'etisalat' => 'etisalat'];
             $res = Http::withHeaders([
                 'api-key' => AppSetting::get('vtpass_api_key'),
                 'secret-key' => AppSetting::get('vtpass_secret_key'),
-            ])->post('https://vtpass.com/api/pay', [
-                'request_id' => $reference,
-                'serviceID'  => $serviceIds[$network->network_key] ?? $network->network_key,
-                'amount'     => $amount,
-                'phone'      => $phone,
-            ]);
+            ])->post($endpoint, $payload);
 
             $body = $res->json() ?? [];
             $code = $body['code'] ?? null;
             $success = ($code === '000');
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'airtime',
+                'provider'    => 'vtpass',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint,
+                'method'      => 'POST',
+                'payload'     => $payload,
+                'response'    => $body,
+                'http_status' => $res->status(),
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
 
             return [
                 'success'   => $success,
@@ -362,20 +381,38 @@ class AirtimeController extends Controller
 
     private function callClubkonnect(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
+        $endpoint = 'https://www.nellobytesystems.com/APIAirtimeV1.asp';
+        $netCodes = ['mtn' => '01', 'glo' => '02', 'airtel' => '03', 'etisalat' => '04'];
+        $payload = [
+            'UserID'        => AppSetting::get('clubkonnect_user_id'),
+            'APIKey'        => AppSetting::get('clubkonnect_api_key'),
+            'MobileNetwork' => $netCodes[$network->network_key] ?? '01',
+            'Amount'        => $amount,
+            'MobileNo'      => $phone,
+            'RequestID'     => $reference,
+        ];
+        $start = hrtime(true);
         try {
-            $netCodes = ['mtn' => '01', 'glo' => '02', 'airtel' => '03', 'etisalat' => '04'];
-            $res = Http::get('https://www.nellobytesystems.com/APIAirtimeV1.asp', [
-                'UserID'    => AppSetting::get('clubkonnect_user_id'),
-                'APIKey'    => AppSetting::get('clubkonnect_api_key'),
-                'MobileNetwork' => $netCodes[$network->network_key] ?? '01',
-                'Amount'    => $amount,
-                'MobileNo'  => $phone,
-                'RequestID' => $reference,
-            ]);
+            $res = Http::get($endpoint, $payload);
 
             $body = $res->json() ?? [];
             $status = $body['status'] ?? '';
             $success = str_contains(strtolower($status), 'order_received') || str_contains(strtolower($status), 'success');
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'airtime',
+                'provider'    => 'clubkonnect',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint,
+                'method'      => 'GET',
+                'payload'     => $payload,
+                'response'    => $body,
+                'http_status' => $res->status(),
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
 
             return [
                 'success'   => $success,
@@ -389,20 +426,38 @@ class AirtimeController extends Controller
 
     private function callAutopilot(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
+        $endpoint = config('services.autopilot.base_url', 'https://autopilot.com.ng/api/v1') . '/airtime';
+        $netIds = ['mtn' => 1, 'glo' => 3, 'airtel' => 2, 'etisalat' => 4];
+        $payload = [
+            'network'     => $netIds[$network->network_key] ?? 1,
+            'amount'      => $amount,
+            'phone'       => $phone,
+            'airtimeType' => 'VTU',
+            'reference'   => $reference,
+        ];
+        $start = hrtime(true);
         try {
-            $netIds = ['mtn' => 1, 'glo' => 3, 'airtel' => 2, 'etisalat' => 4];
             $res = Http::withHeaders([
                 'Authorization' => 'Bearer ' . AppSetting::get('autopilot_api_key'),
-            ])->post(config('services.autopilot.base_url', 'https://autopilot.com.ng/api/v1') . '/airtime', [
-                'network'     => $netIds[$network->network_key] ?? 1,
-                'amount'      => $amount,
-                'phone'       => $phone,
-                'airtimeType' => 'VTU',
-                'reference'   => $reference,
-            ]);
+            ])->post($endpoint, $payload);
 
             $body = $res->json() ?? [];
             $success = ($body['status'] ?? false) === true || ($body['code'] ?? '') === '00';
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'airtime',
+                'provider'    => 'autopilot',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint,
+                'method'      => 'POST',
+                'payload'     => $payload,
+                'response'    => $body,
+                'http_status' => $res->status(),
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
 
             return [
                 'success'   => $success,
@@ -416,20 +471,38 @@ class AirtimeController extends Controller
 
     private function callEasyaccess(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
+        $endpoint = 'https://easyaccess.com.ng/api/airtime.php';
+        $netIds = ['mtn' => 01, 'glo' => 02, 'airtel' => 03, 'etisalat' => 04];
+        $payload = [
+            'network'          => $netIds[$network->network_key] ?? 01,
+            'amount'           => $amount,
+            'mobileno'         => $phone,
+            'airtimetype'      => 'VTU',
+            'client_reference' => $reference,
+        ];
+        $start = hrtime(true);
         try {
-            $netIds = ['mtn' => 01, 'glo' => 02, 'airtel' => 03, 'etisalat' => 04];
             $res = Http::withHeaders([
                 'Authorization' => 'Bearer ' . AppSetting::get('easyaccess_api_key'),
-            ])->post('https://easyaccess.com.ng/api/airtime.php', [
-                'network'   => $netIds[$network->network_key] ?? 01,
-                'amount'    => $amount,
-                'mobileno'  => $phone,
-                'airtimetype' => 'VTU',
-                'client_reference' => $reference,
-            ]);
+            ])->post($endpoint, $payload);
 
             $body = $res->json() ?? [];
             $success = str_contains(strtolower($body['message'] ?? ''), 'successful') || ($body['success'] ?? false) === true;
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'airtime',
+                'provider'    => 'easyaccess',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint,
+                'method'      => 'POST',
+                'payload'     => $payload,
+                'response'    => $body,
+                'http_status' => $res->status(),
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
 
             return [
                 'success'   => $success,

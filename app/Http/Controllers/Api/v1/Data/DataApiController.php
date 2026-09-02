@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1\Data;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiLog;
 use App\Models\AppSetting;
 use App\Models\DataPlan;
 use App\Models\NetworkAirtime;
@@ -349,19 +350,37 @@ class DataApiController extends Controller
 
     private function callAutopilotData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
+        $endpoint = config('services.autopilot.base_url', 'https://autopilot.com.ng/api/v1') . '/data';
+        $netIds = ['mtn' => 1, 'glo' => 3, 'airtel' => 2, 'etisalat' => 4];
+        $payload = [
+            'network'   => $netIds[$network->network_key] ?? 1,
+            'plan'      => $plan->api_plan_id,
+            'phone'     => $phone,
+            'reference' => $reference,
+        ];
+        $start = hrtime(true);
         try {
-            $netIds = ['mtn' => 1, 'glo' => 3, 'airtel' => 2, 'etisalat' => 4];
             $res = Http::withHeaders([
                 'Authorization' => 'Bearer ' . AppSetting::get('autopilot_api_key'),
-            ])->post(config('services.autopilot.base_url', 'https://autopilot.com.ng/api/v1') . '/data', [
-                'network'   => $netIds[$network->network_key] ?? 1,
-                'plan'      => $plan->api_plan_id,
-                'phone'     => $phone,
-                'reference' => $reference,
-            ]);
+            ])->post($endpoint, $payload);
 
             $body = $res->json() ?? [];
             $success = ($body['status'] ?? false) === true || ($body['code'] ?? '') === '00';
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'data',
+                'provider'    => 'autopilot',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint,
+                'method'      => 'POST',
+                'payload'     => $payload,
+                'response'    => $body,
+                'http_status' => $res->status(),
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
 
             return [
                 'success'   => $success,
@@ -375,19 +394,37 @@ class DataApiController extends Controller
 
     private function callEasyaccessData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
+        $endpoint = 'https://easyaccess.com.ng/api/data.php';
+        $netIds = ['mtn' => 01, 'glo' => 02, 'airtel' => 03, 'etisalat' => 04];
+        $payload = [
+            'network'          => $netIds[$network->network_key] ?? 01,
+            'data_plan'        => $plan->api_plan_id,
+            'mobileno'         => $phone,
+            'client_reference' => $reference,
+        ];
+        $start = hrtime(true);
         try {
-            $netIds = ['mtn' => 01, 'glo' => 02, 'airtel' => 03, 'etisalat' => 04];
             $res = Http::withHeaders([
                 'Authorization' => 'Bearer ' . AppSetting::get('easyaccess_api_key'),
-            ])->post('https://easyaccess.com.ng/api/data.php', [
-                'network'          => $netIds[$network->network_key] ?? 01,
-                'data_plan'        => $plan->api_plan_id,
-                'mobileno'         => $phone,
-                'client_reference' => $reference,
-            ]);
+            ])->post($endpoint, $payload);
 
             $body = $res->json() ?? [];
             $success = str_contains(strtolower($body['message'] ?? ''), 'successful') || ($body['success'] ?? false) === true;
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'data',
+                'provider'    => 'easyaccess',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint,
+                'method'      => 'POST',
+                'payload'     => $payload,
+                'response'    => $body,
+                'http_status' => $res->status(),
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
 
             return [
                 'success'   => $success,
@@ -401,21 +438,39 @@ class DataApiController extends Controller
 
     private function callVtpassData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
+        $endpoint = 'https://vtpass.com/api/pay';
+        $vtpassServiceIds = ['mtn' => 'mtn-data', 'glo' => 'glo-data', 'airtel' => 'airtel-data', 'etisalat' => 'etisalat-data'];
+        $payload = [
+            'request_id'     => $reference,
+            'serviceID'      => $vtpassServiceIds[$network->network_key] ?? 'mtn-data',
+            'billersCode'    => $phone,
+            'variation_code' => $plan->api_plan_id,
+            'phone'          => $phone,
+        ];
+        $start = hrtime(true);
         try {
-            $vtpassServiceIds = ['mtn' => 'mtn-data', 'glo' => 'glo-data', 'airtel' => 'airtel-data', 'etisalat' => 'etisalat-data'];
             $res = Http::withHeaders([
                 'api-key'    => AppSetting::get('vtpass_api_key'),
                 'secret-key' => AppSetting::get('vtpass_secret_key'),
-            ])->post('https://vtpass.com/api/pay', [
-                'request_id'   => $reference,
-                'serviceID'    => $vtpassServiceIds[$network->network_key] ?? 'mtn-data',
-                'billersCode'  => $phone,
-                'variation_code' => $plan->api_plan_id,
-                'phone'        => $phone,
-            ]);
+            ])->post($endpoint, $payload);
 
             $body = $res->json() ?? [];
             $success = (($body['code'] ?? '') === '000');
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'data',
+                'provider'    => 'vtpass',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint,
+                'method'      => 'POST',
+                'payload'     => $payload,
+                'response'    => $body,
+                'http_status' => $res->status(),
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
 
             return [
                 'success'   => $success,
@@ -429,20 +484,38 @@ class DataApiController extends Controller
 
     private function callClubkonnectData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
+        $endpoint = 'https://www.nellobytesystems.com/APIDataV1.asp';
+        $netCodes = ['mtn' => '01', 'glo' => '02', 'airtel' => '03', 'etisalat' => '04'];
+        $payload = [
+            'UserID'        => AppSetting::get('clubkonnect_user_id'),
+            'APIKey'        => AppSetting::get('clubkonnect_api_key'),
+            'MobileNetwork' => $netCodes[$network->network_key] ?? '01',
+            'DataPlan'      => $plan->api_plan_id,
+            'MobileNo'      => $phone,
+            'RequestID'     => $reference,
+        ];
+        $start = hrtime(true);
         try {
-            $netCodes = ['mtn' => '01', 'glo' => '02', 'airtel' => '03', 'etisalat' => '04'];
-            $res = Http::get('https://www.nellobytesystems.com/APIDataV1.asp', [
-                'UserID'        => AppSetting::get('clubkonnect_user_id'),
-                'APIKey'        => AppSetting::get('clubkonnect_api_key'),
-                'MobileNetwork' => $netCodes[$network->network_key] ?? '01',
-                'DataPlan'      => $plan->api_plan_id,
-                'MobileNo'      => $phone,
-                'RequestID'     => $reference,
-            ]);
+            $res = Http::get($endpoint, $payload);
 
             $body = $res->json() ?? [];
             $status = $body['status'] ?? '';
             $success = str_contains(strtolower($status), 'order_received') || str_contains(strtolower($status), 'success');
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'data',
+                'provider'    => 'clubkonnect',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint,
+                'method'      => 'GET',
+                'payload'     => $payload,
+                'response'    => $body,
+                'http_status' => $res->status(),
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
 
             return [
                 'success'   => $success,

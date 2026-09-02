@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1\Bills;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiLog;
 use App\Models\AppSetting;
 use App\Models\CablePlan;
 use App\Models\CableProvider;
@@ -740,10 +741,26 @@ class BillsApiController extends Controller
 
     private function callElectricityGateway($disco, $meterType, $meterNumber, $amount, $phone, $reference, $api): array
     {
+        $start = hrtime(true);
         try {
             if ($api === 'easyaccess') {
                 $service = app(EasyaccessService::class);
-                $res = $service->payElectricity($disco->easyaccess_code ?? $disco->code, $meterNumber, $meterType, $amount, $phone, $reference);
+                $res = $service->payElectricity($disco->easyaccess_id ?? $disco->short_code, $meterNumber, $meterType, $amount, $phone, $reference);
+                $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+                ApiLog::record([
+                    'user_id'     => auth()->id(),
+                    'service'     => 'electricity',
+                    'provider'    => 'easyaccess',
+                    'reference'   => $reference,
+                    'endpoint'    => 'https://easyaccess.com.ng/api/pay_electricity.php',
+                    'method'      => 'POST',
+                    'payload'     => ['disco' => $disco->short_code, 'meter' => $meterNumber, 'amount' => $amount],
+                    'response'    => $res,
+                    'duration_ms' => $duration,
+                    'success'     => $res['success'] ?? false,
+                ]);
+
                 return [
                     'success'   => $res['success'] ?? false,
                     'reference' => $res['reference'] ?? $reference,
@@ -752,12 +769,29 @@ class BillsApiController extends Controller
                     'response'  => $res,
                 ];
             }
+
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $resData = ['status' => 'success', 'token' => '1234-5678-9012-3456-7890', 'units' => '25.0 kWh'];
+
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'electricity',
+                'provider'    => $api,
+                'reference'   => $reference,
+                'endpoint'    => '/api/v1/bills/electricity/purchase',
+                'method'      => 'POST',
+                'payload'     => ['disco' => $disco->slug, 'meter' => $meterNumber, 'amount' => $amount],
+                'response'    => $resData,
+                'duration_ms' => $duration,
+                'success'     => true,
+            ]);
+
             return [
                 'success'   => true,
                 'reference' => $reference,
                 'token'     => '1234-5678-9012-3456-7890',
                 'units'     => '25.0 kWh',
-                'response'  => ['status' => 'success'],
+                'response'  => $resData,
             ];
         } catch (\Throwable $e) {
             return ['success' => false, 'message' => $e->getMessage()];
@@ -768,7 +802,7 @@ class BillsApiController extends Controller
     {
         try {
             $service = app(EasyaccessService::class);
-            $res = $service->verifyCable($provider->easyaccess_code ?? $provider->code, $smartcard);
+            $res = $service->verifyCable($provider->easyaccess_id ?? $provider->slug, $smartcard);
             return [
                 'success'       => $res['success'] ?? false,
                 'customer_name' => $res['customer_name'] ?? 'VALIDATED SUBSCRIBER',
@@ -791,17 +825,50 @@ class BillsApiController extends Controller
 
     private function callCableGateway($provider, $plan, $smartcard, $phone, $reference, $api): array
     {
+        $start = hrtime(true);
         try {
             if ($api === 'easyaccess') {
                 $service = app(EasyaccessService::class);
-                $res = $service->payCable($provider->easyaccess_code ?? $provider->code, $plan->api_plan_id ?? $plan->id, $smartcard, $phone, $reference);
+                $res = $service->payCable($provider->easyaccess_id ?? $provider->slug, $plan->easyaccess_id ?? $plan->id, $smartcard, $phone, $reference);
+                $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+                ApiLog::record([
+                    'user_id'     => auth()->id(),
+                    'service'     => 'cable',
+                    'provider'    => 'easyaccess',
+                    'reference'   => $reference,
+                    'endpoint'    => 'https://easyaccess.com.ng/api/pay_tv.php',
+                    'method'      => 'POST',
+                    'payload'     => ['provider' => $provider->slug, 'smartcard' => $smartcard, 'plan' => $plan->name],
+                    'response'    => $res,
+                    'duration_ms' => $duration,
+                    'success'     => $res['success'] ?? false,
+                ]);
+
                 return [
                     'success'   => $res['success'] ?? false,
                     'reference' => $res['reference'] ?? $reference,
                     'response'  => $res,
                 ];
             }
-            return ['success' => true, 'reference' => $reference, 'response' => ['status' => 'success']];
+
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $resData = ['status' => 'success'];
+
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'cable',
+                'provider'    => $api,
+                'reference'   => $reference,
+                'endpoint'    => '/api/v1/bills/cable/purchase',
+                'method'      => 'POST',
+                'payload'     => ['provider' => $provider->slug, 'smartcard' => $smartcard, 'plan' => $plan->name],
+                'response'    => $resData,
+                'duration_ms' => $duration,
+                'success'     => true,
+            ]);
+
+            return ['success' => true, 'reference' => $reference, 'response' => $resData];
         } catch (\Throwable $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -809,10 +876,26 @@ class BillsApiController extends Controller
 
     private function callExamPinGateway($examType, $quantity, $phone, $reference, $api): array
     {
+        $start = hrtime(true);
         try {
             if ($api === 'easyaccess') {
                 $service = app(EasyaccessService::class);
-                $res = $service->payExamPin($examType->easyaccess_code ?? $examType->code, $quantity, $phone, $reference);
+                $res = $service->payExamPin($examType->easyaccess_code ?? $examType->slug, $quantity, $phone, $reference);
+                $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+                ApiLog::record([
+                    'user_id'     => auth()->id(),
+                    'service'     => 'epin',
+                    'provider'    => 'easyaccess',
+                    'reference'   => $reference,
+                    'endpoint'    => 'https://easyaccess.com.ng/api/pay_pin.php',
+                    'method'      => 'POST',
+                    'payload'     => ['exam' => $examType->slug, 'quantity' => $quantity],
+                    'response'    => $res,
+                    'duration_ms' => $duration,
+                    'success'     => $res['success'] ?? false,
+                ]);
+
                 return [
                     'success'   => $res['success'] ?? false,
                     'reference' => $res['reference'] ?? $reference,
@@ -820,11 +903,28 @@ class BillsApiController extends Controller
                     'response'  => $res,
                 ];
             }
+
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $resData = ['status' => 'success'];
+
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'epin',
+                'provider'    => $api,
+                'reference'   => $reference,
+                'endpoint'    => '/api/v1/bills/exam-pins/purchase',
+                'method'      => 'POST',
+                'payload'     => ['exam' => $examType->slug, 'quantity' => $quantity],
+                'response'    => $resData,
+                'duration_ms' => $duration,
+                'success'     => true,
+            ]);
+
             return [
                 'success'   => true,
                 'reference' => $reference,
                 'tokens'    => [['pin' => '123456789012', 'serial' => 'WAEC998877']],
-                'response'  => ['status' => 'success'],
+                'response'  => $resData,
             ];
         } catch (\Throwable $e) {
             return ['success' => false, 'message' => $e->getMessage()];
