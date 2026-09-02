@@ -365,6 +365,214 @@ Accept: application/json</code></pre>
 
                 </div>
 
+                <!-- Milestone 2: User Profile & Account Management Section -->
+                <div id="milestone-2" class="space-y-6">
+                    <h2 class="text-2xl font-bold text-white font-outfit border-b border-slate-800 pb-3 flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-indigo-500 animate-pulse"></span>
+                        Milestone 2: User Profile & Account Management APIs
+                    </h2>
+
+                    <!-- 1. GET /user/profile -->
+                    <div id="get-user-profile" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/user/profile</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Fetch full profile details, user tier, referral code, PIN set status, and live wallet balance.</p>
+                        <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "User profile retrieved successfully.",
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "John Doe",
+      "username": "johndoe",
+      "email": "john@example.com",
+      "phone": "08031234567",
+      "user_type": "user",
+      "has_pin": true,
+      "referral_code": "REF12345"
+    },
+    "wallet": {
+      "balance": "5000.00",
+      "total_funded": "5000.00"
+    }
+  }
+}</code></pre>
+                    </div>
+
+                    <!-- 2. PUT /user/profile -->
+                    <div id="put-user-profile" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-400 font-mono font-bold text-xs">PUT</span>
+                                <code class="text-base font-bold text-white font-mono">/user/profile</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Update account full name, email, or phone number.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "name": "John Updated Doe",
+  "email": "johnnew@example.com",
+  "phone": "08031234567"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Profile updated successfully.",
+  "data": { ... }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. PUT /user/password -->
+                    <div id="put-user-password" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-400 font-mono font-bold text-xs">PUT</span>
+                                <code class="text-base font-bold text-white font-mono">/user/password</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Change account password by providing current password and new password confirmation.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "current_password": "OldPassword123",
+  "password": "NewPassword123",
+  "password_confirmation": "NewPassword123"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Password changed successfully."
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. PUT /user/pin -->
+                    <div id="put-user-pin" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-400 font-mono font-bold text-xs">PUT</span>
+                                <code class="text-base font-bold text-white font-mono">/user/pin</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Set a initial 4-digit transaction PIN or update existing transaction PIN.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "current_pin": "1234",
+  "pin": "5678",
+  "pin_confirmation": "5678"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Transaction PIN updated successfully."
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. POST /user/pin/verify -->
+                    <div id="post-user-pin-verify" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/user/pin/verify</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Verify user's 4-digit transaction PIN before authorizing sensitive actions.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "pin": "1234"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Transaction PIN is valid."
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. PUT /user/bank -->
+                    <div id="put-user-bank" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-400 font-mono font-bold text-xs">PUT</span>
+                                <code class="text-base font-bold text-white font-mono">/user/bank</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Update withdrawal bank account details.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "bank_name": "Kuda Bank",
+  "account_number": "2012345678",
+  "account_name": "John Doe"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Bank details updated successfully."
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7. POST /user/upgrade-agent -->
+                    <div id="post-upgrade-agent" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/user/upgrade-agent</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Upgrade user tier to Agent status (deducts configured agent fee from wallet balance).</p>
+                    </div>
+
+                    <!-- 8. POST /user/dva/generate -->
+                    <div id="post-dva-generate" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/user/dva/generate</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Generate or re-query Dedicated Virtual Bank Accounts (DVA) for automated wallet top-up.</p>
+                    </div>
+                </div>
+
                 <!-- Milestone 3: Airtime & Data Services Section -->
                 <div id="milestone-3" class="space-y-6">
                     <h2 class="text-2xl font-bold text-white font-outfit border-b border-slate-800 pb-3 flex items-center gap-3">
