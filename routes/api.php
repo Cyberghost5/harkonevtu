@@ -58,4 +58,22 @@ Route::prefix('v1')->group(function () {
         Route::post('/purchase',         [\App\Http\Controllers\Api\v1\Data\DataApiController::class, 'purchase']);
     });
 
+    // ── Bills & Utilities Services Endpoints (Milestone 4) ────────────────────
+    Route::prefix('bills')->middleware('auth:sanctum')->group(function () {
+        // Electricity
+        Route::get('/electricity/discos',          [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'electricityDiscos']);
+        Route::post('/electricity/validate-meter', [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'validateMeter']);
+        Route::post('/electricity/purchase',       [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'purchaseElectricity']);
+
+        // Cable TV
+        Route::get('/cable/providers',             [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'cableProviders']);
+        Route::post('/cable/plans',                [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'cablePlans']);
+        Route::post('/cable/validate-card',        [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'validateSmartcard']);
+        Route::post('/cable/purchase',             [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'purchaseCable']);
+
+        // Exam Pins
+        Route::get('/exam-pins/types',             [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'examTypes']);
+        Route::post('/exam-pins/purchase',         [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'purchaseExamPin']);
+    });
+
 });
