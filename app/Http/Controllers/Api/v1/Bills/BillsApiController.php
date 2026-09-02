@@ -193,7 +193,7 @@ class BillsApiController extends Controller
                     $amount,
                     $disco->name . ' Electricity (' . $meterNumber . ')',
                     $reference,
-                    ['service' => 'electricity', 'disco' => $disco->code, 'meter' => $meterNumber]
+                    ['service' => 'electricity', 'disco' => $disco->short_code ?? $disco->slug, 'meter' => $meterNumber]
                 );
             });
         } catch (\Exception $e) {
@@ -232,7 +232,7 @@ class BillsApiController extends Controller
             'user_id'               => $user->id,
             'wallet_transaction_id' => $walletTx->id,
             'service_type'          => 'electricity',
-            'provider'              => $disco->code,
+            'provider'              => $disco->short_code ?? $disco->slug,
             'recipient'             => $meterNumber,
             'amount'                => $amount,
             'status'                => 'success',
@@ -462,7 +462,7 @@ class BillsApiController extends Controller
                     $amount,
                     $provider->name . ' - ' . $plan->name . ' (' . $smartcard . ')',
                     $reference,
-                    ['service' => 'cable', 'provider' => $provider->code, 'smartcard' => $smartcard, 'plan' => $plan->name]
+                    ['service' => 'cable', 'provider' => $provider->slug, 'smartcard' => $smartcard, 'plan' => $plan->name]
                 );
             });
         } catch (\Exception $e) {
@@ -501,7 +501,7 @@ class BillsApiController extends Controller
             'user_id'               => $user->id,
             'wallet_transaction_id' => $walletTx->id,
             'service_type'          => 'cable',
-            'provider'              => $provider->code,
+            'provider'              => $provider->slug,
             'recipient'             => $smartcard,
             'amount'                => $amount,
             'status'                => 'success',
@@ -643,7 +643,7 @@ class BillsApiController extends Controller
                     $amount,
                     $quantity . 'x ' . $examType->name . ' Scratch Card',
                     $reference,
-                    ['service' => 'epin', 'exam_type' => $examType->code, 'quantity' => $quantity]
+                    ['service' => 'epin', 'exam_type' => $examType->slug, 'quantity' => $quantity]
                 );
             });
         } catch (\Exception $e) {
@@ -682,7 +682,7 @@ class BillsApiController extends Controller
             'user_id'               => $user->id,
             'wallet_transaction_id' => $walletTx->id,
             'service_type'          => 'epin',
-            'provider'              => $examType->code,
+            'provider'              => $examType->slug,
             'recipient'             => $phone,
             'amount'                => $amount,
             'status'                => 'success',
