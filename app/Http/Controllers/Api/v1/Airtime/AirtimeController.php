@@ -501,7 +501,7 @@ class AirtimeController extends Controller
                 'response'    => $body,
                 'http_status' => $res->status(),
                 'duration_ms' => $duration,
-                'success'     => $success,
+                'success'     => $success, 
             ]);
 
             return [
