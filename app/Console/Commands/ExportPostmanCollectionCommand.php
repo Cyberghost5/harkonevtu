@@ -92,6 +92,7 @@ class ExportPostmanCollectionCommand extends Command
                         $this->createRequest('Verify Transaction PIN', 'POST', '{{base_url}}/user/pin/verify', [
                             'pin' => '1234',
                         ], true),
+                        $this->createRequest('Request Transaction PIN Reset (OTP)', 'POST', '{{base_url}}/user/pin/reset-request', null, true),
                         $this->createRequest('Update Settlement Bank Details', 'PUT', '{{base_url}}/user/bank', [
                             'bank_name'           => 'GTBank',
                             'bank_account_number' => '0123456789',

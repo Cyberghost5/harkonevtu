@@ -92,9 +92,11 @@
                             <li><a href="#put-user-password" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">PUT</span> /user/password</a></li>
                             <li><a href="#put-user-pin" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">PUT</span> /user/pin</a></li>
                             <li><a href="#post-user-pin-verify" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /user/pin/verify</a></li>
+                            <li><a href="#post-user-pin-reset" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /user/pin/reset-request</a></li>
                             <li><a href="#put-user-bank" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">PUT</span> /user/bank</a></li>
                             <li><a href="#post-upgrade-agent" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /user/upgrade-agent</a></li>
                             <li><a href="#post-dva-generate" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /user/dva/generate</a></li>
+                            <li><a href="#delete-user-account" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold">DEL</span> /user/account</a></li>
                         </ul>
                     </div>
 
@@ -104,9 +106,11 @@
                             <li><a href="#get-airtime-networks" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /airtime/networks</a></li>
                             <li><a href="#post-network-lookup" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /airtime/network-lookup</a></li>
                             <li><a href="#post-airtime-purchase" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /airtime/purchase</a></li>
+                            <li><a href="#get-airtime-history" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /airtime/history</a></li>
                             <li><a href="#get-data-networks" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /data/networks</a></li>
                             <li><a href="#post-data-plans" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /data/plans</a></li>
                             <li><a href="#post-data-purchase" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /data/purchase</a></li>
+                            <li><a href="#get-data-history" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /data/history</a></li>
                         </ul>
                     </div>
 
@@ -153,7 +157,18 @@
                             <li><a href="#get-referrals-summary" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /referrals/summary</a></li>
                             <li><a href="#post-referrals-withdraw" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /referrals/withdraw</a></li>
                             <li><a href="#get-support-contact" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /support/contact</a></li>
+                            <li><a href="#post-support-inquiry" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /support/inquiry</a></li>
                             <li><a href="#get-kyc-status" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /kyc/status</a></li>
+                            <li><a href="#post-kyc-submit" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /kyc/submit</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">7: Push Notifications</h3>
+                        <ul class="space-y-2 text-xs font-mono text-slate-300">
+                            <li><a href="#post-device-token" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /user/device-token</a></li>
+                            <li><a href="#post-device-token-remove" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /user/device-token/remove</a></li>
+                            <li><a href="#get-notifications" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /notifications</a></li>
                         </ul>
                     </div>
                 </div>
@@ -1634,6 +1649,105 @@ Accept: application/json</code></pre>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
                         <p class="text-slate-300 text-xs">Check current account KYC verification tier & status (Tier 1 Unverified vs Tier 2 Verified).</p>
+                    </div>
+
+                    <!-- POST /kyc/submit -->
+                    <div id="post-kyc-submit" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/kyc/submit</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Submit National Identity Number (NIN) and Bank Verification Number (BVN) for automated QoreID identity verification.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "id_type": "nin",
+  "id_number": "12345678901",
+  "bvn": "22113344556"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "KYC identity verification submitted and approved successfully."
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- POST /support/inquiry -->
+                    <div id="post-support-inquiry" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/support/inquiry</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Submit a support ticket or inquiry directly to platform administrators.</p>
+                    </div>
+
+                </div>
+
+                <!-- 7. Push Notifications & Devices Section -->
+                <div class="glass-panel p-8 rounded-3xl space-y-6">
+                    <h2 class="text-2xl font-bold text-white tracking-tight border-b border-slate-800 pb-4">7. Push Notifications & Devices</h2>
+
+                    <!-- POST /user/device-token -->
+                    <div id="post-device-token" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/user/device-token</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Register or update Firebase FCM / OneSignal push notification device token for system alerts & funding notifications.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "device_token": "fcm_token_sample_xyz123",
+  "device_type": "android"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Push notification device token registered successfully."
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- POST /user/device-token/remove -->
+                    <div id="post-device-token-remove" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/user/device-token/remove</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Unregister FCM / OneSignal push notification device token upon user logout.</p>
+                    </div>
+
+                    <!-- GET /notifications -->
+                    <div id="get-notifications" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/notifications</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Fetch paginated list of user notification messages, system broadcasts, and funding alerts.</p>
                     </div>
 
                 </div>
