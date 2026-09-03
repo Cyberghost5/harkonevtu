@@ -42,6 +42,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/upgrade-agent',     [\App\Http\Controllers\Api\v1\User\UserController::class, 'upgradeAgent']);
         Route::post('/dva/generate',      [\App\Http\Controllers\Api\v1\User\UserController::class, 'generateDva']);
         Route::delete('/account',         [\App\Http\Controllers\Api\v1\User\UserController::class, 'deleteAccount']);
+        Route::post('/account/delete',    [\App\Http\Controllers\Api\v1\User\UserController::class, 'deleteAccount']);
     });
 
     // ── Airtime Services Endpoints (Milestone 3) ──────────────────────────────
