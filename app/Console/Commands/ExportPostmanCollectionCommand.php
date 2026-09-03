@@ -103,6 +103,12 @@ class ExportPostmanCollectionCommand extends Command
                         $this->createRequest('Generate Virtual Bank Account (DVA)', 'POST', '{{base_url}}/user/dva/generate', [
                             'bvn' => '22113344556',
                         ], true),
+                        $this->createRequest('Delete User Account (POST)', 'POST', '{{base_url}}/user/account/delete', [
+                            'password' => 'Password123',
+                        ], true),
+                        $this->createRequest('Delete User Account (DELETE)', 'DELETE', '{{base_url}}/user/account', [
+                            'password' => 'Password123',
+                        ], true),
                     ],
                 ],
 
