@@ -131,6 +131,12 @@ Route::prefix('v1')->group(function () {
         // KYC Verification
         Route::get('/kyc/status',                  [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'kycStatus']);
         Route::post('/kyc/submit',                 [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'submitKyc']);
+
+        // Push Notifications & Device Token
+        Route::post('/user/device-token',          [\App\Http\Controllers\Api\v1\User\DeviceTokenController::class, 'updateDeviceToken']);
+        Route::post('/user/device-token/remove',   [\App\Http\Controllers\Api\v1\User\DeviceTokenController::class, 'removeDeviceToken']);
+        Route::delete('/user/device-token',        [\App\Http\Controllers\Api\v1\User\DeviceTokenController::class, 'removeDeviceToken']);
+        Route::get('/notifications',               [\App\Http\Controllers\Api\v1\User\DeviceTokenController::class, 'notifications']);
     });
 
 });

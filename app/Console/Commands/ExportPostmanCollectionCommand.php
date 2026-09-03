@@ -249,6 +249,12 @@ class ExportPostmanCollectionCommand extends Command
                             'id_number' => '12345678901',
                             'bvn'       => '22113344556',
                         ], true),
+                        $this->createRequest('Register Push Notification Device Token', 'POST', '{{base_url}}/user/device-token', [
+                            'device_token' => 'fcm_sample_device_token_xyz123',
+                            'device_type'  => 'android',
+                        ], true),
+                        $this->createRequest('Remove Push Notification Device Token', 'POST', '{{base_url}}/user/device-token/remove', null, true),
+                        $this->createRequest('Get User Notifications List', 'GET', '{{base_url}}/notifications', null, true),
                     ],
                 ],
             ],
