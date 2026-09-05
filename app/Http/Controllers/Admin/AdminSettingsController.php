@@ -166,7 +166,7 @@ class AdminSettingsController extends Controller
             // service enable/disable toggles
             'service_data','service_airtime','service_electricity',
             'service_cable','service_epins','service_betting',
-            'service_recharge_card_printing',
+            'service_recharge_card_printing','service_airtime_to_cash',
             'service_funding_gateway','service_funding_auto_bank',
             'service_funding_manual','service_funding_coupon',
         ];

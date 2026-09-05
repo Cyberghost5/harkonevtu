@@ -189,6 +189,13 @@ class ExtraApiController extends Controller
      */
     public function airtimeToCashSettings(Request $request): JsonResponse
     {
+        if (AppSetting::get('service_airtime_to_cash', '1') !== '1') {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Airtime to cash service is currently disabled.',
+            ], 503);
+        }
+
         $settings = AppSetting::getMany([
             'airtime2cash_phone',
             'airtime2cash_tx_charge',
@@ -214,6 +221,13 @@ class ExtraApiController extends Controller
      */
     public function submitAirtimeToCash(Request $request): JsonResponse
     {
+        if (AppSetting::get('service_airtime_to_cash', '1') !== '1') {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Airtime to cash service is currently disabled.',
+            ], 503);
+        }
+
         $min = (float) AppSetting::get('airtime2cash_min_per_payment', 500);
         $max = (float) AppSetting::get('airtime2cash_max_per_payment', 50000);
 

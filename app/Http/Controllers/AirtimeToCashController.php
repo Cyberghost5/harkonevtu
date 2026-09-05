@@ -11,8 +11,12 @@ use Illuminate\Support\Facades\Storage;
 
 class AirtimeToCashController extends Controller
 {
-    public function index(): View
+    public function index(): View|RedirectResponse
     {
+        if (AppSetting::get('service_airtime_to_cash', '1') !== '1') {
+            return redirect()->route('dashboard')->with('error', 'Airtime to Cash service is currently disabled.');
+        }
+
         $user = auth()->user();
         
         $settings = AppSetting::getMany([
@@ -31,6 +35,10 @@ class AirtimeToCashController extends Controller
 
     public function submit(Request $request): RedirectResponse
     {
+        if (AppSetting::get('service_airtime_to_cash', '1') !== '1') {
+            return redirect()->route('dashboard')->with('error', 'Airtime to Cash service is currently disabled.');
+        }
+
         $min = (float) AppSetting::get('airtime2cash_min_per_payment', 500);
         $max = (float) AppSetting::get('airtime2cash_max_per_payment', 50000);
 
