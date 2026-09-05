@@ -717,7 +717,7 @@ class BillsApiController extends Controller
     {
         try {
             $service = app(EasyaccessService::class);
-            $res = $service->verifyElectricity($disco->easyaccess_code ?? $disco->code, $meterNumber, $meterType);
+            $res = $service->verifyElectricity($disco->easyaccess_code ?? $disco->slug, $meterNumber, $meterType);
             return [
                 'success'       => $res['success'] ?? false,
                 'customer_name' => $res['customer_name'] ?? 'VALIDATED CUSTOMER',
@@ -731,12 +731,67 @@ class BillsApiController extends Controller
 
     private function validateMeterPayscribe($disco, $meterType, $meterNumber): array
     {
-        return ['success' => true, 'customer_name' => 'CUSTOMER NAME (PAYSCRIBE)', 'address' => 'VALIDATED ADDRESS'];
+        $endpoint = config('services.payscribe.base_url') . '/electricity/validate';
+        $rawBody  = json_encode([
+            'service'      => $disco->slug,
+            'meter_number' => $meterNumber,
+            'amount'       => '1000',
+            'meter_type'   => $meterType,
+        ]);
+        try {
+            $httpResponse = Http::withHeaders([
+                'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
+                'Content-Type'  => 'text/plain',
+            ])->timeout(20)->withBody($rawBody, 'text/plain')->post($endpoint);
+
+            $data   = $httpResponse->json() ?? [];
+            $status = $data['status'] ?? false;
+            if ($status) {
+                $details = $data['message']['details'] ?? [];
+                return [
+                    'success'       => true,
+                    'customer_name' => $details['customer_name'] ?? 'VALIDATED CUSTOMER',
+                    'address'       => $details['address'] ?? null,
+                ];
+            }
+            return ['success' => false, 'message' => $data['description'] ?? 'Meter validation failed.'];
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
     private function validateMeterVtpass($disco, $meterType, $meterNumber): array
     {
-        return ['success' => true, 'customer_name' => 'CUSTOMER NAME (VTPASS)', 'address' => 'VALIDATED ADDRESS'];
+        $baseUrl  = rtrim(config('services.vtpass.base_url') ?: AppSetting::get('vtpass_base_url', 'https://vtpass.com'), '/');
+        $endpoint = $baseUrl . '/api/merchant-verify';
+        $payload  = [
+            'billersCode' => $meterNumber,
+            'serviceID'   => $disco->slug,
+            'type'        => $meterType,
+        ];
+        $apiKey    = config('services.vtpass.api_key') ?: AppSetting::get('vtpass_api_key') ?: AppSetting::get('vtpass_public_key');
+        $secretKey = config('services.vtpass.secret_key') ?: AppSetting::get('vtpass_secret_key');
+        $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
+
+        try {
+            $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
+            if ($publicKey) {
+                $headers['public-key'] = $publicKey;
+            }
+            $res  = Http::withHeaders($headers)->timeout(20)->post($endpoint, $payload);
+            $data = $res->json() ?? [];
+            if (($data['code'] ?? '') === '000') {
+                $content = $data['content'] ?? [];
+                return [
+                    'success'       => true,
+                    'customer_name' => $content['Customer_Name'] ?? $content['name'] ?? 'VALIDATED CUSTOMER',
+                    'address'       => $content['Address'] ?? $content['address'] ?? null,
+                ];
+            }
+            return ['success' => false, 'message' => $data['response_description'] ?? 'Meter validation failed.'];
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
     private function callElectricityGateway($disco, $meterType, $meterNumber, $amount, $phone, $reference, $api): array
@@ -744,8 +799,8 @@ class BillsApiController extends Controller
         $start = hrtime(true);
         try {
             if ($api === 'easyaccess') {
-                $service = app(EasyaccessService::class);
-                $res = $service->payElectricity($disco->easyaccess_id ?? $disco->short_code, $meterNumber, $meterType, $amount, $phone, $reference);
+                $service  = app(EasyaccessService::class);
+                $res      = $service->payElectricity($disco->easyaccess_id ?? $disco->slug, $meterNumber, $meterType, $amount, $phone, $reference);
                 $duration = (int) ((hrtime(true) - $start) / 1e6);
 
                 ApiLog::record([
@@ -753,9 +808,9 @@ class BillsApiController extends Controller
                     'service'     => 'electricity',
                     'provider'    => 'easyaccess',
                     'reference'   => $reference,
-                    'endpoint'    => 'https://easyaccess.com.ng/api/pay_electricity.php',
+                    'endpoint'    => config('services.easyaccess.base_url') . '/pay_electricity',
                     'method'      => 'POST',
-                    'payload'     => ['disco' => $disco->short_code, 'meter' => $meterNumber, 'amount' => $amount],
+                    'payload'     => ['disco' => $disco->slug, 'meter' => $meterNumber, 'amount' => $amount],
                     'response'    => $res,
                     'duration_ms' => $duration,
                     'success'     => $res['success'] ?? false,
@@ -770,28 +825,96 @@ class BillsApiController extends Controller
                 ];
             }
 
-            $duration = (int) ((hrtime(true) - $start) / 1e6);
-            $resData = ['status' => 'success', 'token' => '1234-5678-9012-3456-7890', 'units' => '25.0 kWh'];
+            if ($api === 'payscribe') {
+                $endpoint = config('services.payscribe.base_url') . '/electricity/pay';
+                $payload  = [
+                    'service'      => $disco->slug,
+                    'meter_number' => $meterNumber,
+                    'amount'       => (int) $amount,
+                    'phone'        => $phone,
+                    'meter_type'   => $meterType,
+                    'ref'          => $reference,
+                ];
+                $res  = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
+                    'Content-Type'  => 'application/json',
+                ])->timeout(30)->post($endpoint, $payload);
+                $data     = $res->json() ?? [];
+                $success  = ($data['status'] ?? false) === true;
+                $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+                ApiLog::record([
+                    'user_id'     => auth()->id(),
+                    'service'     => 'electricity',
+                    'provider'    => 'payscribe',
+                    'reference'   => $reference,
+                    'endpoint'    => $endpoint,
+                    'method'      => 'POST',
+                    'payload'     => $payload,
+                    'response'    => $data,
+                    'duration_ms' => $duration,
+                    'success'     => $success,
+                ]);
+
+                return [
+                    'success'   => $success,
+                    'reference' => $data['message']['ref'] ?? $reference,
+                    'token'     => $data['message']['token'] ?? 'N/A',
+                    'units'     => $data['message']['units'] ?? null,
+                    'response'  => $data,
+                ];
+            }
+
+            // Default / VTPass
+            $vtpassRef = date('YmdHis') . Str::upper(Str::random(6));
+            $baseUrl   = rtrim(config('services.vtpass.base_url') ?: AppSetting::get('vtpass_base_url', 'https://vtpass.com'), '/');
+            $endpoint  = $baseUrl . '/api/pay';
+            $payload   = [
+                'request_id'     => $vtpassRef,
+                'serviceID'      => $disco->slug,
+                'variation_code' => $meterType,
+                'billersCode'    => $meterNumber,
+                'amount'         => (int) $amount,
+                'phone'          => $phone,
+            ];
+            $apiKey    = config('services.vtpass.api_key') ?: AppSetting::get('vtpass_api_key') ?: AppSetting::get('vtpass_public_key');
+            $secretKey = config('services.vtpass.secret_key') ?: AppSetting::get('vtpass_secret_key');
+            $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
+
+            $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
+            if ($publicKey) {
+                $headers['public-key'] = $publicKey;
+            }
+
+            $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
+            $data    = $res->json() ?? [];
+            $code    = $data['code'] ?? '';
+            $success = in_array($code, ['000', '099']);
+            $txn     = $data['content']['transactions'] ?? [];
+            $rawToken= $txn['token'] ?? $data['purchased_code'] ?? $data['Token'] ?? null;
+            $token   = $rawToken ? preg_replace('/^Token\s*:\s*/i', '', trim((string) $rawToken)) : 'N/A';
+            $units   = $txn['units'] ?? $data['RefundUnits'] ?? $data['FreeUnits'] ?? null;
+            $duration= (int) ((hrtime(true) - $start) / 1e6);
 
             ApiLog::record([
                 'user_id'     => auth()->id(),
                 'service'     => 'electricity',
-                'provider'    => $api,
+                'provider'    => 'vtpass',
                 'reference'   => $reference,
-                'endpoint'    => '/api/v1/bills/electricity/purchase',
+                'endpoint'    => $endpoint,
                 'method'      => 'POST',
-                'payload'     => ['disco' => $disco->slug, 'meter' => $meterNumber, 'amount' => $amount],
-                'response'    => $resData,
+                'payload'     => $payload,
+                'response'    => $data,
                 'duration_ms' => $duration,
-                'success'     => true,
+                'success'     => $success,
             ]);
 
             return [
-                'success'   => true,
-                'reference' => $reference,
-                'token'     => '1234-5678-9012-3456-7890',
-                'units'     => '25.0 kWh',
-                'response'  => $resData,
+                'success'   => $success,
+                'reference' => $txn['transactionId'] ?? $data['requestId'] ?? $vtpassRef,
+                'token'     => $token,
+                'units'     => $units,
+                'response'  => $data,
             ];
         } catch (\Throwable $e) {
             return ['success' => false, 'message' => $e->getMessage()];
@@ -802,7 +925,7 @@ class BillsApiController extends Controller
     {
         try {
             $service = app(EasyaccessService::class);
-            $res = $service->verifyCable($provider->easyaccess_id ?? $provider->slug, $smartcard);
+            $res     = $service->verifyCable($provider->easyaccess_id ?? $provider->slug, $smartcard);
             return [
                 'success'       => $res['success'] ?? false,
                 'customer_name' => $res['customer_name'] ?? 'VALIDATED SUBSCRIBER',
@@ -815,12 +938,61 @@ class BillsApiController extends Controller
 
     private function validateCardPayscribe($provider, $smartcard): array
     {
-        return ['success' => true, 'customer_name' => 'SUBSCRIBER (PAYSCRIBE)'];
+        $endpoint = config('services.payscribe.base_url') . '/multichoice/validate';
+        $rawBody  = json_encode([
+            'service' => $provider->slug,
+            'account' => $smartcard,
+        ]);
+        try {
+            $res = Http::withHeaders([
+                'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
+                'Content-Type'  => 'application/json',
+            ])->timeout(20)->withBody($rawBody, 'application/json')->post($endpoint);
+            $data   = $res->json() ?? [];
+            $status = $data['status'] ?? false;
+            if ($status) {
+                $details = $data['message']['details'] ?? [];
+                return [
+                    'success'       => true,
+                    'customer_name' => $details['customer_name'] ?? 'VALIDATED SUBSCRIBER',
+                ];
+            }
+            return ['success' => false, 'message' => $data['description'] ?? 'Smartcard validation failed.'];
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
     private function validateCardVtpass($provider, $smartcard): array
     {
-        return ['success' => true, 'customer_name' => 'SUBSCRIBER (VTPASS)'];
+        $baseUrl  = rtrim(config('services.vtpass.base_url') ?: AppSetting::get('vtpass_base_url', 'https://vtpass.com'), '/');
+        $endpoint = $baseUrl . '/api/merchant-verify';
+        $payload  = [
+            'serviceID'   => $provider->slug,
+            'billersCode' => $smartcard,
+        ];
+        $apiKey    = config('services.vtpass.api_key') ?: AppSetting::get('vtpass_api_key') ?: AppSetting::get('vtpass_public_key');
+        $secretKey = config('services.vtpass.secret_key') ?: AppSetting::get('vtpass_secret_key');
+        $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
+
+        try {
+            $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
+            if ($publicKey) {
+                $headers['public-key'] = $publicKey;
+            }
+            $res  = Http::withHeaders($headers)->timeout(20)->post($endpoint, $payload);
+            $data = $res->json() ?? [];
+            if (($data['code'] ?? '') === '000') {
+                $content = $data['content'] ?? [];
+                return [
+                    'success'       => true,
+                    'customer_name' => $content['Customer_Name'] ?? $content['name'] ?? 'VALIDATED SUBSCRIBER',
+                ];
+            }
+            return ['success' => false, 'message' => $data['response_description'] ?? 'Smartcard validation failed.'];
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
     private function callCableGateway($provider, $plan, $smartcard, $phone, $reference, $api): array
@@ -828,8 +1000,8 @@ class BillsApiController extends Controller
         $start = hrtime(true);
         try {
             if ($api === 'easyaccess') {
-                $service = app(EasyaccessService::class);
-                $res = $service->payCable($provider->easyaccess_id ?? $provider->slug, $plan->easyaccess_id ?? $plan->id, $smartcard, $phone, $reference);
+                $service  = app(EasyaccessService::class);
+                $res      = $service->payCable($provider->easyaccess_id ?? $provider->slug, $plan->easyaccess_id ?? $plan->id, $smartcard, $phone, $reference);
                 $duration = (int) ((hrtime(true) - $start) / 1e6);
 
                 ApiLog::record([
@@ -837,7 +1009,7 @@ class BillsApiController extends Controller
                     'service'     => 'cable',
                     'provider'    => 'easyaccess',
                     'reference'   => $reference,
-                    'endpoint'    => 'https://easyaccess.com.ng/api/pay_tv.php',
+                    'endpoint'    => config('services.easyaccess.base_url') . '/pay_tv',
                     'method'      => 'POST',
                     'payload'     => ['provider' => $provider->slug, 'smartcard' => $smartcard, 'plan' => $plan->name],
                     'response'    => $res,
@@ -852,23 +1024,88 @@ class BillsApiController extends Controller
                 ];
             }
 
-            $duration = (int) ((hrtime(true) - $start) / 1e6);
-            $resData = ['status' => 'success'];
+            if ($api === 'payscribe') {
+                $endpoint = config('services.payscribe.base_url') . '/multichoice/pay';
+                $payload  = [
+                    'service' => $provider->slug,
+                    'account' => $smartcard,
+                    'plan_id' => $plan->payscribe_id ?? $plan->vtpass_id,
+                    'ref'     => $reference,
+                ];
+                $res  = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
+                    'Content-Type'  => 'application/json',
+                ])->timeout(30)->post($endpoint, $payload);
+                $data     = $res->json() ?? [];
+                $success  = ($data['status'] ?? false) === true;
+                $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+                ApiLog::record([
+                    'user_id'     => auth()->id(),
+                    'service'     => 'cable',
+                    'provider'    => 'payscribe',
+                    'reference'   => $reference,
+                    'endpoint'    => $endpoint,
+                    'method'      => 'POST',
+                    'payload'     => $payload,
+                    'response'    => $data,
+                    'duration_ms' => $duration,
+                    'success'     => $success,
+                ]);
+
+                return [
+                    'success'   => $success,
+                    'reference' => $data['message']['ref'] ?? $reference,
+                    'response'  => $data,
+                ];
+            }
+
+            // Default / VTPass
+            $vtpassRef = date('YmdHis') . Str::upper(Str::random(6));
+            $baseUrl   = rtrim(config('services.vtpass.base_url') ?: AppSetting::get('vtpass_base_url', 'https://vtpass.com'), '/');
+            $endpoint  = $baseUrl . '/api/pay';
+            $payload   = [
+                'request_id'     => $vtpassRef,
+                'serviceID'      => $provider->slug,
+                'variation_code' => $plan->vtpass_id,
+                'billersCode'    => $smartcard,
+                'amount'         => (int) $plan->amount,
+                'phone'          => $phone,
+            ];
+            $apiKey    = config('services.vtpass.api_key') ?: AppSetting::get('vtpass_api_key') ?: AppSetting::get('vtpass_public_key');
+            $secretKey = config('services.vtpass.secret_key') ?: AppSetting::get('vtpass_secret_key');
+            $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
+
+            $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
+            if ($publicKey) {
+                $headers['public-key'] = $publicKey;
+            }
+
+            $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
+            $data    = $res->json() ?? [];
+            $code    = $data['code'] ?? '';
+            $success = in_array($code, ['000', '099']);
+            $txn     = $data['content']['transactions'] ?? [];
+            $duration= (int) ((hrtime(true) - $start) / 1e6);
 
             ApiLog::record([
                 'user_id'     => auth()->id(),
                 'service'     => 'cable',
-                'provider'    => $api,
+                'provider'    => 'vtpass',
                 'reference'   => $reference,
-                'endpoint'    => '/api/v1/bills/cable/purchase',
+                'endpoint'    => $endpoint,
                 'method'      => 'POST',
-                'payload'     => ['provider' => $provider->slug, 'smartcard' => $smartcard, 'plan' => $plan->name],
-                'response'    => $resData,
+                'payload'     => $payload,
+                'response'    => $data,
                 'duration_ms' => $duration,
-                'success'     => true,
+                'success'     => $success,
             ]);
 
-            return ['success' => true, 'reference' => $reference, 'response' => $resData];
+            return [
+                'success'   => $success,
+                'reference' => $txn['transactionId'] ?? $data['requestId'] ?? $vtpassRef,
+                'response'  => $data,
+            ];
         } catch (\Throwable $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -879,8 +1116,8 @@ class BillsApiController extends Controller
         $start = hrtime(true);
         try {
             if ($api === 'easyaccess') {
-                $service = app(EasyaccessService::class);
-                $res = $service->payExamPin($examType->easyaccess_code ?? $examType->slug, $quantity, $phone, $reference);
+                $service  = app(EasyaccessService::class);
+                $res      = $service->payExamPin($examType->easyaccess_code ?? $examType->slug, $quantity, $phone, $reference);
                 $duration = (int) ((hrtime(true) - $start) / 1e6);
 
                 ApiLog::record([
@@ -888,7 +1125,7 @@ class BillsApiController extends Controller
                     'service'     => 'epin',
                     'provider'    => 'easyaccess',
                     'reference'   => $reference,
-                    'endpoint'    => 'https://easyaccess.com.ng/api/pay_pin.php',
+                    'endpoint'    => config('services.easyaccess.base_url') . '/pay_pin',
                     'method'      => 'POST',
                     'payload'     => ['exam' => $examType->slug, 'quantity' => $quantity],
                     'response'    => $res,
@@ -904,27 +1141,72 @@ class BillsApiController extends Controller
                 ];
             }
 
+            // VTPass Exam Pin
+            $vtpassRef = date('YmdHis') . Str::upper(Str::random(6));
+            $baseUrl   = rtrim(config('services.vtpass.base_url') ?: AppSetting::get('vtpass_base_url', 'https://vtpass.com'), '/');
+            $endpoint  = $baseUrl . '/api/pay';
+            $payload   = [
+                'request_id'     => $vtpassRef,
+                'serviceID'      => $examType->slug,
+                'variation_code' => $examType->vtpass_service_id,
+                'phone'          => $phone,
+                'quantity'       => $quantity,
+            ];
+            $apiKey    = config('services.vtpass.api_key') ?: AppSetting::get('vtpass_api_key') ?: AppSetting::get('vtpass_public_key');
+            $secretKey = config('services.vtpass.secret_key') ?: AppSetting::get('vtpass_secret_key');
+            $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
+
+            $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
+            if ($publicKey) {
+                $headers['public-key'] = $publicKey;
+            }
+
+            $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
+            $data    = $res->json() ?? [];
+            $code    = $data['code'] ?? '';
+            $success = in_array($code, ['000', '099']);
+            $txn     = $data['content']['transactions'] ?? [];
+            $pins    = [];
+
+            if ($success) {
+                if (!empty($data['cards']) && is_array($data['cards'])) {
+                    foreach ($data['cards'] as $p) {
+                        $pins[] = [
+                            'pin'    => $p['pin'] ?? ($p['Pin'] ?? ''),
+                            'serial' => $p['serialnumber'] ?? ($p['Serial'] ?? null),
+                        ];
+                    }
+                } else {
+                    for ($i = 1; $i <= $quantity; $i++) {
+                        $key = $i === 1 ? 'token' : 'token' . $i;
+                        $t   = $txn[$key] ?? null;
+                        if ($t) {
+                            $pins[] = ['pin' => $t, 'serial' => null];
+                        }
+                    }
+                }
+            }
+
             $duration = (int) ((hrtime(true) - $start) / 1e6);
-            $resData = ['status' => 'success'];
 
             ApiLog::record([
                 'user_id'     => auth()->id(),
                 'service'     => 'epin',
-                'provider'    => $api,
+                'provider'    => 'vtpass',
                 'reference'   => $reference,
-                'endpoint'    => '/api/v1/bills/exam-pins/purchase',
+                'endpoint'    => $endpoint,
                 'method'      => 'POST',
-                'payload'     => ['exam' => $examType->slug, 'quantity' => $quantity],
-                'response'    => $resData,
+                'payload'     => $payload,
+                'response'    => $data,
                 'duration_ms' => $duration,
-                'success'     => true,
+                'success'     => $success,
             ]);
 
             return [
-                'success'   => true,
-                'reference' => $reference,
-                'tokens'    => [['pin' => '123456789012', 'serial' => 'WAEC998877']],
-                'response'  => $resData,
+                'success'   => $success,
+                'reference' => $txn['transactionId'] ?? $data['requestId'] ?? $vtpassRef,
+                'tokens'    => $pins,
+                'response'  => $data,
             ];
         } catch (\Throwable $e) {
             return ['success' => false, 'message' => $e->getMessage()];

@@ -244,7 +244,7 @@
                                 </div>
                             </td>
                             <td class="px-4 py-3.5 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap">
-                                {{ $ref->created_at->format('d M Y') }}
+                                {{ optional($ref->created_at)->format('d M Y') ?? 'N/A' }}
                             </td>
                             <td class="px-4 py-3.5 text-right">
                                 <div>

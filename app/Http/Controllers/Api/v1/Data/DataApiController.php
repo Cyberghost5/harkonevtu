@@ -9,6 +9,7 @@ use App\Models\DataPlan;
 use App\Models\NetworkAirtime;
 use App\Models\ServiceTransaction;
 use App\Models\Wallet;
+use App\Services\GloErsSoapService;
 use App\Services\MtnErsSoapService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,20 @@ use Illuminate\Support\Str;
 
 class DataApiController extends Controller
 {
+    private array $vtpassServiceIds = [
+        'mtn'      => 'mtn-data',
+        'glo'      => 'glo-data',
+        'airtel'   => 'airtel-data',
+        'etisalat' => 'etisalat-data',
+    ];
+
+    private array $autopilotNetworkIds = [
+        'mtn'      => 1,
+        'glo'      => 3,
+        'airtel'   => 2,
+        'etisalat' => 4,
+    ];
+
     private array $typeLabels = [
         'cheap_data' => 'Cheap Data',
         'sme'        => 'SME',
@@ -323,219 +338,532 @@ class DataApiController extends Controller
     private function callDataGateway(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference, string $api): array
     {
         return match ($api) {
-            'mtn_ers'     => $this->callMtnErsData($network, $plan, $phone, $reference),
-            'autopilot'   => $this->callAutopilotData($network, $plan, $phone, $reference),
-            'easyaccess'  => $this->callEasyaccessData($network, $plan, $phone, $reference),
-            'vtpass'      => $this->callVtpassData($network, $plan, $phone, $reference),
-            'clubkonnect' => $this->callClubkonnectData($network, $plan, $phone, $reference),
-            default       => $this->callAutopilotData($network, $plan, $phone, $reference),
+            'clubkonnect'  => $this->callClubkonnectData($network, $plan, $phone, $reference),
+            'autopilot'    => $this->callAutopilotData($network, $plan, $phone, $reference),
+            'merrybills'   => $this->callMerrybillsData($network, $plan, $phone, $reference),
+            'easyaccess'   => $this->callEasyaccessData($network, $plan, $phone, $reference),
+            'aabaxztech'   => $this->callAabaxyztechData($network, $plan, $phone, $reference),
+            'legitdataway' => $this->callLegitdatawayData($network, $plan, $phone, $reference),
+            'globacom'     => $this->callGlobacomData($network, $plan, $phone, $reference),
+            'mtn_ers'      => $this->callMtnErsData($network, $plan, $phone, $reference),
+            'glo_ers'      => $this->callGloErsData($network, $plan, $phone, $reference),
+            default        => $this->callVtpassData($network, $plan, $phone, $reference),
         };
+    }
+
+    private function callGloErsData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
+    {
+        $ersService = app(GloErsSoapService::class);
+        $productId  = $plan->idForApi('glo_ers');
+
+        $result = $ersService->vendData($phone, (float) $plan->amount, $productId, $reference);
+
+        $success = $result['success'] ?? false;
+        $data    = $result['response'] ?? ['message' => $result['message'] ?? 'Failed to communicate with Glo ERS SOAP Gateway'];
+        $apiRef  = $result['reference'] ?? $reference;
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
     }
 
     private function callMtnErsData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
-        try {
-            $service = app(MtnErsSoapService::class);
-            $amount = (float) ($plan->user_price ?? $plan->amount ?? 0);
-            $res = $service->vend($phone, $amount, $plan->api_plan_id ?: 1);
-            return [
-                'success'   => $res['status'] ?? false,
-                'reference' => $res['data']['txRefId'] ?? $reference,
-                'response'  => $res,
-            ];
-        } catch (\Throwable $e) {
-            return ['success' => false, 'reference' => null, 'response' => ['message' => $e->getMessage()]];
+        $ersService = app(MtnErsSoapService::class);
+
+        $formattedPhone = $phone;
+        if (str_starts_with($phone, '234') && strlen($phone) === 13) {
+            $formattedPhone = '0' . substr($phone, 3);
         }
-    }
 
-    private function callAutopilotData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
-    {
-        $endpoint = config('services.autopilot.base_url', 'https://autopilot.com.ng/api/v1') . '/data';
-        $netIds = ['mtn' => 1, 'glo' => 3, 'airtel' => 2, 'etisalat' => 4];
-        $payload = [
-            'network'   => $netIds[$network->network_key] ?? 1,
-            'plan'      => $plan->api_plan_id,
-            'phone'     => $phone,
-            'reference' => $reference,
-        ];
-        $start = hrtime(true);
-        try {
-            $res = Http::withHeaders([
-                'Authorization' => 'Bearer ' . AppSetting::get('autopilot_api_key'),
-            ])->post($endpoint, $payload);
+        $tariffTypeId = $plan->mtn_ers_id;
 
-            $body = $res->json() ?? [];
-            $success = ($body['status'] ?? false) === true || ($body['code'] ?? '') === '00';
-            $duration = (int) ((hrtime(true) - $start) / 1e6);
+        $result = $ersService->vend($formattedPhone, $plan->mtn_ers_cis_id, $tariffTypeId);
 
-            ApiLog::record([
-                'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'autopilot',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $body,
-                'http_status' => $res->status(),
-                'duration_ms' => $duration,
-                'success'     => $success,
-            ]);
+        $success = $result['status'] ?? false;
+        $data    = $result['data'] ?? ['message' => $result['message'] ?? 'MTN ERS transaction failed'];
+        $apiRef  = $data['txRefId'] ?? $reference;
 
-            return [
-                'success'   => $success,
-                'reference' => $body['reference'] ?? $reference,
-                'response'  => $body,
-            ];
-        } catch (\Throwable $e) {
-            return ['success' => false, 'reference' => null, 'response' => ['message' => $e->getMessage()]];
-        }
-    }
-
-    private function callEasyaccessData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
-    {
-        $endpoint = 'https://easyaccess.com.ng/api/data.php';
-        $netIds = ['mtn' => 01, 'glo' => 02, 'airtel' => 03, 'etisalat' => 04];
-        $payload = [
-            'network'          => $netIds[$network->network_key] ?? 01,
-            'data_plan'        => $plan->api_plan_id,
-            'mobileno'         => $phone,
-            'client_reference' => $reference,
-        ];
-        $start = hrtime(true);
-        try {
-            $res = Http::withHeaders([
-                'Authorization' => 'Bearer ' . AppSetting::get('easyaccess_api_key'),
-            ])->post($endpoint, $payload);
-
-            $body = $res->json() ?? [];
-            $success = str_contains(strtolower($body['message'] ?? ''), 'successful') || ($body['success'] ?? false) === true;
-            $duration = (int) ((hrtime(true) - $start) / 1e6);
-
-            ApiLog::record([
-                'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'easyaccess',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $body,
-                'http_status' => $res->status(),
-                'duration_ms' => $duration,
-                'success'     => $success,
-            ]);
-
-            return [
-                'success'   => $success,
-                'reference' => $body['reference'] ?? $reference,
-                'response'  => $body,
-            ];
-        } catch (\Throwable $e) {
-            return ['success' => false, 'reference' => null, 'response' => ['message' => $e->getMessage()]];
-        }
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
     }
 
     private function callVtpassData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
-        $baseUrl  = rtrim(config('services.vtpass.base_url') ?: AppSetting::get('vtpass_base_url', 'https://vtpass.com'), '/');
-        $endpoint = $baseUrl . '/api/pay';
-        $vtpassServiceIds = ['mtn' => 'mtn-data', 'glo' => 'glo-data', 'airtel' => 'airtel-data', 'etisalat' => 'etisalat-data'];
-        $payload = [
-            'request_id'     => $reference,
-            'serviceID'      => $vtpassServiceIds[$network->network_key] ?? 'mtn-data',
+        $vtpassRef  = date('YmdHis') . Str::upper(Str::random(6));
+        $baseUrl    = rtrim(config('services.vtpass.base_url') ?: AppSetting::get('vtpass_base_url', 'https://vtpass.com'), '/');
+        $endpoint   = $baseUrl . '/api/pay';
+        $serviceId  = $this->vtpassServiceIds[$network->network_key] ?? ($network->network_key . '-data');
+        $payload    = [
+            'request_id'     => $vtpassRef,
+            'serviceID'      => $serviceId,
             'billersCode'    => $phone,
-            'variation_code' => $plan->api_plan_id,
+            'variation_code' => $plan->vtpass_id,
+            'amount'         => $plan->amount,
             'phone'          => $phone,
         ];
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $apiRef     = $vtpassRef;
 
         $apiKey    = config('services.vtpass.api_key') ?: AppSetting::get('vtpass_api_key') ?: AppSetting::get('vtpass_public_key');
         $secretKey = config('services.vtpass.secret_key') ?: AppSetting::get('vtpass_secret_key');
         $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
 
+        $requestHeaders = [
+            'api-key'    => $apiKey,
+            'secret-key' => $secretKey,
+        ];
+        if ($publicKey) {
+            $requestHeaders['public-key'] = $publicKey;
+        }
+
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $headers = [
-                'api-key'    => $apiKey,
-                'secret-key' => $secretKey,
-            ];
-            if ($publicKey) {
-                $headers['public-key'] = $publicKey;
-            }
-
-            $res = Http::withHeaders($headers)->post($endpoint, $payload);
-
-            $body = $res->json() ?? [];
-            $success = (($body['code'] ?? '') === '000');
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $raw             = $response->json();
+            $data            = is_array($raw) ? $raw : ['message' => is_string($raw) ? $raw : 'Unknown VTpass response'];
+            $code            = $data['code'] ?? '';
+            $apiRef          = $data['content']['transactions']['transactionId'] ?? $data['requestId'] ?? $vtpassRef;
+            $success         = in_array($code, ['000', '099']);
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('VTpass data request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
-
             ApiLog::record([
-                'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'vtpass',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'POST',
-                'payload'     => $payload,
-                'response'    => $body,
-                'http_status' => $res->status(),
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'user_id'          => auth()->id(),
+                'service'          => 'data',
+                'provider'         => 'vtpass',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
-
-            return [
-                'success'   => $success,
-                'reference' => $body['requestId'] ?? $reference,
-                'response'  => $body,
-            ];
-        } catch (\Throwable $e) {
-            return ['success' => false, 'reference' => null, 'response' => ['message' => $e->getMessage()]];
         }
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
     }
 
     private function callClubkonnectData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
-        $endpoint = 'https://www.nellobytesystems.com/APIDataV1.asp';
-        $netCodes = ['mtn' => '01', 'glo' => '02', 'airtel' => '03', 'etisalat' => '04'];
-        $payload = [
-            'UserID'        => AppSetting::get('clubkonnect_user_id'),
-            'APIKey'        => AppSetting::get('clubkonnect_api_key'),
-            'MobileNetwork' => $netCodes[$network->network_key] ?? '01',
-            'DataPlan'      => $plan->api_plan_id,
-            'MobileNo'      => $phone,
+        $endpoint   = 'https://www.nellobytesystems.com/APIDataV1.asp';
+        $payload    = [
+            'UserID'        => config('services.clubkonnect.user_id') ?: AppSetting::get('clubkonnect_user_id'),
+            'APIKey'        => config('services.clubkonnect.api_key') ?: AppSetting::get('clubkonnect_api_key'),
+            'MobileNetwork' => $network->clubkonnect_id,
+            'DataPlan'      => $plan->clubkonnect_id,
+            'MobileNumber'  => $phone,
             'RequestID'     => $reference,
         ];
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $apiRef     = $reference;
+
+        $requestHeaders  = [];
+        $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $res = Http::get($endpoint, $payload);
-
-            $body = $res->json() ?? [];
-            $status = $body['status'] ?? '';
-            $success = str_contains(strtolower($status), 'order_received') || str_contains(strtolower($status), 'success');
+            $response        = Http::timeout(30)->get($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $data            = $response->json() ?? [];
+            $status          = $data['status'] ?? '';
+            $apiRef          = $data['orderid'] ?? $reference;
+            $success         = in_array($status, ['ORDER_RECEIVED', 'ORDER_COMPLETED']);
+            if (!$success) {
+                $data['message'] = $data['statusremark'] ?? $data['orderremark'] ?? 'Transaction failed.';
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('Clubkonnect data request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
-
             ApiLog::record([
-                'user_id'     => auth()->id(),
-                'service'     => 'data',
-                'provider'    => 'clubkonnect',
-                'reference'   => $reference,
-                'endpoint'    => $endpoint,
-                'method'      => 'GET',
-                'payload'     => $payload,
-                'response'    => $body,
-                'http_status' => $res->status(),
-                'duration_ms' => $duration,
-                'success'     => $success,
+                'user_id'          => auth()->id(),
+                'service'          => 'data',
+                'provider'         => 'clubkonnect',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'GET',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
             ]);
-
-            return [
-                'success'   => $success,
-                'reference' => $body['orderid'] ?? $reference,
-                'response'  => $body,
-            ];
-        } catch (\Throwable $e) {
-            return ['success' => false, 'reference' => null, 'response' => ['message' => $e->getMessage()]];
         }
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
+    }
+
+    private function callAutopilotData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
+    {
+        $endpoint  = config('services.autopilot.base_url') . '/data';
+        $networkId = (string) ($this->autopilotNetworkIds[$network->network_key] ?? 1);
+        $dataType  = 'SME';
+        if ($plan->data_type === 'cg') {
+            $dataType = 'CORPORATE GIFTING';
+        }
+        if ($plan->data_type === 'gifting') {
+            $dataType = 'GIFTING';
+        }
+        if ($plan->data_type === 'cg' && $network->network_key === 'airtel') {
+            $dataType = 'DIRECT GIFTING';
+        }
+        if ($plan->data_type === 'awoof') {
+            $dataType = 'CORPORATE GIFTING';
+        }
+        if ($plan->data_type === 'sme') {
+            $dataType = 'SME';
+        }
+        $payload   = [
+            'networkId' => $networkId,
+            'dataType'  => $dataType,
+            'planId'    => $plan->autopilot_id,
+            'phone'     => $phone,
+            'reference' => $reference,
+        ];
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $apiRef     = $reference;
+
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . (config('services.autopilot.api_key') ?: AppSetting::get('autopilot_api_key')),
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
+        $start = hrtime(true);
+        try {
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $data            = $response->json() ?? [];
+            $success         = ($data['status'] ?? false) === true && ($data['code'] ?? 0) === 200;
+            $apiRef          = $data['data']['reference'] ?? $reference;
+            if (!$success) {
+                $data['message'] = $data['message'] ?? ($data['data']['message'] ?? 'Transaction failed.');
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('Autopilot data request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'data',
+                'provider'         => 'autopilot',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
+        }
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
+    }
+
+    private function callMerrybillsData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
+    {
+        $endpoint  = config('services.merrybills.base_url') . '/data';
+        $payload   = [
+            'request_id' => $reference,
+            'product_id' => $plan->merrybills_product_id,
+            'val_id'     => $plan->merrybills_id,
+            'phone'      => $phone,
+            'pin'        => config('services.merrybills.pin') ?: AppSetting::get('merrybills_pin'),
+        ];
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $apiRef     = $reference;
+
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . (config('services.merrybills.token') ?: AppSetting::get('merrybills_token')),
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
+        $start = hrtime(true);
+        try {
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $data            = $response->json() ?? [];
+            $success         = ($data['status'] ?? false) === true;
+            $apiRef          = $data['ref'] ?? $data['data']['ref'] ?? $reference;
+            if (!$success) {
+                $data['message'] = $data['message'] ?? 'Transaction failed.';
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('Merrybills data request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'data',
+                'provider'         => 'merrybills',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
+        }
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
+    }
+
+    private function callEasyaccessData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
+    {
+        $endpoint  = config('services.easyaccess.base_url') . '/purchase-data';
+        $payload   = [
+            'network'          => $network->easyaccess_id,
+            'dataplan'         => $plan->easyaccess_id,
+            'mobileno'         => $phone,
+            'client_reference' => $reference,
+        ];
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $apiRef     = $reference;
+
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . (config('services.easyaccess.token') ?: AppSetting::get('easyaccess_api_key')),
+            'Cache-Control' => 'no-cache',
+        ];
+        $responseHeaders = null;
+        $start = hrtime(true);
+        try {
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->asForm()->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $data            = $response->json() ?? [];
+            $success         = ($data['code'] ?? '') === '200' || ($data['message'] ?? '') === 'Data purchase was successful' || ($data['status'] ?? '') === 'success';
+            if (!$success) {
+                $data['message'] = $data['message'] ?? $data['error'] ?? 'Easyaccess transaction failed.';
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('Easyaccess data request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'data',
+                'provider'         => 'easyaccess',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
+        }
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
+    }
+
+    private function callAabaxyztechData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
+    {
+        $endpoint  = config('services.aabaxztech.base_url') . '/data';
+        $payload   = [
+            'network'    => (int) $network->aabaxztech_id,
+            'phone'      => $phone,
+            'data_plan'  => $plan->aabaxztech_id,
+            'bypass'     => true,
+            'request-id' => $reference,
+        ];
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $apiRef     = $reference;
+
+        $requestHeaders = [
+            'Authorization' => config('services.aabaxztech.token') ?: AppSetting::get('aabaxztech_api_key'),
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
+        $start = hrtime(true);
+        try {
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $data            = $response->json() ?? [];
+            $status          = $data['status'] ?? '';
+            $success         = in_array($status, ['success', 'process'], true);
+            if (!$success) {
+                $errMsg = $data['message'] ?? 'Aabaxyztech transaction failed.';
+                if (str_contains(strtolower((string) $errMsg), 'insufficient')) {
+                    $errMsg = 'Insufficient balance on provider. Please try another network.';
+                }
+                $data['message'] = $errMsg;
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('Aabaxyztech data request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'data',
+                'provider'         => 'aabaxztech',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
+        }
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
+    }
+
+    private function callLegitdatawayData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
+    {
+        $endpoint  = config('services.legitdataway.base_url') . '/data';
+        $payload   = [
+            'network'    => (int) $network->legitdataway_id,
+            'phone'      => $phone,
+            'data_plan'  => $plan->legitdataway_id,
+            'bypass'     => true,
+            'request-id' => $reference,
+        ];
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $apiRef     = $reference;
+
+        $requestHeaders = [
+            'Authorization' => 'Token ' . (config('services.legitdataway.token') ?: AppSetting::get('legitdataway_api_key')),
+            'Content-Type'  => 'application/json',
+        ];
+        $responseHeaders = null;
+        $start = hrtime(true);
+        try {
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $data            = $response->json() ?? [];
+            $status          = $data['status'] ?? '';
+            $success         = in_array($status, ['success', 'process'], true);
+            if (!$success) {
+                $data['message'] = $data['message'] ?? 'Legitdataway transaction failed.';
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('Legitdataway data request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'data',
+                'provider'         => 'legitdataway',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
+        }
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
+    }
+
+    private function callGlobacomData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
+    {
+        $trx_ref  = "TRX" . time();
+        $endpoint = rtrim(config('services.globacom.base_url'), '/') . '/';
+        $payload  = [
+            'transId'   => $trx_ref,
+            'msisdn'    => preg_replace('/^0/', '234', $phone),
+            'bucketId'  => (string) config('services.globacom.bucket_id'),
+            'planId'    => (string) $plan->idForApi('globacom'),
+            'sponsorId' => (string) config('services.globacom.sponsor_id'),
+            'quantity'  => 1,
+            'ignoresms' => false,
+        ];
+        $data       = [];
+        $httpStatus = null;
+        $success    = false;
+        $apiRef     = $trx_ref;
+
+        $requestHeaders = [
+            'x-api-key'    => config('services.globacom.x_api_key') ?: AppSetting::get('globacom_xapi_key'),
+            'Content-Type' => 'application/json',
+        ];
+        $responseHeaders = null;
+        $start = hrtime(true);
+        try {
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $data            = $response->json() ?? [];
+            $status          = $data['status'] ?? '';
+            $success         = $status === 'ok';
+            $apiRef          = $data['egmstransId'] ?? $data['transId'] ?? $trx_ref;
+            if (!$success) {
+                $data['message'] = $data['message'] ?? 'Globacom transaction failed.';
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            Log::error('Globacom data request failed', ['reference' => $trx_ref, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'data',
+                'provider'         => 'globacom',
+                'reference'        => $trx_ref,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
+        }
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
     }
 
     /**
