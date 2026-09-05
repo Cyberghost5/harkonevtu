@@ -95,7 +95,7 @@
                     }
                 },
                 {
-                    "name": "Verify Email / Phone OTP",
+                    "name": "Verify Login / Phone OTP",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -122,7 +122,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"email\": \"johndoe@example.com\",\n    \"otp\": \"123456\"\n}",
+                            "raw": "{\n    \"user_id\": 1,\n    \"otp\": \"123456\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -132,7 +132,7 @@
                     }
                 },
                 {
-                    "name": "Resend Verification OTP",
+                    "name": "Resend Login / Phone OTP",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -159,7 +159,81 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"email\": \"johndoe@example.com\"\n}",
+                            "raw": "{\n    \"user_id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Verify Email 6-Digit OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/verify-email-otp",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "verify-email-otp"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": 1,\n    \"email\": \"johndoe@example.com\",\n    \"otp\": \"123456\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Resend Email Verification OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/resend-email-otp",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "resend-email-otp"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": 1,\n    \"email\": \"johndoe@example.com\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"

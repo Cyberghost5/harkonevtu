@@ -20,6 +20,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/login',           [AuthController::class, 'login']);
         Route::post('/verify-otp',      [AuthController::class, 'verifyOtp']);
         Route::post('/resend-otp',      [AuthController::class, 'resendOtp']);
+        Route::post('/verify-email-otp', [AuthController::class, 'verifyEmailOtp']);
+        Route::post('/resend-email-otp', [AuthController::class, 'resendEmailOtp']);
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
         Route::post('/reset-password',  [AuthController::class, 'resetPassword']);
 

@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Api\v1\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\VerifyEmailOtpMail;
 use App\Models\AppSetting;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Services\TermiiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -95,12 +98,104 @@ class AuthController extends Controller
             'total_spent'  => 0.00,
         ]);
 
+        $emailVerificationRequired = AppSetting::get('email_verification', '1') === '1';
+
+        if ($emailVerificationRequired) {
+            $emailOtp = (string) rand(100000, 999999);
+            Cache::put('api_email_otp_' . $user->id, $emailOtp, now()->addMinutes(15));
+            Mail::to($user->email)->send(new VerifyEmailOtpMail($user, $emailOtp));
+        } else {
+            $user->forceFill(['email_verified_at' => now()])->save();
+        }
+
         $token = $user->createToken('mobile-app')->plainTextToken;
 
-        return $this->jsonResponse(true, 'Registration successful.', [
+        $message = $emailVerificationRequired 
+            ? 'Registration successful. A 6-digit verification code has been sent to your email address.' 
+            : 'Registration successful.';
+
+        return $this->jsonResponse(true, $message, [
+            'token'                       => $token,
+            'requires_email_verification' => $emailVerificationRequired,
+            'user'                        => $user->load('wallet'),
+        ], 201);
+    }
+
+    /**
+     * Verify 6-digit Email OTP via API.
+     * POST /api/v1/auth/verify-email-otp
+     */
+    public function verifyEmailOtp(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => ['required_without:email', 'nullable', 'integer', 'exists:users,id'],
+            'email'   => ['required_without:user_id', 'nullable', 'email', 'exists:users,email'],
+            'otp'     => ['required', 'string', 'size:6'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
+        }
+
+        $user = $request->filled('user_id') 
+            ? User::find($request->user_id) 
+            : User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return $this->jsonResponse(false, 'User account not found.', null, 404);
+        }
+
+        $cachedOtp = Cache::get('api_email_otp_' . $user->id);
+
+        if (!$cachedOtp || $cachedOtp !== $request->otp) {
+            return $this->jsonResponse(false, 'Invalid or expired email verification code.', null, 400);
+        }
+
+        Cache::forget('api_email_otp_' . $user->id);
+
+        $user->forceFill(['email_verified_at' => now()])->save();
+
+        $token = $user->createToken('mobile-app')->plainTextToken;
+
+        return $this->jsonResponse(true, 'Email verified successfully.', [
             'token' => $token,
             'user'  => $user->load('wallet'),
-        ], 201);
+        ]);
+    }
+
+    /**
+     * Resend 6-digit Email OTP via API.
+     * POST /api/v1/auth/resend-email-otp
+     */
+    public function resendEmailOtp(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => ['required_without:email', 'nullable', 'integer', 'exists:users,id'],
+            'email'   => ['required_without:user_id', 'nullable', 'email', 'exists:users,email'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
+        }
+
+        $user = $request->filled('user_id') 
+            ? User::find($request->user_id) 
+            : User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return $this->jsonResponse(false, 'User account not found.', null, 404);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return $this->jsonResponse(false, 'Your email address is already verified.', null, 400);
+        }
+
+        $emailOtp = (string) rand(100000, 999999);
+        Cache::put('api_email_otp_' . $user->id, $emailOtp, now()->addMinutes(15));
+
+        Mail::to($user->email)->send(new VerifyEmailOtpMail($user, $emailOtp));
+
+        return $this->jsonResponse(true, 'A new 6-digit verification code has been sent to your email address.');
     }
 
     /**

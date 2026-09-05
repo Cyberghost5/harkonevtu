@@ -49,12 +49,21 @@ class ExportPostmanCollectionCommand extends Command
                             'login'    => 'johndoe@example.com',
                             'password' => 'Password123',
                         ], false),
-                        $this->createRequest('Verify Email / Phone OTP', 'POST', '{{base_url}}/auth/verify-otp', [
-                            'email' => 'johndoe@example.com',
-                            'otp'   => '123456',
+                        $this->createRequest('Verify Login / Phone OTP', 'POST', '{{base_url}}/auth/verify-otp', [
+                            'user_id' => 1,
+                            'otp'     => '123456',
                         ], false),
-                        $this->createRequest('Resend Verification OTP', 'POST', '{{base_url}}/auth/resend-otp', [
-                            'email' => 'johndoe@example.com',
+                        $this->createRequest('Resend Login / Phone OTP', 'POST', '{{base_url}}/auth/resend-otp', [
+                            'user_id' => 1,
+                        ], false),
+                        $this->createRequest('Verify Email 6-Digit OTP', 'POST', '{{base_url}}/auth/verify-email-otp', [
+                            'user_id' => 1,
+                            'email'   => 'johndoe@example.com',
+                            'otp'     => '123456',
+                        ], false),
+                        $this->createRequest('Resend Email Verification OTP', 'POST', '{{base_url}}/auth/resend-email-otp', [
+                            'user_id' => 1,
+                            'email'   => 'johndoe@example.com',
                         ], false),
                         $this->createRequest('Forgot Password', 'POST', '{{base_url}}/auth/forgot-password', [
                             'email' => 'johndoe@example.com',
