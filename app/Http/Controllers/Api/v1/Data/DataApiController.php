@@ -438,7 +438,7 @@ class DataApiController extends Controller
 
     private function callVtpassData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
-        $endpoint = 'https://vtpass.com/api/pay';
+        $endpoint = 'https://sandbox.vtpass.com/api/pay'; // Change to live later
         $vtpassServiceIds = ['mtn' => 'mtn-data', 'glo' => 'glo-data', 'airtel' => 'airtel-data', 'etisalat' => 'etisalat-data'];
         $payload = [
             'request_id'     => $reference,

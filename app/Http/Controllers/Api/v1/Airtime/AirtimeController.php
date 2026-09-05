@@ -335,7 +335,7 @@ class AirtimeController extends Controller
 
     private function callVtpass(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
-        $endpoint = 'https://vtpass.com/api/pay';
+        $endpoint = 'https://sandbox.vtpass.com/api/pay'; // Change to live later
         $serviceIds = ['mtn' => 'mtn', 'glo' => 'glo', 'airtel' => 'airtel', 'etisalat' => 'etisalat'];
         $payload = [
             'request_id' => $reference,
