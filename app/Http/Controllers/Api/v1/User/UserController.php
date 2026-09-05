@@ -291,71 +291,174 @@ class UserController extends Controller
             return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
         }
 
-        $monnifyApiKey    = AppSetting::get('monnify_api_key');
-        $monnifySecretKey = AppSetting::get('monnify_secret_key');
-        $monnifyContract  = AppSetting::get('monnify_contract_code');
-        $monnifyMode      = AppSetting::get('monnify_mode', 'sandbox');
+        $bvn     = $request->bvn;
+        $results = [];
+        $errors  = [];
 
-        if (!$monnifyApiKey || !$monnifySecretKey || !$monnifyContract) {
-            return $this->jsonResponse(false, 'Virtual account service is currently unavailable.', null, 400);
+        // ── 1. Paystack DVA (Wema Bank + Titan Bank) ──────────────────────────
+        $paystackSecret = config('services.paystack.secret_key') ?: AppSetting::get('paystack_secret_key');
+        if ($paystackSecret) {
+            try {
+                $customerCode = $this->getOrCreatePaystackCustomer($user, $bvn, $paystackSecret);
+
+                foreach (['wema-bank', 'titan-paystack'] as $bankCode) {
+                    $existing = VirtualAccount::where('user_id', $user->id)
+                        ->where('provider', 'paystack')
+                        ->where('bank_code', $bankCode)
+                        ->first();
+
+                    if ($existing) {
+                        $results[] = $existing;
+                        continue;
+                    }
+
+                    $resp = Http::withToken($paystackSecret)
+                        ->timeout(20)
+                        ->post('https://api.paystack.co/dedicated_account', [
+                            'customer'       => $customerCode,
+                            'preferred_bank' => $bankCode,
+                            'phone'          => $user->phone,
+                        ]);
+
+                    if ($resp->successful() && $resp->json('status') === true) {
+                        $data = $resp->json('data');
+                        $va   = VirtualAccount::create([
+                            'user_id'        => $user->id,
+                            'provider'       => 'paystack',
+                            'bank_name'      => $data['bank']['name'],
+                            'bank_code'      => $bankCode,
+                            'account_number' => $data['account_number'],
+                            'account_name'   => $data['account_name'],
+                            'metadata'       => $data,
+                        ]);
+                        $results[] = $va;
+                    } else {
+                        $errors[] = 'Paystack (' . $bankCode . '): ' . ($resp->json('message') ?? 'Request failed');
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Paystack DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                $errors[] = 'Paystack: ' . $e->getMessage();
+            }
         }
 
-        $baseUrl = $monnifyMode === 'live'
-            ? 'https://api.monnify.com'
-            : 'https://sandbox.monnify.com';
+        // ── 2. Flutterwave DVA ───────────────────────────────────────────────
+        $flwSecret = config('services.flutterwave.secret_key') ?: AppSetting::get('flutterwave_secret_key');
+        if ($flwSecret) {
+            try {
+                $existing = VirtualAccount::where('user_id', $user->id)
+                    ->where('provider', 'flutterwave')
+                    ->first();
 
-        // 1. Authenticate with Monnify
-        $authRes = Http::withHeaders([
-            'Authorization' => 'Basic ' . base64_encode($monnifyApiKey . ':' . $monnifySecretKey),
-        ])->post($baseUrl . '/api/v1/auth/login');
+                if ($existing) {
+                    $results[] = $existing;
+                } else {
+                    $resp = Http::withToken($flwSecret)
+                        ->timeout(20)
+                        ->post('https://api.flutterwave.com/v3/virtual-account-numbers', [
+                            'email'        => $user->email,
+                            'currency'     => 'NGN',
+                            'is_permanent' => true,
+                            'bvn'          => $bvn,
+                            'tx_ref'       => 'DVA_FLW_' . $user->id . '_' . time(),
+                            'narration'    => $user->name,
+                        ]);
 
-        if (!$authRes->successful() || !isset($authRes->json()['responseBody']['accessToken'])) {
-            return $this->jsonResponse(false, 'Could not authenticate with bank provider.', null, 400);
+                    if ($resp->successful() && $resp->json('status') === 'success') {
+                        $data = $resp->json('data');
+                        $va   = VirtualAccount::create([
+                            'user_id'        => $user->id,
+                            'provider'       => 'flutterwave',
+                            'bank_name'      => $data['bank_name'],
+                            'bank_code'      => 'flutterwave_dva',
+                            'account_number' => $data['account_number'],
+                            'account_name'   => $data['account_name'] ?? $user->name,
+                            'metadata'       => $data,
+                        ]);
+                        $results[] = $va;
+                    } else {
+                        $errors[] = 'Flutterwave: ' . ($resp->json('message') ?? 'Request failed');
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Flutterwave DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                $errors[] = 'Flutterwave: ' . $e->getMessage();
+            }
         }
 
-        $accessToken = $authRes->json()['responseBody']['accessToken'];
+        // ── 3. Monnify DVA ───────────────────────────────────────────────────
+        $monnifyApiKey = AppSetting::get('monnify_api_key');
+        if ($monnifyApiKey) {
+            try {
+                $existing = VirtualAccount::where('user_id', $user->id)
+                    ->where('provider', 'monnify')
+                    ->get();
 
-        // 2. Create Reserved Account
-        $accRef = 'DVA-' . $user->id . '-' . time();
-        $dvaRes = Http::withToken($accessToken)->post($baseUrl . '/api/v2/bank-transfer/reserved-accounts', [
-            'accountReference' => $accRef,
-            'accountName'      => $user->name,
-            'currencyCode'     => 'NGN',
-            'contractCode'     => $monnifyContract,
-            'customerEmail'    => $user->email,
-            'customerName'     => $user->name,
-            'bvn'              => $request->bvn,
-            'getAllAvailableBanks' => true,
-        ]);
-
-        if (!$dvaRes->successful() || !isset($dvaRes->json()['responseBody']['accounts'])) {
-            $msg = $dvaRes->json()['responseMessage'] ?? 'Failed to generate virtual accounts.';
-            return $this->jsonResponse(false, $msg, null, 400);
+                if ($existing->isNotEmpty()) {
+                    foreach ($existing as $acc) {
+                        $results[] = $acc;
+                    }
+                } else {
+                    $data = \App\Services\MonnifyService::generateReservedAccounts($user, $bvn);
+                    if (!empty($data['accounts'])) {
+                        foreach ($data['accounts'] as $acc) {
+                            $va = VirtualAccount::create([
+                                'user_id'        => $user->id,
+                                'provider'       => 'monnify',
+                                'bank_name'      => $acc['bankName'],
+                                'bank_code'      => $acc['bankCode'],
+                                'account_number' => $acc['accountNumber'],
+                                'account_name'   => $acc['accountName'] ?? $user->name,
+                                'metadata'       => $data,
+                            ]);
+                            $results[] = $va;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Monnify DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                $errors[] = 'Monnify: ' . $e->getMessage();
+            }
         }
 
-        $accountsData = $dvaRes->json()['responseBody']['accounts'];
-        $createdAccounts = [];
-
-        foreach ($accountsData as $acc) {
-            $va = VirtualAccount::updateOrCreate(
-                [
-                    'user_id'     => $user->id,
-                    'provider'    => 'monnify',
-                    'bank_code'   => $acc['bankCode'] ?? null,
-                ],
-                [
-                    'bank_name'      => $acc['bankName'],
-                    'account_number' => $acc['accountNumber'],
-                    'account_name'   => $acc['accountName'],
-                    'reference'      => $accRef,
-                ]
-            );
-            $createdAccounts[] = $va;
+        if (empty($results)) {
+            return $this->jsonResponse(false, 'Could not generate virtual accounts. ' . implode(' | ', $errors), null, 400);
         }
 
         return $this->jsonResponse(true, 'Virtual bank accounts generated successfully.', [
-            'accounts' => $createdAccounts,
+            'accounts' => $results,
         ]);
+    }
+
+    private function getOrCreatePaystackCustomer(User $user, string $bvn, string $secretKey): string
+    {
+        $existing = VirtualAccount::where('user_id', $user->id)
+            ->where('provider', 'paystack')
+            ->whereNotNull('metadata')
+            ->first();
+
+        if ($existing) {
+            $code = $existing->metadata['customer']['customer_code']
+                 ?? $existing->metadata['customer_code']
+                 ?? null;
+            if ($code) return $code;
+        }
+
+        $nameParts = explode(' ', $user->name, 2);
+        $resp = Http::withToken($secretKey)
+            ->timeout(20)
+            ->post('https://api.paystack.co/customer', [
+                'email'      => $user->email,
+                'first_name' => $nameParts[0],
+                'last_name'  => $nameParts[1] ?? '',
+                'phone'      => $user->phone ?? '',
+            ]);
+
+        if (!$resp->successful() || !$resp->json('status')) {
+            throw new \RuntimeException($resp->json('message') ?? 'Failed to create Paystack customer');
+        }
+
+        return $resp->json('data.customer_code');
     }
 
     /**
