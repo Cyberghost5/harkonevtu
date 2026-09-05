@@ -55,6 +55,32 @@ class WalletApiController extends Controller
 
         $query = WalletTransaction::where('user_id', $user->id);
 
+        // Exclude refund entries unless explicitly requested
+        if ($serviceType !== 'refund') {
+            $refundedOriginalRefs = WalletTransaction::where('user_id', $user->id)
+                ->where(function ($q) {
+                    $q->where('reference', 'like', 'REFUND_%')
+                      ->orWhere('description', 'like', 'Refund%')
+                      ->orWhereJsonContains('metadata->type', 'refund');
+                })
+                ->pluck('reference')
+                ->map(fn ($r) => str_replace('REFUND_', '', $r))
+                ->filter()
+                ->values()
+                ->all();
+
+            $query->where('reference', 'not like', 'REFUND_%')
+                  ->where('description', 'not like', 'Refund%')
+                  ->where(function ($q) {
+                      $q->whereNull('metadata->type')
+                        ->orWhere('metadata->type', '!=', 'refund');
+                  });
+
+            if (!empty($refundedOriginalRefs)) {
+                $query->whereNotIn('reference', $refundedOriginalRefs);
+            }
+        }
+
         if (!empty($type) && in_array($type, ['credit', 'debit'])) {
             $query->where('type', $type);
         }

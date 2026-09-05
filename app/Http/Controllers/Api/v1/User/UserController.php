@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiLog;
 use App\Models\AppSetting;
 use App\Models\User;
 use App\Models\VirtualAccount;
@@ -312,13 +313,30 @@ class UserController extends Controller
                         continue;
                     }
 
+                    $payload = [
+                        'customer'       => $customerCode,
+                        'preferred_bank' => $bankCode,
+                        'phone'          => $user->phone,
+                    ];
+                    $start = hrtime(true);
                     $resp = Http::withToken($paystackSecret)
                         ->timeout(20)
-                        ->post('https://api.paystack.co/dedicated_account', [
-                            'customer'       => $customerCode,
-                            'preferred_bank' => $bankCode,
-                            'phone'          => $user->phone,
-                        ]);
+                        ->post('https://api.paystack.co/dedicated_account', $payload);
+                    $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+                    ApiLog::record([
+                        'user_id'     => $user->id,
+                        'service'     => 'dva_generate',
+                        'provider'    => 'paystack',
+                        'reference'   => $bankCode,
+                        'endpoint'    => 'https://api.paystack.co/dedicated_account',
+                        'method'      => 'POST',
+                        'payload'     => $payload,
+                        'response'    => $resp->json(),
+                        'http_status' => $resp->status(),
+                        'duration_ms' => $duration,
+                        'success'     => $resp->successful() && $resp->json('status') === true,
+                    ]);
 
                     if ($resp->successful() && $resp->json('status') === true) {
                         $data = $resp->json('data');
@@ -353,16 +371,33 @@ class UserController extends Controller
                 if ($existing) {
                     $results[] = $existing;
                 } else {
+                    $payload = [
+                        'email'        => $user->email,
+                        'currency'     => 'NGN',
+                        'is_permanent' => true,
+                        'bvn'          => $bvn,
+                        'tx_ref'       => 'DVA_FLW_' . $user->id . '_' . time(),
+                        'narration'    => $user->name,
+                    ];
+                    $start = hrtime(true);
                     $resp = Http::withToken($flwSecret)
                         ->timeout(20)
-                        ->post('https://api.flutterwave.com/v3/virtual-account-numbers', [
-                            'email'        => $user->email,
-                            'currency'     => 'NGN',
-                            'is_permanent' => true,
-                            'bvn'          => $bvn,
-                            'tx_ref'       => 'DVA_FLW_' . $user->id . '_' . time(),
-                            'narration'    => $user->name,
-                        ]);
+                        ->post('https://api.flutterwave.com/v3/virtual-account-numbers', $payload);
+                    $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+                    ApiLog::record([
+                        'user_id'     => $user->id,
+                        'service'     => 'dva_generate',
+                        'provider'    => 'flutterwave',
+                        'reference'   => $payload['tx_ref'],
+                        'endpoint'    => 'https://api.flutterwave.com/v3/virtual-account-numbers',
+                        'method'      => 'POST',
+                        'payload'     => $payload,
+                        'response'    => $resp->json(),
+                        'http_status' => $resp->status(),
+                        'duration_ms' => $duration,
+                        'success'     => $resp->successful() && $resp->json('status') === 'success',
+                    ]);
 
                     if ($resp->successful() && $resp->json('status') === 'success') {
                         $data = $resp->json('data');
@@ -400,19 +435,28 @@ class UserController extends Controller
                     }
                 } else {
                     $data = \App\Services\MonnifyService::generateReservedAccounts($user, $bvn);
-                    if (!empty($data['accounts'])) {
-                        foreach ($data['accounts'] as $acc) {
-                            $va = VirtualAccount::create([
+                    $accountsList = [];
+                    if (!empty($data['accounts']) && is_array($data['accounts'])) {
+                        $accountsList = $data['accounts'];
+                    } elseif (!empty($data['accountNumber'])) {
+                        $accountsList = [$data];
+                    }
+
+                    foreach ($accountsList as $acc) {
+                        $va = VirtualAccount::updateOrCreate(
+                            [
                                 'user_id'        => $user->id,
                                 'provider'       => 'monnify',
-                                'bank_name'      => $acc['bankName'],
-                                'bank_code'      => $acc['bankCode'],
                                 'account_number' => $acc['accountNumber'],
-                                'account_name'   => $acc['accountName'] ?? $user->name,
-                                'metadata'       => $data,
-                            ]);
-                            $results[] = $va;
-                        }
+                            ],
+                            [
+                                'bank_name'    => $acc['bankName'] ?? 'Monnify Bank',
+                                'bank_code'    => $acc['bankCode'] ?? null,
+                                'account_name' => $acc['accountName'] ?? $user->name,
+                                'metadata'     => $acc,
+                            ]
+                        );
+                        $results[] = $va;
                     }
                 }
             } catch (\Exception $e) {
@@ -445,14 +489,30 @@ class UserController extends Controller
         }
 
         $nameParts = explode(' ', $user->name, 2);
+        $payload = [
+            'email'      => $user->email,
+            'first_name' => $nameParts[0],
+            'last_name'  => $nameParts[1] ?? '',
+            'phone'      => $user->phone ?? '',
+        ];
+        $start = hrtime(true);
         $resp = Http::withToken($secretKey)
             ->timeout(20)
-            ->post('https://api.paystack.co/customer', [
-                'email'      => $user->email,
-                'first_name' => $nameParts[0],
-                'last_name'  => $nameParts[1] ?? '',
-                'phone'      => $user->phone ?? '',
-            ]);
+            ->post('https://api.paystack.co/customer', $payload);
+        $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+        ApiLog::record([
+            'user_id'     => $user->id,
+            'service'     => 'dva_customer_create',
+            'provider'    => 'paystack',
+            'endpoint'    => 'https://api.paystack.co/customer',
+            'method'      => 'POST',
+            'payload'     => $payload,
+            'response'    => $resp->json(),
+            'http_status' => $resp->status(),
+            'duration_ms' => $duration,
+            'success'     => $resp->successful() && $resp->json('status') === true,
+        ]);
 
         if (!$resp->successful() || !$resp->json('status')) {
             throw new \RuntimeException($resp->json('message') ?? 'Failed to create Paystack customer');

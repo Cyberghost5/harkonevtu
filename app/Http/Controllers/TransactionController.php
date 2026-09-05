@@ -39,13 +39,24 @@ class TransactionController extends Controller
         // Collect refund references so we can exclude both the refund credit
         // and its paired orphaned debit from the wallet history.
         $refundedOriginalRefs = WalletTransaction::where('user_id', $user->id)
-            ->where('reference', 'like', 'REFUND_%')
+            ->where(function ($q) {
+                $q->where('reference', 'like', 'REFUND_%')
+                  ->orWhere('description', 'like', 'Refund%')
+                  ->orWhereJsonContains('metadata->type', 'refund');
+            })
             ->pluck('reference')
-            ->map(fn ($r) => substr($r, 7))
+            ->map(fn ($r) => str_replace('REFUND_', '', $r))
+            ->filter()
+            ->values()
             ->all();
 
         $walletQuery = WalletTransaction::where('user_id', $user->id)
             ->where('reference', 'not like', 'REFUND_%')
+            ->where('description', 'not like', 'Refund%')
+            ->where(function ($q) {
+                $q->whereNull('metadata->type')
+                  ->orWhere('metadata->type', '!=', 'refund');
+            })
             ->when($refundedOriginalRefs, fn ($q) =>
                 $q->whereNotIn('reference', $refundedOriginalRefs)
             )
@@ -72,6 +83,11 @@ class TransactionController extends Controller
         $serviceTxCount = ServiceTransaction::where('user_id', $user->id)->count();
         $walletTxCount  = WalletTransaction::where('user_id', $user->id)
                             ->where('reference', 'not like', 'REFUND_%')
+                            ->where('description', 'not like', 'Refund%')
+                            ->where(function ($q) {
+                                $q->whereNull('metadata->type')
+                                  ->orWhere('metadata->type', '!=', 'refund');
+                            })
                             ->when($refundedOriginalRefs, fn ($q) =>
                                 $q->whereNotIn('reference', $refundedOriginalRefs)
                             )->count();
