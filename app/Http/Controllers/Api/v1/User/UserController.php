@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -54,28 +55,38 @@ class UserController extends Controller
     }
 
     /**
-     * Update Contact Information.
-     * PUT /api/v1/user/profile
+     * Update Contact Information & Profile Avatar Photo.
+     * PUT/POST /api/v1/user/profile
      */
     public function updateProfile(Request $request): JsonResponse
     {
         $user = $request->user();
 
         $validator = Validator::make($request->all(), [
-            'name'  => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'phone' => ['required', 'string', 'max:20', 'unique:users,phone,' . $user->id],
+            'name'   => ['sometimes', 'required', 'string', 'max:255'],
+            'email'  => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone'  => ['sometimes', 'required', 'string', 'max:20', 'unique:users,phone,' . $user->id],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         if ($validator->fails()) {
             return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
         }
 
-        $user->update([
-            'name'  => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-        ]);
+        $data = [];
+        if ($request->has('name'))  $data['name']  = $request->name;
+        if ($request->has('email')) $data['email'] = $request->email;
+        if ($request->has('phone')) $data['phone'] = $request->phone;
+
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $storedPath = $file->store('avatars', 'public');
+            $data['avatar'] = url('storage/' . $storedPath);
+        }
+
+        if (!empty($data)) {
+            $user->update($data);
+        }
 
         return $this->jsonResponse(true, 'Profile updated successfully.', [
             'user' => $user->fresh('wallet'),

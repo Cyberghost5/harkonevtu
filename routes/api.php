@@ -34,6 +34,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('user')->middleware('auth:sanctum')->group(function () {
         Route::get('/profile',            [\App\Http\Controllers\Api\v1\User\UserController::class, 'profile']);
         Route::put('/profile',            [\App\Http\Controllers\Api\v1\User\UserController::class, 'updateProfile']);
+        Route::post('/profile',           [\App\Http\Controllers\Api\v1\User\UserController::class, 'updateProfile']);
         Route::put('/password',           [\App\Http\Controllers\Api\v1\User\UserController::class, 'updatePassword']);
         Route::put('/pin',                [\App\Http\Controllers\Api\v1\User\UserController::class, 'updatePin']);
         Route::post('/pin/verify',        [\App\Http\Controllers\Api\v1\User\UserController::class, 'verifyPin']);
