@@ -50,7 +50,7 @@ return [
         'api_key'    => env('VTPASS_API_KEY'),
         'public_key' => env('VTPASS_PUBLIC_KEY'),
         'secret_key' => env('VTPASS_SECRET_KEY'),
-        'base_url'   => env('VTPASS_BASE_URL', 'https://sandbox.vtpass.com'), // prod: https://vtpass.com
+        'base_url'   => env('VTPASS_BASE_URL', 'https://vtpass.com'),
     ],
 
     'clubkonnect' => [

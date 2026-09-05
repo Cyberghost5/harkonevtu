@@ -220,10 +220,22 @@
                                placeholder="Enter Password"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API Key / Public Key</label>
                         <input type="text" name="vtpass_api_key" value="{{ $s['vtpass_api_key'] ?? '' }}"
                                placeholder="Enter API Key"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Secret Key</label>
+                        <input type="password" name="vtpass_secret_key" value="{{ $s['vtpass_secret_key'] ?? '' }}"
+                               placeholder="Enter Secret Key"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Base URL (Default: https://vtpass.com)</label>
+                        <input type="text" name="vtpass_base_url" value="{{ $s['vtpass_base_url'] ?? '' }}"
+                               placeholder="https://vtpass.com (or https://sandbox.vtpass.com for testing)"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>

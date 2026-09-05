@@ -438,7 +438,8 @@ class DataApiController extends Controller
 
     private function callVtpassData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
-        $endpoint = 'https://sandbox.vtpass.com/api/pay'; // Change to live later
+        $baseUrl  = rtrim(config('services.vtpass.base_url') ?: AppSetting::get('vtpass_base_url', 'https://vtpass.com'), '/');
+        $endpoint = $baseUrl . '/api/pay';
         $vtpassServiceIds = ['mtn' => 'mtn-data', 'glo' => 'glo-data', 'airtel' => 'airtel-data', 'etisalat' => 'etisalat-data'];
         $payload = [
             'request_id'     => $reference,
@@ -447,12 +448,22 @@ class DataApiController extends Controller
             'variation_code' => $plan->api_plan_id,
             'phone'          => $phone,
         ];
+
+        $apiKey    = config('services.vtpass.api_key') ?: AppSetting::get('vtpass_api_key') ?: AppSetting::get('vtpass_public_key');
+        $secretKey = config('services.vtpass.secret_key') ?: AppSetting::get('vtpass_secret_key');
+        $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
+
         $start = hrtime(true);
         try {
-            $res = Http::withHeaders([
-                'api-key'    => AppSetting::get('vtpass_api_key'),
-                'secret-key' => AppSetting::get('vtpass_secret_key'),
-            ])->post($endpoint, $payload);
+            $headers = [
+                'api-key'    => $apiKey,
+                'secret-key' => $secretKey,
+            ];
+            if ($publicKey) {
+                $headers['public-key'] = $publicKey;
+            }
+
+            $res = Http::withHeaders($headers)->post($endpoint, $payload);
 
             $body = $res->json() ?? [];
             $success = (($body['code'] ?? '') === '000');

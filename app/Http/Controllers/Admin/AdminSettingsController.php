@@ -108,7 +108,7 @@ class AdminSettingsController extends Controller
             'monnify_api_key','monnify_secret_key','monnify_contract_no','monnify_mode',
             'payscribe_secret_key','payscribe_public_key',
             'tx_charge_m2m','tx_charge_bank','active_gateway',
-            'vtpass_username','vtpass_password','vtpass_api_key',
+            'vtpass_username','vtpass_password','vtpass_api_key','vtpass_public_key','vtpass_secret_key','vtpass_base_url',
             'primebiller_api_key','primebiller_status',
             'aabaxztech_username','aabaxztech_password','aabaxztech_api_key',
             'autopilot_email','autopilot_api_key',
