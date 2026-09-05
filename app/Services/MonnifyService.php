@@ -81,6 +81,7 @@ class MonnifyService
             'getAllAvailableBanks' => true
         ];
 
+        $start = hrtime(true);
         try {
             $response = Http::withToken($accessToken)
                 ->withHeaders([
@@ -90,7 +91,24 @@ class MonnifyService
                 ->timeout(20)
                 ->post($url, $payload);
 
-            if ($response->successful() && $response->json('requestSuccessful') === true) {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $success  = $response->successful() && $response->json('requestSuccessful') === true;
+
+            \App\Models\ApiLog::record([
+                'user_id'     => $user->id,
+                'service'     => 'dva_generate',
+                'provider'    => 'monnify',
+                'reference'   => $payload['accountReference'],
+                'endpoint'    => $url,
+                'method'      => 'POST',
+                'payload'     => $payload,
+                'response'    => $response->json(),
+                'http_status' => $response->status(),
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
+
+            if ($success) {
                 return $response->json('responseBody');
             }
 

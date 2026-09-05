@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1\Payment;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiLog;
 use App\Models\AppSetting;
 use App\Models\Coupon;
 use App\Models\CouponRedemption;
@@ -58,6 +59,7 @@ class PaymentApiController extends Controller
                 ], 500);
             }
 
+            $start = hrtime(true);
             $res = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $secretKey,
                 'Content-Type'  => 'application/json',
@@ -77,7 +79,24 @@ class PaymentApiController extends Controller
             ]);
 
             $body = $res->json() ?? [];
-            if (!($body['status'] ?? false)) {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $success = ($body['status'] ?? false) === true;
+
+            ApiLog::record([
+                'user_id'     => $user->id,
+                'service'     => 'wallet_funding_init',
+                'provider'    => 'paystack',
+                'reference'   => $reference,
+                'endpoint'    => 'https://api.paystack.co/transaction/initialize',
+                'method'      => 'POST',
+                'payload'     => ['amount' => $totalAmount, 'reference' => $reference],
+                'response'    => $body,
+                'http_status' => $res->status(),
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
+
+            if (!$success) {
                 return response()->json([
                     'status'  => false,
                     'message' => $body['message'] ?? 'Failed to initialize Paystack payment.',
@@ -143,10 +162,28 @@ class PaymentApiController extends Controller
         // Verify with Paystack
         $secretKey = config('services.paystack.secret_key') ?: AppSetting::get('paystack_secret_key');
         if ($secretKey) {
+            $endpoint = "https://api.paystack.co/transaction/verify/{$reference}";
+            $start = hrtime(true);
             $res = Http::withHeaders(['Authorization' => 'Bearer ' . $secretKey])
-                ->get("https://api.paystack.co/transaction/verify/{$reference}");
+                ->get($endpoint);
 
             $body = $res->json() ?? [];
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $success = (($body['status'] ?? false) && (($body['data']['status'] ?? '') === 'success'));
+
+            ApiLog::record([
+                'user_id'     => $user->id,
+                'service'     => 'wallet_funding_verify',
+                'provider'    => 'paystack',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint,
+                'method'      => 'GET',
+                'payload'     => ['reference' => $reference],
+                'response'    => $body,
+                'http_status' => $res->status(),
+                'duration_ms' => $duration,
+                'success'     => $success,
+            ]);
             if (($body['status'] ?? false) && (($body['data']['status'] ?? '') === 'success')) {
                 $payData = $body['data'];
                 $amount  = ((float) $payData['amount']) / 100;

@@ -98,8 +98,28 @@ class QoreIDService
                 'lastname' => $lastName,
             ];
             
+            $start = hrtime(true);
             $response = Http::withHeaders($requestHeaders)
                 ->post($requestEndpoint, $requestPayload);
+
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $success = $response->successful();
+
+            \App\Models\ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'kyc_verification',
+                'provider'         => 'qoreid',
+                'reference'        => $idNumber,
+                'endpoint'         => $requestEndpoint,
+                'method'           => 'POST',
+                'payload'          => $requestPayload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $response->json() ?? ['raw' => $response->body()],
+                'http_status'      => $response->status(),
+                'response_headers' => $response->headers(),
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
 
             Log::info('QoreID Verification Response', [
                 'requestEndpoint' => $requestEndpoint,
