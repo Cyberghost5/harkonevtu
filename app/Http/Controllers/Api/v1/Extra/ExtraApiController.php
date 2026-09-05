@@ -218,9 +218,10 @@ class ExtraApiController extends Controller
         $max = (float) AppSetting::get('airtime2cash_max_per_payment', 50000);
 
         $request->validate([
-            'network' => ['required', 'string', 'in:mtn,airtel,glo,9mobile'],
-            'phone'   => ['required', 'string', 'digits:11'],
-            'amount'  => ['required', 'numeric', "min:{$min}", "max:{$max}"],
+            'network'    => ['required', 'string', 'in:mtn,airtel,glo,9mobile'],
+            'phone'      => ['required', 'string', 'digits:11'],
+            'amount'     => ['required', 'numeric', "min:{$min}", "max:{$max}"],
+            'screenshot' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $user          = auth()->user();
@@ -229,6 +230,11 @@ class ExtraApiController extends Controller
         $charge        = ($amount * $chargePercent) / 100;
         $receiveAmount = $amount - $charge;
 
+        $screenshotPath = 'api_submission';
+        if ($request->hasFile('screenshot')) {
+            $screenshotPath = $request->file('screenshot')->store('airtime-proofs', 'public');
+        }
+
         $req = AirtimeToCashRequest::create([
             'user_id'        => $user->id,
             'network'        => $request->network,
@@ -236,7 +242,7 @@ class ExtraApiController extends Controller
             'amount'         => $amount,
             'charge'         => $charge,
             'receive_amount' => $receiveAmount,
-            'screenshot'     => 'api_submission',
+            'screenshot'     => $screenshotPath,
             'status'         => 'pending',
         ]);
 
