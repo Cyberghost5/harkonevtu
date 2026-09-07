@@ -33,7 +33,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // ── User Profile & Account Management Endpoints (Milestone 2) ────────────
-    Route::prefix('user')->middleware('auth:sanctum')->group(function () {
+    Route::prefix('user')->middleware(['auth:sanctum', \App\Http\Middleware\EnsureVerified::class])->group(function () {
         Route::get('/profile',            [\App\Http\Controllers\Api\v1\User\UserController::class, 'profile']);
         Route::put('/profile',            [\App\Http\Controllers\Api\v1\User\UserController::class, 'updateProfile']);
         Route::post('/profile',           [\App\Http\Controllers\Api\v1\User\UserController::class, 'updateProfile']);
@@ -49,7 +49,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // ── Airtime Services Endpoints (Milestone 3) ──────────────────────────────
-    Route::prefix('airtime')->middleware('auth:sanctum')->group(function () {
+    Route::prefix('airtime')->middleware(['auth:sanctum', \App\Http\Middleware\EnsureVerified::class])->group(function () {
         Route::get('/networks',          [\App\Http\Controllers\Api\v1\Airtime\AirtimeController::class, 'networks']);
         Route::post('/network-lookup',   [\App\Http\Controllers\Api\v1\Airtime\AirtimeController::class, 'lookup']);
         Route::post('/purchase',         [\App\Http\Controllers\Api\v1\Airtime\AirtimeController::class, 'purchase']);
@@ -58,7 +58,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // ── Data Services Endpoints (Milestone 3) ─────────────────────────────────
-    Route::prefix('data')->middleware('auth:sanctum')->group(function () {
+    Route::prefix('data')->middleware(['auth:sanctum', \App\Http\Middleware\EnsureVerified::class])->group(function () {
         Route::get('/networks',          [\App\Http\Controllers\Api\v1\Data\DataApiController::class, 'networks']);
         Route::post('/plans',            [\App\Http\Controllers\Api\v1\Data\DataApiController::class, 'plans']);
         Route::post('/purchase',         [\App\Http\Controllers\Api\v1\Data\DataApiController::class, 'purchase']);
@@ -67,7 +67,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // ── Bills & Utilities Services Endpoints (Milestone 4) ────────────────────
-    Route::prefix('bills')->middleware('auth:sanctum')->group(function () {
+    Route::prefix('bills')->middleware(['auth:sanctum', \App\Http\Middleware\EnsureVerified::class])->group(function () {
         // Electricity
         Route::get('/electricity/discos',          [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'electricityDiscos']);
         Route::post('/electricity/validate-meter', [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'validateMeter']);
@@ -85,13 +85,13 @@ Route::prefix('v1')->group(function () {
     });
 
     // ── Wallet & Payment Gateway Endpoints (Milestone 5) ──────────────────────
-    Route::prefix('wallet')->middleware('auth:sanctum')->group(function () {
+    Route::prefix('wallet')->middleware(['auth:sanctum', \App\Http\Middleware\EnsureVerified::class])->group(function () {
         Route::get('/balance',                     [\App\Http\Controllers\Api\v1\Wallet\WalletApiController::class, 'balance']);
         Route::get('/transactions',                [\App\Http\Controllers\Api\v1\Wallet\WalletApiController::class, 'transactions']);
         Route::get('/transactions/{reference}',    [\App\Http\Controllers\Api\v1\Wallet\WalletApiController::class, 'transactionDetails']);
     });
 
-    Route::prefix('payments')->middleware('auth:sanctum')->group(function () {
+    Route::prefix('payments')->middleware(['auth:sanctum', \App\Http\Middleware\EnsureVerified::class])->group(function () {
         Route::post('/initialize',                 [\App\Http\Controllers\Api\v1\Payment\PaymentApiController::class, 'initializePayment']);
         Route::post('/verify',                     [\App\Http\Controllers\Api\v1\Payment\PaymentApiController::class, 'verifyPayment']);
         Route::get('/dva-accounts',                [\App\Http\Controllers\Api\v1\Payment\PaymentApiController::class, 'dvaAccounts']);
@@ -108,7 +108,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/pricing',                         [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'publicPricing']);
 
     // Authenticated Extra Services
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureVerified::class])->group(function () {
         // Betting
         Route::get('/betting/platforms',           [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'bettingPlatforms']);
         Route::post('/betting/validate-account',   [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'validateBettingAccount']);

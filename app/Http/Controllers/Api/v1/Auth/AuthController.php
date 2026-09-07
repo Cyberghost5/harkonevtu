@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
+use Illuminate\Support\Facades\Log;
+
 class AuthController extends Controller
 {
     /**
@@ -103,22 +105,125 @@ class AuthController extends Controller
         if ($emailVerificationRequired) {
             $emailOtp = (string) rand(100000, 999999);
             Cache::put('api_email_otp_' . $user->id, $emailOtp, now()->addMinutes(15));
-            Mail::to($user->email)->send(new VerifyEmailOtpMail($user, $emailOtp));
+            
+            try {
+                Mail::to($user->email)->send(new VerifyEmailOtpMail($user, $emailOtp));
+            } catch (\Exception $e) {
+                Log::error('[API Register Email Error] ' . $e->getMessage());
+            }
+
+            Log::info('[API Register OTP] User ID: ' . $user->id . ' | Email: ' . $user->email . ' | OTP: ' . $emailOtp);
+
+            return $this->jsonResponse(true, 'Registration successful. A 6-digit verification code has been sent to your email address.', [
+                'user_id'                     => $user->id,
+                'email'                       => $user->email,
+                'requires_email_verification' => true,
+                'user'                        => $user->load('wallet'),
+            ], 201);
         } else {
+            $user->forceFill(['email_verified_at' => now()])->save();
+            $token = $user->createToken('mobile-app')->plainTextToken;
+
+            return $this->jsonResponse(true, 'Registration successful.', [
+                'token'                       => $token,
+                'requires_email_verification' => false,
+                'user'                        => $user->load('wallet'),
+            ], 201);
+        }
+    }
+
+    /**
+     * Unified OTP Verification logic used by both verifyOtp and verifyEmailOtp.
+     */
+    protected function processOtpVerification(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'email'   => ['nullable', 'string'],
+            'phone'   => ['nullable', 'string'],
+            'login'   => ['nullable', 'string'],
+            'otp'     => ['required'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
+        }
+
+        $submittedOtp = trim((string) $request->input('otp'));
+
+        // Locate User
+        $user = null;
+        if ($request->filled('user_id')) {
+            $user = User::find($request->user_id);
+        } elseif ($request->filled('email')) {
+            $user = User::where('email', $request->email)->first();
+        } elseif ($request->filled('phone')) {
+            $user = User::where('phone', $request->phone)->first();
+        } elseif ($request->filled('login')) {
+            $loginVal = $request->input('login');
+            $user = User::where('email', $loginVal)
+                ->orWhere('phone', $loginVal)
+                ->orWhere('username', $loginVal)
+                ->first();
+        }
+
+        if (!$user) {
+            return $this->jsonResponse(false, 'User account not found. Please provide a valid user_id, email, or phone.', null, 404);
+        }
+
+        // Check across all possible cache keys for this user
+        $emailOtpKey    = 'api_email_otp_' . $user->id;
+        $loginOtpKey    = 'api_login_otp_' . $user->id;
+        $phoneOtpKey    = 'phone_otp_' . $user->id;
+        $webLoginOtpKey = 'login_otp_' . $user->id;
+
+        $cachedEmailOtp    = Cache::get($emailOtpKey);
+        $cachedLoginOtp    = Cache::get($loginOtpKey);
+        $cachedPhoneOtp    = Cache::get($phoneOtpKey);
+        $cachedWebLoginOtp = Cache::get($webLoginOtpKey);
+
+        $matched = false;
+
+        if ($cachedEmailOtp && trim((string)$cachedEmailOtp) === $submittedOtp) {
+            $matched = true;
+            Cache::forget($emailOtpKey);
+        }
+
+        if ($cachedLoginOtp && trim((string)$cachedLoginOtp) === $submittedOtp) {
+            $matched = true;
+            Cache::forget($loginOtpKey);
+        }
+
+        if ($cachedPhoneOtp && trim((string)$cachedPhoneOtp) === $submittedOtp) {
+            $matched = true;
+            Cache::forget($phoneOtpKey);
+            $user->phone_verified_at = now();
+        }
+
+        if ($cachedWebLoginOtp && trim((string)$cachedWebLoginOtp) === $submittedOtp) {
+            $matched = true;
+            Cache::forget($webLoginOtpKey);
+        }
+
+        if (!$matched) {
+            Log::warning("[API OTP Verify Failed] User ID: {$user->id} | Input OTP: {$submittedOtp} | CachedEmail: {$cachedEmailOtp} | CachedLogin: {$cachedLoginOtp} | CachedPhone: {$cachedPhoneOtp}");
+            return $this->jsonResponse(false, 'Invalid or expired verification code.', null, 400);
+        }
+
+        // Mark email as verified if unverified
+        if (!$user->hasVerifiedEmail()) {
             $user->forceFill(['email_verified_at' => now()])->save();
         }
 
+        // Issue fresh Sanctum access token
         $token = $user->createToken('mobile-app')->plainTextToken;
 
-        $message = $emailVerificationRequired 
-            ? 'Registration successful. A 6-digit verification code has been sent to your email address.' 
-            : 'Registration successful.';
+        Log::info("[API OTP Verified Success] User ID: {$user->id} ({$user->email})");
 
-        return $this->jsonResponse(true, $message, [
-            'token'                       => $token,
-            'requires_email_verification' => $emailVerificationRequired,
-            'user'                        => $user->load('wallet'),
-        ], 201);
+        return $this->jsonResponse(true, 'OTP verified successfully.', [
+            'token' => $token,
+            'user'  => $user->load('wallet'),
+        ]);
     }
 
     /**
@@ -127,40 +232,7 @@ class AuthController extends Controller
      */
     public function verifyEmailOtp(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'user_id' => ['required_without:email', 'nullable', 'integer', 'exists:users,id'],
-            'email'   => ['required_without:user_id', 'nullable', 'email', 'exists:users,email'],
-            'otp'     => ['required', 'string', 'size:6'],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
-        }
-
-        $user = $request->filled('user_id') 
-            ? User::find($request->user_id) 
-            : User::where('email', $request->email)->first();
-
-        if (!$user) {
-            return $this->jsonResponse(false, 'User account not found.', null, 404);
-        }
-
-        $cachedOtp = Cache::get('api_email_otp_' . $user->id);
-
-        if (!$cachedOtp || $cachedOtp !== $request->otp) {
-            return $this->jsonResponse(false, 'Invalid or expired email verification code.', null, 400);
-        }
-
-        Cache::forget('api_email_otp_' . $user->id);
-
-        $user->forceFill(['email_verified_at' => now()])->save();
-
-        $token = $user->createToken('mobile-app')->plainTextToken;
-
-        return $this->jsonResponse(true, 'Email verified successfully.', [
-            'token' => $token,
-            'user'  => $user->load('wallet'),
-        ]);
+        return $this->processOtpVerification($request);
     }
 
     /**
@@ -170,17 +242,30 @@ class AuthController extends Controller
     public function resendEmailOtp(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => ['required_without:email', 'nullable', 'integer', 'exists:users,id'],
-            'email'   => ['required_without:user_id', 'nullable', 'email', 'exists:users,email'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'email'   => ['nullable', 'email', 'exists:users,email'],
+            'phone'   => ['nullable', 'string', 'exists:users,phone'],
+            'login'   => ['nullable', 'string'],
         ]);
 
         if ($validator->fails()) {
             return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
         }
 
-        $user = $request->filled('user_id') 
-            ? User::find($request->user_id) 
-            : User::where('email', $request->email)->first();
+        $user = null;
+        if ($request->filled('user_id')) {
+            $user = User::find($request->user_id);
+        } elseif ($request->filled('email')) {
+            $user = User::where('email', $request->email)->first();
+        } elseif ($request->filled('phone')) {
+            $user = User::where('phone', $request->phone)->first();
+        } elseif ($request->filled('login')) {
+            $loginVal = $request->input('login');
+            $user = User::where('email', $loginVal)
+                ->orWhere('phone', $loginVal)
+                ->orWhere('username', $loginVal)
+                ->first();
+        }
 
         if (!$user) {
             return $this->jsonResponse(false, 'User account not found.', null, 404);
@@ -193,7 +278,13 @@ class AuthController extends Controller
         $emailOtp = (string) rand(100000, 999999);
         Cache::put('api_email_otp_' . $user->id, $emailOtp, now()->addMinutes(15));
 
-        Mail::to($user->email)->send(new VerifyEmailOtpMail($user, $emailOtp));
+        try {
+            Mail::to($user->email)->send(new VerifyEmailOtpMail($user, $emailOtp));
+        } catch (\Exception $e) {
+            Log::error('[API Resend Email Error] ' . $e->getMessage());
+        }
+
+        Log::info('[API Resend OTP] User ID: ' . $user->id . ' | Email: ' . $user->email . ' | OTP: ' . $emailOtp);
 
         return $this->jsonResponse(true, 'A new 6-digit verification code has been sent to your email address.');
     }
@@ -227,12 +318,35 @@ class AuthController extends Controller
             return $this->jsonResponse(false, 'Your account is deactivated. Please contact support.', null, 403);
         }
 
-        // Check if Login OTP verification is globally required
+        // 1. Enforce Email Verification if globally enabled
+        $emailVerificationRequired = AppSetting::get('email_verification', '1') === '1';
+        if ($emailVerificationRequired && !$user->hasVerifiedEmail()) {
+            $emailOtp = Cache::get('api_email_otp_' . $user->id);
+            if (!$emailOtp) {
+                $emailOtp = (string) rand(100000, 999999);
+                Cache::put('api_email_otp_' . $user->id, $emailOtp, now()->addMinutes(15));
+                try {
+                    Mail::to($user->email)->send(new VerifyEmailOtpMail($user, $emailOtp));
+                } catch (\Exception $e) {
+                    Log::error('[API Login Mail Error] ' . $e->getMessage());
+                }
+                Log::info('[API Login Unverified OTP] User ID: ' . $user->id . ' | Email: ' . $user->email . ' | OTP: ' . $emailOtp);
+            }
+
+            return $this->jsonResponse(false, 'Email verification required. Please verify your email address to continue.', [
+                'requires_email_verification' => true,
+                'user_id'                     => $user->id,
+                'email'                       => $user->email,
+            ], 403);
+        }
+
+        // 2. Check if SMS/Login OTP verification is globally required
         $otpRequired = AppSetting::get('otp_verification', '0') === '1';
 
         if ($otpRequired) {
             $otp = (string) rand(100000, 999999);
             cache()->put('api_login_otp_' . $user->id, $otp, now()->addMinutes(10));
+            Log::info('[API Login SMS OTP] User ID: ' . $user->id . ' | Phone: ' . $user->phone . ' | OTP: ' . $otp);
 
             // Send OTP via SMS
             $message = "Your " . AppSetting::get('site_name', 'PayPulse') . " login verification code is: " . $otp;
@@ -259,30 +373,7 @@ class AuthController extends Controller
      */
     public function verifyOtp(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'user_id' => ['required', 'integer', 'exists:users,id'],
-            'otp'     => ['required', 'string', 'size:6'],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
-        }
-
-        $cachedOtp = cache()->get('api_login_otp_' . $request->user_id);
-
-        if (!$cachedOtp || $cachedOtp !== $request->otp) {
-            return $this->jsonResponse(false, 'Invalid or expired OTP code.', null, 400);
-        }
-
-        cache()->forget('api_login_otp_' . $request->user_id);
-
-        $user = User::findOrFail($request->user_id);
-        $token = $user->createToken('mobile-app')->plainTextToken;
-
-        return $this->jsonResponse(true, 'OTP verified successfully.', [
-            'token' => $token,
-            'user'  => $user->load('wallet'),
-        ]);
+        return $this->processOtpVerification($request);
     }
 
     /**
@@ -292,16 +383,38 @@ class AuthController extends Controller
     public function resendOtp(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'email'   => ['nullable', 'email', 'exists:users,email'],
+            'phone'   => ['nullable', 'string', 'exists:users,phone'],
+            'login'   => ['nullable', 'string'],
         ]);
 
         if ($validator->fails()) {
             return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
         }
 
-        $user = User::findOrFail($request->user_id);
+        $user = null;
+        if ($request->filled('user_id')) {
+            $user = User::find($request->user_id);
+        } elseif ($request->filled('email')) {
+            $user = User::where('email', $request->email)->first();
+        } elseif ($request->filled('phone')) {
+            $user = User::where('phone', $request->phone)->first();
+        } elseif ($request->filled('login')) {
+            $loginVal = $request->input('login');
+            $user = User::where('email', $loginVal)
+                ->orWhere('phone', $loginVal)
+                ->orWhere('username', $loginVal)
+                ->first();
+        }
+
+        if (!$user) {
+            return $this->jsonResponse(false, 'User account not found.', null, 404);
+        }
+
         $otp = (string) rand(100000, 999999);
         cache()->put('api_login_otp_' . $user->id, $otp, now()->addMinutes(10));
+        Log::info('[API Resend SMS OTP] User ID: ' . $user->id . ' | Phone: ' . $user->phone . ' | OTP: ' . $otp);
 
         $message = "Your " . AppSetting::get('site_name', 'PayPulse') . " login verification code is: " . $otp;
         TermiiService::sendSms($user->phone, $message);

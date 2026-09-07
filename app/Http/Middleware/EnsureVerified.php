@@ -18,20 +18,25 @@ class EnsureVerified
 
         $user = $request->user();
 
-        if (!$user->hasVerifiedEmail()) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Your email address is not verified.'], 403);
+        if ($user && !$user->hasVerifiedEmail()) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'status'                      => false,
+                    'message'                     => 'Your email address is not verified.',
+                    'requires_email_verification' => true,
+                ], 403);
             }
             return redirect()->route('verification.notice');
         }
 
         // If phone/OTP verification is enabled, enforce it
         if (AppSetting::get('otp_verification', '0') === '1') {
-            if (!$user->hasVerifiedPhone()) {
-                if ($request->expectsJson()) {
+            if ($user && !$user->hasVerifiedPhone()) {
+                if ($request->expectsJson() || $request->is('api/*')) {
                     return response()->json([
-                        'message' => 'Your phone number is not verified.',
-                        'requires_phone_verification' => true
+                        'status'                      => false,
+                        'message'                     => 'Your phone number is not verified.',
+                        'requires_phone_verification' => true,
                     ], 403);
                 }
                 return redirect()->route('verification.phone')
