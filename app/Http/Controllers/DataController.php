@@ -793,7 +793,8 @@ class DataController extends Controller
     private function callGlobacomData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
         $trx_ref    = "TRX" . substr(time() . rand(1000, 9999), -17);
-        $baseUrl    = rtrim(config('services.globacom.base_url') ?: AppSetting::get('globacom_base_url', 'https://gifting-api.gloworld.com'), '/');
+        $rawUrl     = config('services.globacom.base_url') ?: AppSetting::get('globacom_base_url', 'https://gifting-api.gloworld.com');
+        $cleanBase  = preg_replace('#/v1/distribution(/glo)?/?$#i', '', rtrim($rawUrl, '/'));
         $mode       = config('services.globacom.mode') ?: AppSetting::get('globacom_api_mode', 'legacy');
         $apiKey     = config('services.globacom.x_api_key') ?: AppSetting::get('globacom_xapi_key');
         $sponsorId  = config('services.globacom.sponsor_id') ?: AppSetting::get('globacom_sponsor_id', 'klasspay');
@@ -802,7 +803,7 @@ class DataController extends Controller
         $msisdn     = preg_replace('/^0/', '234', preg_replace('/[^0-9]/', '', $phone));
 
         if ($mode === 'native') {
-            $endpoint       = $baseUrl . '/v1/distribution';
+            $endpoint       = $cleanBase . '/v1/distribution';
             $requestHeaders = [
                 'email'        => (string) $email,
                 'api-key'      => (string) $apiKey,
@@ -819,7 +820,7 @@ class DataController extends Controller
             ];
         } else {
             // Legacy API Mode
-            $endpoint       = $baseUrl . '/v1/distribution/glo';
+            $endpoint       = $cleanBase . '/v1/distribution/glo';
             $requestHeaders = [
                 'x-api-key'    => (string) $apiKey,
                 'Content-Type' => 'application/json',
