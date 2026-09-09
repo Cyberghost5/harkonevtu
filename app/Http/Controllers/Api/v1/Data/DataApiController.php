@@ -808,38 +808,77 @@ class DataApiController extends Controller
 
     private function callGlobacomData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
-        $trx_ref  = "TRX" . time();
-        $endpoint = rtrim(config('services.globacom.base_url'), '/') . '/';
-        $payload  = [
-            'transId'   => $trx_ref,
-            'msisdn'    => preg_replace('/^0/', '234', $phone),
-            'bucketId'  => (string) config('services.globacom.bucket_id'),
-            'planId'    => (string) $plan->idForApi('globacom'),
-            'sponsorId' => (string) config('services.globacom.sponsor_id'),
-            'quantity'  => 1,
-            'ignoresms' => false,
-        ];
-        $data       = [];
-        $httpStatus = null;
-        $success    = false;
-        $apiRef     = $trx_ref;
+        $trx_ref    = "TRX" . substr(time() . rand(1000, 9999), -17);
+        $baseUrl    = rtrim(config('services.globacom.base_url') ?: AppSetting::get('globacom_base_url', 'https://gifting-api.gloworld.com'), '/');
+        $mode       = config('services.globacom.mode') ?: AppSetting::get('globacom_api_mode', 'legacy');
+        $apiKey     = config('services.globacom.x_api_key') ?: AppSetting::get('globacom_xapi_key');
+        $sponsorId  = config('services.globacom.sponsor_id') ?: AppSetting::get('globacom_sponsor_id', 'klasspay');
+        $bucketId   = config('services.globacom.bucket_id') ?: AppSetting::get('globacom_bucket_id');
+        $email      = config('services.globacom.email') ?: AppSetting::get('globacom_email');
+        $msisdn     = preg_replace('/^0/', '234', preg_replace('/[^0-9]/', '', $phone));
 
-        $requestHeaders = [
-            'x-api-key'    => config('services.globacom.x_api_key') ?: AppSetting::get('globacom_xapi_key'),
-            'Content-Type' => 'application/json',
-        ];
+        if ($mode === 'native') {
+            $endpoint       = $baseUrl . '/v1/distribution';
+            $requestHeaders = [
+                'email'        => (string) $email,
+                'api-key'      => (string) $apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            $payload = [
+                'Request-Type'       => 'DISTRIBUTE',
+                'Rating-Id'          => (string) $bucketId,
+                'Request-Id'         => $trx_ref,
+                'Msisdn'             => $msisdn,
+                'Distributable-Code' => (string) $plan->idForApi('globacom'),
+                'Volume-Count'       => 1,
+                'Ignore-SMS'         => false,
+            ];
+        } else {
+            // Legacy API Mode
+            $endpoint       = $baseUrl . '/v1/distribution/glo';
+            $requestHeaders = [
+                'x-api-key'    => (string) $apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            $payload = [
+                'transId'   => $trx_ref,
+                'msisdn'    => $msisdn,
+                'bucketId'  => (string) $bucketId,
+                'planId'    => (string) $plan->idForApi('globacom'),
+                'sponsorId' => (string) $sponsorId,
+                'quantity'  => 1,
+                'ignoresms' => false,
+            ];
+        }
+
+        $data            = [];
+        $httpStatus      = null;
+        $success         = false;
+        $apiRef          = $trx_ref;
         $responseHeaders = null;
-        $start = hrtime(true);
+        $start           = hrtime(true);
+
         try {
             $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
             $data            = $response->json() ?? [];
-            $status          = $data['status'] ?? '';
-            $success         = $status === 'ok';
-            $apiRef          = $data['egmstransId'] ?? $data['transId'] ?? $trx_ref;
-            if (!$success) {
-                $data['message'] = $data['message'] ?? 'Globacom transaction failed.';
+
+            if ($mode === 'native') {
+                $statusCode = $data['Distribution-Status-Code'] ?? '';
+                $success    = in_array($statusCode, ['SUCCESS', 'PENDING'], true);
+                $apiRef     = $data['Internal-Request-Id'] ?? $data['External-Request-ID'] ?? $trx_ref;
+                if (!$success) {
+                    $data['message'] = $data['message'] ?? 'Globacom Native distribution failed (Status: ' . ($statusCode ?: 'Unknown') . ').';
+                }
+            } else {
+                $status     = $data['status'] ?? '';
+                $resCode    = (string) ($data['resultCode'] ?? '');
+                $success    = ($status === 'ok') && in_array($resCode, ['0000', '0002'], true);
+                $apiRef     = $data['egmstransId'] ?? $data['transId'] ?? $trx_ref;
+                if (!$success) {
+                    $data['message'] = $data['message'] ?? 'Globacom transaction failed (ResultCode: ' . ($resCode ?: 'Unknown') . ').';
+                }
             }
         } catch (\Exception $e) {
             $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
