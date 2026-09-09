@@ -437,7 +437,7 @@
                         <a href="https://globacom.com" target="_blank" class="text-blue-500 hover:underline">Globacom</a>
                     </span>
                 </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">X-API Key</label>
                         <input type="text" name="globacom_xapi_key" value="{{ $s['globacom_xapi_key'] ?? '' }}"
@@ -448,6 +448,12 @@
                         <label class="block text-xs font-medium text-slate-500 mb-1">Sponsor ID</label>
                         <input type="text" name="globacom_sponsor_id" value="{{ $s['globacom_sponsor_id'] ?? '' }}"
                                placeholder="Enter Sponsor ID"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Bucket ID</label>
+                        <input type="text" name="globacom_bucket_id" value="{{ $s['globacom_bucket_id'] ?? '' }}"
+                               placeholder="Enter Bucket ID"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
