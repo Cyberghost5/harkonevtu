@@ -116,7 +116,7 @@ class AdminSettingsController extends Controller
             'legitdataway_username','legitdataway_password','legitdataway_api_key',
             'merrybills_username','merrybills_password','merrybills_pin','merrybills_token',
             'clubkonnect_user_id','clubkonnect_api_key',
-            'globacom_xapi_key','globacom_sponsor_id','globacom_bucket_id','globacom_email','globacom_api_mode',
+            'globacom_xapi_key','globacom_email','globacom_sponsor_id','globacom_bucket_id',
             'termii_api_key',
             'bulksms_sender','bulksms_api_key','bulksms_amount_per_unit',
             'onesignal_app_id','onesignal_api_key',

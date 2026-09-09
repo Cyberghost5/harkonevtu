@@ -437,37 +437,30 @@
                         <a href="https://globacom.com" target="_blank" class="text-blue-500 hover:underline">Globacom</a>
                     </span>
                 </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">X-API Key / API Key</label>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
                         <input type="text" name="globacom_xapi_key" value="{{ $s['globacom_xapi_key'] ?? '' }}"
-                               placeholder="Enter API Key"
+                               placeholder="Enter Consumer API Key"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Consumer Email (Native Mode)</label>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Account Email</label>
                         <input type="email" name="globacom_email" value="{{ $s['globacom_email'] ?? '' }}"
                                placeholder="Enter Consumer Email"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Sponsor ID (Legacy Mode)</label>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Rating / Bucket ID</label>
+                        <input type="text" name="globacom_bucket_id" value="{{ $s['globacom_bucket_id'] ?? '' }}"
+                               placeholder="Enter Rating ID"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Sponsor ID (Optional)</label>
                         <input type="text" name="globacom_sponsor_id" value="{{ $s['globacom_sponsor_id'] ?? '' }}"
                                placeholder="Enter Sponsor ID"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Bucket ID / Rating ID</label>
-                        <input type="text" name="globacom_bucket_id" value="{{ $s['globacom_bucket_id'] ?? '' }}"
-                               placeholder="Enter Bucket / Rating ID"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">API Mode</label>
-                        <select name="globacom_api_mode" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            <option value="legacy" {{ ($s['globacom_api_mode'] ?? 'legacy') === 'legacy' ? 'selected' : '' }}>Legacy API (/v1/distribution/glo)</option>
-                            <option value="native" {{ ($s['globacom_api_mode'] ?? 'legacy') === 'native' ? 'selected' : '' }}>Native API (/v1/distribution)</option>
-                        </select>
                     </div>
                 </div>
             </div>

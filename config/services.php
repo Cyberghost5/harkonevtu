@@ -86,11 +86,10 @@ return [
 
     'globacom' => [
         'x_api_key'  => env('GLOBACOM_X_API_KEY'),
+        'email'      => env('GLOBACOM_EMAIL'),
         'sponsor_id' => env('GLOBACOM_SPONSOR_ID', 'klasspay'),
         'bucket_id'  => env('GLOBACOM_BUCKET_ID'),
-        'email'      => env('GLOBACOM_EMAIL'),
-        'mode'       => env('GLOBACOM_MODE', 'legacy'),
-        'base_url'   => env('GLOBACOM_BASE_URL', 'https://gifting-api.gloworld.com'),
+        'base_url'   => env('GLOBACOM_BASE_URL', 'https://gifting-api.gloworld.com/v1/distribution'),
     ],
 
     'payscribe' => [
