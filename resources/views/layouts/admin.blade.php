@@ -125,7 +125,7 @@
             <div class="flex-shrink-0 px-4 py-3" style="border-bottom:1px solid rgba(255,255,255,0.1)">
                 <div class="flex items-center gap-2.5">
                     @if (auth()->user()->avatar)
-                        <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Avatar" class="h-8 w-8 rounded-full object-cover">
+                        <img src="{{ auth()->user()->avatar }}" alt="Avatar" class="h-8 w-8 rounded-full object-cover">
                     @else
                     <div class="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:{{ $themeColor }}">
                         {{ auth()->user()->initials() }}
@@ -365,7 +365,7 @@
                     <div class="relative">
                         @if(auth()->user()->avatar)
                         <button onclick="toggleProfileDropdown(event)" id="profile-btn" class="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-vtu-primary/50">
-                            <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Avatar" class="h-8 w-8 rounded-full object-cover">
+                            <img src="{{ auth()->user()->avatar }}" alt="Avatar" class="h-8 w-8 rounded-full object-cover">
                         </button>
                         @else
                         <button onclick="toggleProfileDropdown(event)" id="profile-btn" class="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-vtu-primary/50" style="background:{{ $themeColor }}">

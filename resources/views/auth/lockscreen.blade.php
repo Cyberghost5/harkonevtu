@@ -81,7 +81,7 @@
                 <div class="relative mb-6">
                     <div class="h-24 w-24 rounded-2xl overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-lg">
                         @if ($user->avatar)
-                            <img src="{{ Storage::url($user->avatar) }}" alt="Avatar" class="h-full w-full object-cover">
+                            <img src="{{ $user->avatar }}" alt="Avatar" class="h-full w-full object-cover">
                         @else
                             <div class="h-full w-full flex items-center justify-center text-2xl font-bold text-white bg-gradient-to-tr from-vtu-primary to-vtu-secondary">
                                 {{ $user->initials() }}

@@ -30,7 +30,7 @@
         <div class="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-b border-slate-100 dark:border-slate-800">
             <div class="flex items-center gap-3">
                 @if ($req->user->avatar)
-                    <img src="{{ Storage::url($req->user->avatar) }}" alt="Avatar" class="h-9 w-9 rounded-2xl object-cover">
+                    <img src="{{ $req->user->avatar }}" alt="Avatar" class="h-9 w-9 rounded-2xl object-cover">
                 @else
                 <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                     {{ $req->user->initials() }}

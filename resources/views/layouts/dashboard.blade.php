@@ -100,7 +100,7 @@
                 {{-- Avatar + name --}}
                 <div class="flex items-center gap-3">
                      @if (auth()->user()->avatar)
-                        <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Avatar" class="h-11 w-11 rounded-2xl object-cover">
+                        <img src="{{ auth()->user()->avatar }}" alt="Avatar" class="h-11 w-11 rounded-2xl object-cover">
                     @else
                     <div class="h-11 w-11 rounded-2xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md shadow-indigo-500/20">
                         {{ auth()->user()->initials() }}
@@ -526,7 +526,7 @@
                     <div class="relative">
                         @if(auth()->user()->avatar)
                         <button onclick="toggleProfileDropdown(event)" id="profile-btn" class="h-9 w-9 rounded-xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center text-white text-xs font-bold shadow-md shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-vtu-primary/50">
-                            <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Avatar" class="h-9 w-9 rounded-full object-cover">
+                            <img src="{{ auth()->user()->avatar }}" alt="Avatar" class="h-9 w-9 rounded-full object-cover">
                         </button>
                         @else
                         <button onclick="toggleProfileDropdown(event)" id="profile-btn" class="h-9 w-9 rounded-xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center text-white text-xs font-bold shadow-md shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-vtu-primary/50">

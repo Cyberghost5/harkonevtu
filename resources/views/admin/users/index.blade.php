@@ -64,7 +64,7 @@
                     <td class="px-5 py-3">
                         <div class="flex items-center gap-2.5">
                             @if ($user->avatar)
-                                <img src="{{ Storage::url($user->avatar) }}" alt="Avatar" class="h-8 w-8 rounded-2xl object-cover">
+                                <img src="{{ $user->avatar }}" alt="Avatar" class="h-8 w-8 rounded-2xl object-cover">
                             @else
                             <div class="h-8 w-8 rounded-xl bg-gradient-to-tr from-vtu-primary to-vtu-secondary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                                 {{ $user->initials() }}
