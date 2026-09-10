@@ -114,6 +114,23 @@ class User extends Authenticatable implements MustVerifyEmail
         return strtoupper(mb_substr($fallback, 0, 2));
     }
 
+    /**
+     * Get full URL for user avatar or null if not set.
+     */
+    public function getAvatarAttribute($value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+
+        $cleanPath = ltrim(preg_replace('#^storage/#', '', $value), '/');
+        return asset('storage/' . $cleanPath);
+    }
+
     // ─── Custom Notifications ─────────────────────────────────────────────────
 
     public function sendEmailVerificationNotification(): void

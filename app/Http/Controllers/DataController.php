@@ -829,7 +829,11 @@ class DataController extends Controller
         $start           = hrtime(true);
 
         try {
-            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $response        = Http::withOptions([
+                'curl' => [
+                    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                ],
+            ])->connectTimeout(15)->timeout(30)->withHeaders($requestHeaders)->post($endpoint, $payload);
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
             $data            = $response->json() ?? [];

@@ -82,7 +82,7 @@ class UserController extends Controller
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
             $storedPath = $file->store('avatars', 'public');
-            $data['avatar'] = url('storage/' . $storedPath);
+            $data['avatar'] = $storedPath;
         }
 
         if (!empty($data)) {
