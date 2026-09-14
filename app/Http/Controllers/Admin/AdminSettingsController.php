@@ -103,30 +103,43 @@ class AdminSettingsController extends Controller
     public function apiKeys()
     {
         $keys = [
-            'flutterwave_public_key','flutterwave_secret_key','flutterwave_encryption_key','flutterwave_bvn',
-            'paystack_public_key','paystack_secret_key',
-            'monnify_api_key','monnify_secret_key','monnify_contract_no','monnify_mode',
-            'payscribe_secret_key','payscribe_public_key',
+            'flutterwave_public_key','flutterwave_secret_key','flutterwave_encryption_key','flutterwave_bvn','flutterwave_status',
+            'paystack_public_key','paystack_secret_key','paystack_status',
+            'monnify_api_key','monnify_secret_key','monnify_contract_no','monnify_mode','monnify_status',
+            'payscribe_secret_key','payscribe_public_key','payscribe_status',
             'tx_charge_m2m','tx_charge_bank','active_gateway',
-            'vtpass_username','vtpass_password','vtpass_api_key','vtpass_public_key','vtpass_secret_key','vtpass_base_url',
+            'vtpass_username','vtpass_password','vtpass_api_key','vtpass_public_key','vtpass_secret_key','vtpass_base_url','vtpass_status',
             'primebiller_api_key','primebiller_status',
-            'aabaxztech_username','aabaxztech_password','aabaxztech_api_key',
-            'autopilot_email','autopilot_api_key',
-            'easyaccess_api_key',
-            'legitdataway_username','legitdataway_password','legitdataway_api_key',
-            'merrybills_username','merrybills_password','merrybills_pin','merrybills_token',
-            'clubkonnect_user_id','clubkonnect_api_key',
-            'globacom_xapi_key','globacom_email','globacom_sponsor_id','globacom_bucket_id',
-            'termii_api_key',
-            'bulksms_sender','bulksms_api_key','bulksms_amount_per_unit',
-            'onesignal_app_id','onesignal_api_key',
-            'qoreid_client_key','qoreid_secret_key','qoreid_mode',
-            'mtn_ers_username','mtn_ers_pin','mtn_ers_endpoint','mtn_ers_mode','mtn_ers_originator_msisdn',
-            'glo_ers_username','glo_ers_password','glo_ers_endpoint','glo_ers_mode','glo_ers_client_id','glo_ers_distributor_id','glo_ers_distributor_userid',
+            'aabaxztech_username','aabaxztech_password','aabaxztech_api_key','aabaxztech_status',
+            'autopilot_email','autopilot_api_key','autopilot_status',
+            'easyaccess_api_key','easyaccess_status',
+            'legitdataway_username','legitdataway_password','legitdataway_api_key','legitdataway_status',
+            'merrybills_username','merrybills_password','merrybills_pin','merrybills_token','merrybills_status',
+            'clubkonnect_user_id','clubkonnect_api_key','clubkonnect_status',
+            'globacom_xapi_key','globacom_email','globacom_sponsor_id','globacom_bucket_id','globacom_status',
+            'termii_api_key','termii_status',
+            'bulksms_sender','bulksms_api_key','bulksms_amount_per_unit','bulksms_status',
+            'onesignal_app_id','onesignal_api_key','onesignal_status',
+            'qoreid_client_key','qoreid_secret_key','qoreid_mode','qoreid_status',
+            'mtn_ers_username','mtn_ers_pin','mtn_ers_endpoint','mtn_ers_mode','mtn_ers_originator_msisdn','mtn_ers_status',
+            'glo_ers_username','glo_ers_password','glo_ers_endpoint','glo_ers_mode','glo_ers_client_id','glo_ers_distributor_id','glo_ers_distributor_userid','glo_ers_status',
             'airtime2cash_phone','airtime2cash_tx_charge','airtime2cash_max_per_payment','airtime2cash_min_per_payment',
             'referral_commission','referral_min_withdrawal','referral_min_total_spent',
         ];
         $s = AppSetting::getMany($keys);
+        
+        $statusKeys = [
+            'flutterwave_status','paystack_status','monnify_status','payscribe_status','vtpass_status',
+            'primebiller_status','aabaxztech_status','autopilot_status','easyaccess_status','legitdataway_status',
+            'merrybills_status','clubkonnect_status','globacom_status','termii_status','bulksms_status',
+            'onesignal_status','qoreid_status','mtn_ers_status','glo_ers_status',
+        ];
+        foreach ($statusKeys as $stKey) {
+            if (!isset($s[$stKey]) || $s[$stKey] === '') {
+                $s[$stKey] = '1';
+            }
+        }
+
         return view('admin.settings.api-keys', compact('s'));
     }
 
@@ -194,25 +207,34 @@ class AdminSettingsController extends Controller
             }
         }
 
-        // Only surface providers whose credentials have been configured
+        // Only surface providers whose credentials have been configured AND status is enabled
         $providerCredentialMap = [
-            'vtpass'       => 'vtpass_api_key',
-            'easyaccess'   => 'easyaccess_api_key',
-            'primebiller'  => 'primebiller_api_key',
-            'payscribe'    => 'payscribe_secret_key',
-            'merrybills'   => 'merrybills_token',
-            'clubkonnect'  => 'clubkonnect_api_key',
-            'autopilot'    => 'autopilot_api_key',
-            'aabaxztech'   => 'aabaxztech_api_key',
-            'legitdataway' => 'legitdataway_api_key',
-            'globacom'    => 'globacom_xapi_key',
-            'mtn_ers'      => 'mtn_ers_username',
-            'glo_ers'      => 'glo_ers_username',
+            'vtpass'       => ['cred' => 'vtpass_api_key',      'status' => 'vtpass_status'],
+            'easyaccess'   => ['cred' => 'easyaccess_api_key',  'status' => 'easyaccess_status'],
+            'primebiller'  => ['cred' => 'primebiller_api_key', 'status' => 'primebiller_status'],
+            'payscribe'    => ['cred' => 'payscribe_secret_key','status' => 'payscribe_status'],
+            'merrybills'   => ['cred' => 'merrybills_token',    'status' => 'merrybills_status'],
+            'clubkonnect'  => ['cred' => 'clubkonnect_api_key', 'status' => 'clubkonnect_status'],
+            'autopilot'    => ['cred' => 'autopilot_api_key',   'status' => 'autopilot_status'],
+            'aabaxztech'   => ['cred' => 'aabaxztech_api_key',  'status' => 'aabaxztech_status'],
+            'legitdataway' => ['cred' => 'legitdataway_api_key','status' => 'legitdataway_status'],
+            'globacom'     => ['cred' => 'globacom_xapi_key',   'status' => 'globacom_status'],
+            'mtn_ers'      => ['cred' => 'mtn_ers_username',    'status' => 'mtn_ers_status'],
+            'glo_ers'      => ['cred' => 'glo_ers_username',    'status' => 'glo_ers_status'],
         ];
-        $credValues = AppSetting::getMany(array_values($providerCredentialMap));
+
+        $keysToFetch = [];
+        foreach ($providerCredentialMap as $cfg) {
+            $keysToFetch[] = $cfg['cred'];
+            $keysToFetch[] = $cfg['status'];
+        }
+        $credValues = AppSetting::getMany($keysToFetch);
+
         $availableProviders = [];
-        foreach ($providerCredentialMap as $name => $credKey) {
-            if (!empty($credValues[$credKey])) {
+        foreach ($providerCredentialMap as $name => $cfg) {
+            $hasCred  = !empty($credValues[$cfg['cred']]);
+            $isEnabled = ($credValues[$cfg['status']] ?? '1') !== '0';
+            if ($hasCred && $isEnabled) {
                 $availableProviders[] = $name;
             }
         }

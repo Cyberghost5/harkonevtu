@@ -104,9 +104,9 @@
             $hasFlutterwave = $accounts->where('provider', 'flutterwave')->isNotEmpty();
             $hasMonnify = $accounts->where('provider', 'monnify')->isNotEmpty();
             
-            $paystackEnabled = !empty(\App\Models\AppSetting::get('paystack_secret_key'));
-            $flutterwaveEnabled = !empty(\App\Models\AppSetting::get('flutterwave_secret_key'));
-            $monnifyEnabled = !empty(\App\Models\AppSetting::get('monnify_api_key'));
+            $paystackEnabled = !empty(\App\Models\AppSetting::get('paystack_secret_key')) && (\App\Models\AppSetting::get('paystack_status', '1') !== '0');
+            $flutterwaveEnabled = !empty(\App\Models\AppSetting::get('flutterwave_secret_key')) && (\App\Models\AppSetting::get('flutterwave_status', '1') !== '0');
+            $monnifyEnabled = !empty(\App\Models\AppSetting::get('monnify_api_key')) && (\App\Models\AppSetting::get('monnify_status', '1') !== '0');
             
             $canGenerateMore = ($paystackEnabled && !$hasPaystack) ||
                                ($flutterwaveEnabled && !$hasFlutterwave) ||
