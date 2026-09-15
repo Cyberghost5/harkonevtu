@@ -132,21 +132,14 @@ $forwardHeaders = [
     'Accept: application/json'
 ];
 
-if (function_exists('getallheaders')) {
-    $incomingHeaders = getallheaders();
-    foreach ($incomingHeaders as $hKey => $hVal) {
-        $lowerKey = strtolower($hKey);
-        if (in_array($lowerKey, ['email', 'api-key', 'authorization'], true)) {
-            $forwardHeaders[] = "{$hKey}: {$hVal}";
-        }
-    }
-} else {
-    if (isset($_SERVER['HTTP_EMAIL'])) {
-        $forwardHeaders[] = 'email: ' . $_SERVER['HTTP_EMAIL'];
-    }
-    if (isset($_SERVER['HTTP_API_KEY'])) {
-        $forwardHeaders[] = 'api-key: ' . $_SERVER['HTTP_API_KEY'];
-    }
+$emailHeader = getRequestHeader('email');
+if ($emailHeader !== null && $emailHeader !== '') {
+    $forwardHeaders[] = "email: {$emailHeader}";
+}
+
+$apiKeyHeader = getRequestHeader('api-key');
+if ($apiKeyHeader !== null && $apiKeyHeader !== '') {
+    $forwardHeaders[] = "api-key: {$apiKeyHeader}";
 }
 
 $ch = curl_init(TARGET_API_URL);
@@ -182,7 +175,9 @@ if ($responseBody === false || $curlErrno !== 0) {
 // ----------------------------------------------------------------------------
 // 5. Audit Log & Mirror Response Back to Caller
 // ----------------------------------------------------------------------------
-logAudit($httpCode, 'Request processed', $rawPayload);
+$hasEmail = ($emailHeader !== null && $emailHeader !== '') ? 'YES' : 'NO';
+$hasApiKey = ($apiKeyHeader !== null && $apiKeyHeader !== '') ? 'YES' : 'NO';
+logAudit($httpCode, "Request processed (Header email: {$hasEmail}, api-key: {$hasApiKey})", $rawPayload);
 
 http_response_code($httpCode > 0 ? $httpCode : 500);
 header('Content-Type: application/json; charset=utf-8');
@@ -253,4 +248,38 @@ function logAudit(int $statusCode, string $message, string $payload = ''): void 
         $fallbackPath = sys_get_temp_dir() . '/proxy_audit.log';
         @file_put_contents($fallbackPath, $logLine, FILE_APPEND | LOCK_EX);
     }
+}
+
+/**
+ * Robust helper to extract an HTTP request header across all server environments
+ * (Apache, LiteSpeed, Nginx, CGI, FPM).
+ */
+function getRequestHeader(string $headerName): ?string {
+    $normalizedTarget = strtolower($headerName);
+
+    // 1. Check getallheaders() if available
+    if (function_exists('getallheaders')) {
+        $headers = @getallheaders();
+        if (is_array($headers) && !empty($headers)) {
+            foreach ($headers as $key => $value) {
+                if (strtolower($key) === $normalizedTarget) {
+                    return trim((string)$value);
+                }
+            }
+        }
+    }
+
+    // 2. Check $_SERVER['HTTP_...']
+    $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $headerName));
+    if (isset($_SERVER[$serverKey]) && $_SERVER[$serverKey] !== '') {
+        return trim((string)$_SERVER[$serverKey]);
+    }
+
+    // 3. Check $_SERVER direct key
+    $directKey = strtoupper(str_replace('-', '_', $headerName));
+    if (isset($_SERVER[$directKey]) && $_SERVER[$directKey] !== '') {
+        return trim((string)$_SERVER[$directKey]);
+    }
+
+    return null;
 }
