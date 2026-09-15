@@ -13,20 +13,26 @@ class DirectGiftingApiTransport implements GiftingApiTransportInterface
      * Send gifting request directly to Glo's distribution API.
      *
      * @param array $payload
+     * @param array $headers
      * @return array
      * @throws GiftingApiException
      */
-    public function send(array $payload): array
+    public function send(array $payload, array $headers = []): array
     {
         $directUrl = config('gifting.direct_url', 'https://gifting-api.gloworld.com/v1/distribution');
         $timeout = (int) config('gifting.timeout', 30);
         $connectTimeout = (int) config('gifting.connect_timeout', 10);
 
+        $mergedHeaders = array_merge([
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ], $headers);
+
         try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
+            $response = Http::withOptions([
+                'force_ip_resolve' => 'v4',
             ])
+            ->withHeaders($mergedHeaders)
             ->connectTimeout($connectTimeout)
             ->timeout($timeout)
             ->post($directUrl, $payload);

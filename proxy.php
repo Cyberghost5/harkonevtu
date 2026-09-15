@@ -125,18 +125,38 @@ if ($rawPayload === false || trim($rawPayload) === '') {
 }
 
 // ----------------------------------------------------------------------------
-// 4. Forward Payload to Glo Gifting API via cURL
+// 4. Forward Payload & Custom Headers to Glo Gifting API via cURL
 // ----------------------------------------------------------------------------
+$forwardHeaders = [
+    'Content-Type: application/json',
+    'Accept: application/json'
+];
+
+if (function_exists('getallheaders')) {
+    $incomingHeaders = getallheaders();
+    foreach ($incomingHeaders as $hKey => $hVal) {
+        $lowerKey = strtolower($hKey);
+        if (in_array($lowerKey, ['email', 'api-key', 'authorization'], true)) {
+            $forwardHeaders[] = "{$hKey}: {$hVal}";
+        }
+    }
+} else {
+    if (isset($_SERVER['HTTP_EMAIL'])) {
+        $forwardHeaders[] = 'email: ' . $_SERVER['HTTP_EMAIL'];
+    }
+    if (isset($_SERVER['HTTP_API_KEY'])) {
+        $forwardHeaders[] = 'api-key: ' . $_SERVER['HTTP_API_KEY'];
+    }
+}
+
 $ch = curl_init(TARGET_API_URL);
 
 curl_setopt_array($ch, [
     CURLOPT_POST => true,
+    CURLOPT_CUSTOMREQUEST => 'POST',
     CURLOPT_POSTFIELDS => $rawPayload,
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => [
-        'Content-Type: application/json',
-        'Accept: application/json'
-    ],
+    CURLOPT_HTTPHEADER => $forwardHeaders,
     CURLOPT_CONNECTTIMEOUT => 10,
     CURLOPT_TIMEOUT => CURL_TIMEOUT,
     CURLOPT_SSL_VERIFYPEER => true,
@@ -210,6 +230,7 @@ function enforceRateLimit(): void {
 
 /**
  * Log audit details to local log file (excluding secret).
+ * Tries current directory first; falls back to system temp directory if un-writable.
  */
 function logAudit(int $statusCode, string $message, string $payload = ''): void {
     $timestamp = date('Y-m-d H:i:s');
@@ -222,5 +243,14 @@ function logAudit(int $statusCode, string $message, string $payload = ''): void 
     }
 
     $logLine = sprintf("[%s] IP: %s | Status: %d | Note: %s%s\n", $timestamp, $ip, $statusCode, $message, $cleanPayload);
-    @file_put_contents(LOG_FILE, $logLine, FILE_APPEND | LOCK_EX);
+    
+    // Primary log destination
+    $logPath = LOG_FILE;
+    
+    // Attempt write; if permission denied, fallback to temp directory
+    $result = @file_put_contents($logPath, $logLine, FILE_APPEND | LOCK_EX);
+    if ($result === false) {
+        $fallbackPath = sys_get_temp_dir() . '/proxy_audit.log';
+        @file_put_contents($fallbackPath, $logLine, FILE_APPEND | LOCK_EX);
+    }
 }

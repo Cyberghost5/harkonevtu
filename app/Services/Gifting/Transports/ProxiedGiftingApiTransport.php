@@ -13,10 +13,11 @@ class ProxiedGiftingApiTransport implements GiftingApiTransportInterface
      * Send gifting request via secondary proxy server.
      *
      * @param array $payload
+     * @param array $headers
      * @return array
      * @throws GiftingApiException
      */
-    public function send(array $payload): array
+    public function send(array $payload, array $headers = []): array
     {
         $proxyUrl = config('gifting.proxy_url');
         $proxySecret = config('gifting.proxy_secret');
@@ -27,15 +28,17 @@ class ProxiedGiftingApiTransport implements GiftingApiTransportInterface
             throw new GiftingApiException('Gifting API proxy configuration is missing or incomplete (GIFTING_PROXY_URL / PROXY_SHARED_SECRET).');
         }
 
+        $mergedHeaders = array_merge($headers, [
+            'X-Proxy-Secret' => $proxySecret,
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ]);
+
         try {
-            $response = Http::withHeaders([
-                'X-Proxy-Secret' => $proxySecret,
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ])
-            ->connectTimeout($connectTimeout)
-            ->timeout($timeout)
-            ->post($proxyUrl, $payload);
+            $response = Http::withHeaders($mergedHeaders)
+                ->connectTimeout($connectTimeout)
+                ->timeout($timeout)
+                ->post($proxyUrl, $payload);
 
             $statusCode = $response->status();
             $responseBody = $response->body();

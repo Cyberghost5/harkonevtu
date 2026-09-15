@@ -829,12 +829,9 @@ class DataController extends Controller
         $start           = hrtime(true);
 
         try {
-            $response        = Http::withOptions([
-                'force_ip_resolve' => 'v4',
-            ])->connectTimeout(15)->timeout(30)->withHeaders($requestHeaders)->post($endpoint, $payload);
-            $httpStatus      = $response->status();
-            $responseHeaders = $response->headers();
-            $data            = $response->json() ?? [];
+            $giftingService  = app(\App\Services\GiftingApiService::class);
+            $data            = $giftingService->distribute($payload, $requestHeaders);
+            $httpStatus      = 200;
 
             $statusCode = $data['Distribution-Status-Code'] ?? '';
             $success    = in_array($statusCode, ['SUCCESS', 'PENDING'], true);

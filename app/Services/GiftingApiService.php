@@ -27,17 +27,18 @@ class GiftingApiService
      * Distribute data gifting request using the injected transport strategy.
      *
      * @param array $payload
+     * @param array $headers
      * @return array
      * @throws GiftingApiException
      */
-    public function distribute(array $payload): array
+    public function distribute(array $payload, array $headers = []): array
     {
         $transportClass = get_class($this->transport);
         $transportName = class_basename($this->transport);
         $startTime = microtime(true);
 
         try {
-            $result = $this->transport->send($payload);
+            $result = $this->transport->send($payload, $headers);
             $responseTimeMs = round((microtime(true) - $startTime) * 1000, 2);
 
             Log::channel('gifting-api')->info("Gifting API request succeeded via {$transportName}", [
