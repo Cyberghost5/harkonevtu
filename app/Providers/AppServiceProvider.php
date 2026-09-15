@@ -2,14 +2,27 @@
 
 namespace App\Providers;
 
+use App\Contracts\GiftingApiTransportInterface;
 use App\Models\AppSetting;
+use App\Services\Gifting\Transports\DirectGiftingApiTransport;
+use App\Services\Gifting\Transports\ProxiedGiftingApiTransport;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public function register(): void {}
+    public function register(): void
+    {
+        $this->app->bind(
+            GiftingApiTransportInterface::class,
+            function ($app) {
+                return config('gifting.transport', 'direct') === 'proxy'
+                    ? $app->make(ProxiedGiftingApiTransport::class)
+                    : $app->make(DirectGiftingApiTransport::class);
+            }
+        );
+    }
 
     public function boot(): void
     {
