@@ -94,12 +94,42 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
+            'name'     => [
+                'required',
+                'string',
+                'min:5',
+                'max:100',
+                'regex:/^[a-zA-Z]+([\'\-\s][a-zA-Z]+)+$/',
+                function ($attribute, $value, $fail) {
+                    $trimmed = trim(preg_replace('/\s+/', ' ', $value));
+                    $parts   = explode(' ', $trimmed);
+
+                    if (count($parts) < 2) {
+                        $fail('Please enter your full name (both first name and last name).');
+                        return;
+                    }
+
+                    foreach ($parts as $part) {
+                        $clean = preg_replace('/[\'\-]/', '', $part);
+                        if (strlen($clean) < 2) {
+                            $fail('Each part of your name must be at least 2 letters long.');
+                            return;
+                        }
+                        if (preg_match('/(.)\1{2,}/i', $clean)) {
+                            $fail('Please enter a valid full name.');
+                            return;
+                        }
+                    }
+                },
+            ],
             'email'    => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'phone'    => ['required', 'string', 'regex:/^0[789]\d{9}$/', 'unique:users'],
             'password' => ['required', 'confirmed', PasswordRule::min(8)],
             'terms'    => ['accepted'],
         ], [
+            'name.required'      => 'Your full name is required.',
+            'name.min'           => 'Your full name must be at least 5 characters long.',
+            'name.regex'         => 'Please enter a valid full name using letters only (first name and last name).',
             'phone.regex'        => 'Please enter a valid Nigerian phone number (e.g. 08012345678).',
             'terms.accepted'     => 'You must accept the terms and conditions to continue.',
             'password.confirmed' => 'The passwords you entered do not match.',

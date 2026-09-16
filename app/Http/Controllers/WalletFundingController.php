@@ -1052,42 +1052,45 @@ class WalletFundingController extends Controller implements HasMiddleware
         $payload = $request->all();
 
         // Extract Request ID / Transaction ID from VTpass webhook format
-        $requestId = $request->json('requestId')
-            ?? $request->json('content.transactions.requestId')
-            ?? $request->json('content.transactions.transactionId')
-            ?? $request->json('code_data.requestId')
+        $requestId = $request->input('requestId')
+            ?? $request->input('request_id')
+            ?? $request->input('content.transactions.requestId')
+            ?? $request->input('content.transactions.transactionId')
+            ?? $request->input('code_data.requestId')
+            ?? $request->input('data.requestId')
+            ?? $request->input('data.request_id')
             ?? null;
+
+        // Find corresponding ServiceTransaction
+        $serviceTxn = $requestId ? ServiceTransaction::where('api_reference', $requestId)
+            ->orWhere('reference', $requestId)
+            ->first() : null;
+
+        // Record API Log for audit FIRST so all hits are logged unconditionally
+        ApiLog::record([
+            'user_id'     => $serviceTxn?->user_id,
+            'service'     => 'webhook',
+            'provider'    => 'vtpass',
+            'reference'   => (string) ($requestId ?? 'UNKNOWN'),
+            'endpoint'    => route('webhook.vtpass'),
+            'method'      => 'POST',
+            'payload'     => $payload,
+            'response'    => ['status' => $requestId ? 'Webhook received and processed' : 'Ignored: No request ID in payload'],
+            'http_status' => $requestId ? 200 : 400,
+            'duration_ms' => 0,
+            'success'     => (bool) $requestId,
+        ]);
 
         if (!$requestId) {
             return response()->json(['status' => 'ignored', 'message' => 'No request ID present in payload.'], 400);
         }
 
         // Extract status
-        $code = (string) ($request->json('code') ?? '');
-        $txnStatus = strtolower((string) ($request->json('content.transactions.status') ?? ''));
+        $code = (string) ($request->input('code') ?? '');
+        $txnStatus = strtolower((string) ($request->input('content.transactions.status') ?? ''));
 
         $isSuccessful = ($code === '000' || in_array($txnStatus, ['delivered', 'successful', 'success'], true));
         $isFailed = (in_array($code, ['016', '084', '089', '091'], true) || in_array($txnStatus, ['failed', 'cancelled', 'reversed'], true));
-
-        // Find corresponding ServiceTransaction
-        $serviceTxn = ServiceTransaction::where('api_reference', $requestId)
-            ->orWhere('reference', $requestId)
-            ->first();
-
-        // Record API Log for audit
-        ApiLog::record([
-            'user_id'     => $serviceTxn?->user_id,
-            'service'     => 'webhook',
-            'provider'    => 'vtpass',
-            'reference'   => (string) $requestId,
-            'endpoint'    => route('webhook.vtpass'),
-            'method'      => 'POST',
-            'payload'     => $payload,
-            'response'    => ['status' => 'Webhook received and processed'],
-            'http_status' => 200,
-            'duration_ms' => 0,
-            'success'     => true,
-        ]);
 
         if (!$serviceTxn) {
             return response()->json(['status' => 'ok', 'message' => 'Transaction not found or non-service event logged.']);

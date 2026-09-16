@@ -50,11 +50,42 @@ class AuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'name'          => ['required', 'string', 'max:255'],
+            'name'          => [
+                'required',
+                'string',
+                'min:5',
+                'max:100',
+                'regex:/^[a-zA-Z]+([\'\-\s][a-zA-Z]+)+$/',
+                function ($attribute, $value, $fail) {
+                    $trimmed = trim(preg_replace('/\s+/', ' ', $value));
+                    $parts   = explode(' ', $trimmed);
+
+                    if (count($parts) < 2) {
+                        $fail('Please enter your full name (both first name and last name).');
+                        return;
+                    }
+
+                    foreach ($parts as $part) {
+                        $clean = preg_replace('/[\'\-]/', '', $part);
+                        if (strlen($clean) < 2) {
+                            $fail('Each part of your name must be at least 2 letters long.');
+                            return;
+                        }
+                        if (preg_match('/(.)\1{2,}/i', $clean)) {
+                            $fail('Please enter a valid full name.');
+                            return;
+                        }
+                    }
+                },
+            ],
             'email'         => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'phone'         => ['required', 'string', 'max:20', 'unique:users,phone'],
             'password'      => ['required', 'string', 'min:8', 'confirmed'],
             'referral_code' => ['nullable', 'string', 'exists:users,referral_code'],
+        ], [
+            'name.required' => 'Your full name is required.',
+            'name.min'      => 'Your full name must be at least 5 characters long.',
+            'name.regex'    => 'Please enter a valid full name using letters only (first name and last name).',
         ]);
 
         if ($validator->fails()) {

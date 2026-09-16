@@ -49,11 +49,11 @@ class ApiLog extends Model
             return $providedChannel;
         }
 
-        if ($service === 'webhook' || ($endpoint && str_contains($endpoint, 'webhook')) || request()?->is('webhook/*')) {
+        if ($service === 'webhook' || ($endpoint && str_contains($endpoint, 'webhook')) || request()?->is('webhook/*') || request()?->is('api/webhook/*')) {
             return 'webhook';
         }
 
-        if (request()?->is('api/*') || request()?->wantsJson()) {
+        if (request()?->is('api/*')) {
             return 'mobile';
         }
 

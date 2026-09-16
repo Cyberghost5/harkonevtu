@@ -12,6 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: [
+            'webhook/*',
+            'api/webhook/*',
+        ]);
+
         $middleware->alias([
             'ensure.verified' => \App\Http\Middleware\EnsureVerified::class,
             'ensure.pin'      => \App\Http\Middleware\EnsurePinIsSet::class,
