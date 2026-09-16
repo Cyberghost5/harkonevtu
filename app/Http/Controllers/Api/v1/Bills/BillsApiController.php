@@ -221,6 +221,19 @@ class BillsApiController extends Controller
                 Log::critical('Electricity refund failed', ['user_id' => $user->id, 'reference' => $reference, 'error' => $e->getMessage()]);
             }
 
+            ServiceTransaction::create([
+                'user_id'               => $user->id,
+                'wallet_transaction_id' => $walletTx?->id,
+                'service_type'          => 'electricity',
+                'provider'              => $disco->short_code ?? $disco->slug,
+                'recipient'             => $meterNumber,
+                'amount'                => $amount,
+                'status'                => 'refunded',
+                'reference'             => $reference,
+                'api_reference'         => $apiRes['reference'] ?? $reference,
+                'api_response'          => array_merge(is_array($apiRes['response'] ?? null) ? $apiRes['response'] : ['error' => $apiRes['message'] ?? 'Electricity purchase failed.'], ['api_provider' => $api]),
+            ]);
+
             return response()->json([
                 'status'   => false,
                 'refunded' => true,
@@ -490,6 +503,19 @@ class BillsApiController extends Controller
                 Log::critical('Cable refund failed', ['user_id' => $user->id, 'reference' => $reference, 'error' => $e->getMessage()]);
             }
 
+            ServiceTransaction::create([
+                'user_id'               => $user->id,
+                'wallet_transaction_id' => $walletTx?->id,
+                'service_type'          => 'cable',
+                'provider'              => $provider->slug,
+                'recipient'             => $smartcard,
+                'amount'                => $amount,
+                'status'                => 'refunded',
+                'reference'             => $reference,
+                'api_reference'         => $apiRes['reference'] ?? $reference,
+                'api_response'          => array_merge(is_array($apiRes['response'] ?? null) ? $apiRes['response'] : ['error' => $apiRes['message'] ?? 'Cable TV subscription failed.'], ['api_provider' => $api]),
+            ]);
+
             return response()->json([
                 'status'   => false,
                 'refunded' => true,
@@ -671,6 +697,19 @@ class BillsApiController extends Controller
                 Log::critical('Exam pin refund failed', ['user_id' => $user->id, 'reference' => $reference, 'error' => $e->getMessage()]);
             }
 
+            ServiceTransaction::create([
+                'user_id'               => $user->id,
+                'wallet_transaction_id' => $walletTx?->id,
+                'service_type'          => 'epin',
+                'provider'              => $examType->slug,
+                'recipient'             => $phone,
+                'amount'                => $amount,
+                'status'                => 'refunded',
+                'reference'             => $reference,
+                'api_reference'         => $apiRes['reference'] ?? $reference,
+                'api_response'          => array_merge(is_array($apiRes['response'] ?? null) ? $apiRes['response'] : ['error' => $apiRes['message'] ?? 'Exam pin purchase failed.'], ['api_provider' => $api]),
+            ]);
+
             return response()->json([
                 'status'   => false,
                 'refunded' => true,
@@ -715,37 +754,80 @@ class BillsApiController extends Controller
 
     private function validateMeterEasyaccess($disco, $meterType, $meterNumber): array
     {
+        $start    = hrtime(true);
+        $endpoint = config('services.easyaccess.base_url') . '/verify-electricity';
+        $payload  = [
+            'company'   => $disco->easyaccess_code ?? $disco->slug,
+            'metertype' => $meterType === 'prepaid' ? '1' : '2',
+            'meterno'   => $meterNumber,
+        ];
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
+        ];
+        $data    = [];
+        $success = false;
+
         try {
             $service = app(EasyaccessService::class);
-            $res = $service->verifyElectricity($disco->easyaccess_code ?? $disco->slug, $meterNumber, $meterType);
+            $res     = $service->verifyElectricity($disco->easyaccess_code ?? $disco->slug, $meterNumber, $meterType);
+            $data    = is_array($res) ? $res : ['raw' => $res];
+            $success = $res['success'] ?? false;
+
             return [
-                'success'       => $res['success'] ?? false,
+                'success'       => $success,
                 'customer_name' => $res['customer_name'] ?? 'VALIDATED CUSTOMER',
                 'address'       => $res['address'] ?? null,
                 'message'       => $res['message'] ?? null,
             ];
         } catch (\Throwable $e) {
+            $data = ['error' => $e->getMessage()];
             return ['success' => false, 'message' => $e->getMessage()];
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'         => auth()->id(),
+                'service'         => 'electricity_validate',
+                'provider'        => 'easyaccess',
+                'reference'       => $meterNumber,
+                'endpoint'        => $endpoint,
+                'method'          => 'POST',
+                'payload'         => $payload,
+                'request_headers' => $requestHeaders,
+                'response'        => $data,
+                'duration_ms'     => $duration,
+                'success'         => $success,
+            ]);
         }
     }
 
     private function validateMeterPayscribe($disco, $meterType, $meterNumber): array
     {
+        $start    = hrtime(true);
         $endpoint = config('services.payscribe.base_url') . '/electricity/validate';
-        $rawBody  = json_encode([
+        $payload  = [
             'service'      => $disco->slug,
             'meter_number' => $meterNumber,
             'amount'       => '1000',
             'meter_type'   => $meterType,
-        ]);
-        try {
-            $httpResponse = Http::withHeaders([
-                'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
-                'Content-Type'  => 'text/plain',
-            ])->timeout(20)->withBody($rawBody, 'text/plain')->post($endpoint);
+        ];
+        $rawBody        = json_encode($payload);
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
+            'Content-Type'  => 'text/plain',
+        ];
+        $data       = [];
+        $httpStatus = null;
+        $resHeaders = null;
+        $success    = false;
 
-            $data   = $httpResponse->json() ?? [];
-            $status = $data['status'] ?? false;
+        try {
+            $httpResponse = Http::withHeaders($requestHeaders)->timeout(20)->withBody($rawBody, 'text/plain')->post($endpoint);
+            $httpStatus   = $httpResponse->status();
+            $resHeaders   = $httpResponse->headers();
+            $data         = $httpResponse->json() ?? [];
+            $status       = $data['status'] ?? false;
+            $success      = (bool) $status;
+
             if ($status) {
                 $details = $data['message']['details'] ?? [];
                 return [
@@ -756,12 +838,31 @@ class BillsApiController extends Controller
             }
             return ['success' => false, 'message' => $data['description'] ?? 'Meter validation failed.'];
         } catch (\Throwable $e) {
+            $data = ['error' => $e->getMessage()];
             return ['success' => false, 'message' => $e->getMessage()];
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'electricity_validate',
+                'provider'         => 'payscribe',
+                'reference'        => $meterNumber,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $resHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
         }
     }
 
     private function validateMeterVtpass($disco, $meterType, $meterNumber): array
     {
+        $start    = hrtime(true);
         $baseUrl  = rtrim(config('services.vtpass.base_url') ?: AppSetting::get('vtpass_base_url', 'https://vtpass.com'), '/');
         $endpoint = $baseUrl . '/api/merchant-verify';
         $payload  = [
@@ -771,16 +872,20 @@ class BillsApiController extends Controller
         ];
         $apiKey    = config('services.vtpass.api_key') ?: AppSetting::get('vtpass_api_key') ?: AppSetting::get('vtpass_public_key');
         $secretKey = config('services.vtpass.secret_key') ?: AppSetting::get('vtpass_secret_key');
-        $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
+        $headers   = ['api-key' => $apiKey, 'secret-key' => $secretKey];
+        $data       = [];
+        $httpStatus = null;
+        $resHeaders = null;
+        $success    = false;
 
         try {
-            $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
-            // if ($publicKey) {
-            //     $headers['public-key'] = $publicKey;
-            // }
-            $res  = Http::withHeaders($headers)->timeout(20)->post($endpoint, $payload);
-            $data = $res->json() ?? [];
-            if (($data['code'] ?? '') === '000') {
+            $res        = Http::withHeaders($headers)->timeout(20)->post($endpoint, $payload);
+            $httpStatus = $res->status();
+            $resHeaders = $res->headers();
+            $data       = $res->json() ?? [];
+            $success    = (($data['code'] ?? '') === '000');
+
+            if ($success) {
                 $content = $data['content'] ?? [];
                 return [
                     'success'       => true,
@@ -790,7 +895,25 @@ class BillsApiController extends Controller
             }
             return ['success' => false, 'message' => $data['response_description'] ?? 'Meter validation failed.'];
         } catch (\Throwable $e) {
+            $data = ['error' => $e->getMessage()];
             return ['success' => false, 'message' => $e->getMessage()];
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'electricity_validate',
+                'provider'         => 'vtpass',
+                'reference'        => $meterNumber,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $headers,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $resHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
         }
     }
 
@@ -917,39 +1040,97 @@ class BillsApiController extends Controller
                 'response'  => $data,
             ];
         } catch (\Throwable $e) {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'electricity',
+                'provider'    => $api ?? 'electricity',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint ?? 'N/A',
+                'method'      => 'POST',
+                'payload'     => ['disco' => $disco->slug, 'meter' => $meterNumber, 'amount' => $amount],
+                'response'    => ['error' => $e->getMessage()],
+                'duration_ms' => $duration,
+                'success'     => false,
+            ]);
+
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
     private function validateCardEasyaccess($provider, $smartcard): array
     {
+        $start    = hrtime(true);
+        $endpoint = config('services.easyaccess.base_url') . '/verify-tv';
+        $payload  = [
+            'company' => $provider->easyaccess_id ?? $provider->slug,
+            'iucno'   => $smartcard,
+        ];
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
+            'Cache-Control' => 'no-cache',
+        ];
+        $data    = [];
+        $success = false;
+
         try {
             $service = app(EasyaccessService::class);
             $res     = $service->verifyCable($provider->easyaccess_id ?? $provider->slug, $smartcard);
+            $data    = is_array($res) ? $res : ['raw' => $res];
+            $success = $res['success'] ?? false;
+
             return [
-                'success'       => $res['success'] ?? false,
+                'success'       => $success,
                 'customer_name' => $res['customer_name'] ?? 'VALIDATED SUBSCRIBER',
                 'message'       => $res['message'] ?? null,
             ];
         } catch (\Throwable $e) {
+            $data = ['error' => $e->getMessage()];
             return ['success' => false, 'message' => $e->getMessage()];
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'         => auth()->id(),
+                'service'         => 'cable_validate',
+                'provider'        => 'easyaccess',
+                'reference'       => $smartcard,
+                'endpoint'        => $endpoint,
+                'method'          => 'POST',
+                'payload'         => $payload,
+                'request_headers' => $requestHeaders,
+                'response'        => $data,
+                'duration_ms'     => $duration,
+                'success'         => $success,
+            ]);
         }
     }
 
     private function validateCardPayscribe($provider, $smartcard): array
     {
+        $start    = hrtime(true);
         $endpoint = config('services.payscribe.base_url') . '/multichoice/validate';
-        $rawBody  = json_encode([
+        $payload  = [
             'service' => $provider->slug,
             'account' => $smartcard,
-        ]);
+        ];
+        $rawBody        = json_encode($payload);
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
+            'Content-Type'  => 'application/json',
+        ];
+        $data       = [];
+        $httpStatus = null;
+        $resHeaders = null;
+        $success    = false;
+
         try {
-            $res = Http::withHeaders([
-                'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
-                'Content-Type'  => 'application/json',
-            ])->timeout(20)->withBody($rawBody, 'application/json')->post($endpoint);
-            $data   = $res->json() ?? [];
-            $status = $data['status'] ?? false;
+            $res        = Http::withHeaders($requestHeaders)->timeout(20)->withBody($rawBody, 'application/json')->post($endpoint);
+            $httpStatus = $res->status();
+            $resHeaders = $res->headers();
+            $data       = $res->json() ?? [];
+            $status     = $data['status'] ?? false;
+            $success    = (bool) $status;
+
             if ($status) {
                 $details = $data['message']['details'] ?? [];
                 return [
@@ -959,12 +1140,31 @@ class BillsApiController extends Controller
             }
             return ['success' => false, 'message' => $data['description'] ?? 'Smartcard validation failed.'];
         } catch (\Throwable $e) {
+            $data = ['error' => $e->getMessage()];
             return ['success' => false, 'message' => $e->getMessage()];
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'cable_validate',
+                'provider'         => 'payscribe',
+                'reference'        => $smartcard,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $resHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
         }
     }
 
     private function validateCardVtpass($provider, $smartcard): array
     {
+        $start    = hrtime(true);
         $baseUrl  = rtrim(config('services.vtpass.base_url') ?: AppSetting::get('vtpass_base_url', 'https://vtpass.com'), '/');
         $endpoint = $baseUrl . '/api/merchant-verify';
         $payload  = [
@@ -973,16 +1173,20 @@ class BillsApiController extends Controller
         ];
         $apiKey    = config('services.vtpass.api_key') ?: AppSetting::get('vtpass_api_key') ?: AppSetting::get('vtpass_public_key');
         $secretKey = config('services.vtpass.secret_key') ?: AppSetting::get('vtpass_secret_key');
-        $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
+        $headers   = ['api-key' => $apiKey, 'secret-key' => $secretKey];
+        $data       = [];
+        $httpStatus = null;
+        $resHeaders = null;
+        $success    = false;
 
         try {
-            $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
-            // if ($publicKey) {
-            //     $headers['public-key'] = $publicKey;
-            // }
-            $res  = Http::withHeaders($headers)->timeout(20)->post($endpoint, $payload);
-            $data = $res->json() ?? [];
-            if (($data['code'] ?? '') === '000') {
+            $res        = Http::withHeaders($headers)->timeout(20)->post($endpoint, $payload);
+            $httpStatus = $res->status();
+            $resHeaders = $res->headers();
+            $data       = $res->json() ?? [];
+            $success    = (($data['code'] ?? '') === '000');
+
+            if ($success) {
                 $content = $data['content'] ?? [];
                 return [
                     'success'       => true,
@@ -991,7 +1195,25 @@ class BillsApiController extends Controller
             }
             return ['success' => false, 'message' => $data['response_description'] ?? 'Smartcard validation failed.'];
         } catch (\Throwable $e) {
+            $data = ['error' => $e->getMessage()];
             return ['success' => false, 'message' => $e->getMessage()];
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'cable_validate',
+                'provider'         => 'vtpass',
+                'reference'        => $smartcard,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $headers,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $resHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
         }
     }
 
@@ -1107,6 +1329,20 @@ class BillsApiController extends Controller
                 'response'  => $data,
             ];
         } catch (\Throwable $e) {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'cable',
+                'provider'    => $api ?? 'cable',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint ?? 'N/A',
+                'method'      => 'POST',
+                'payload'     => ['provider' => $provider->slug, 'smartcard' => $smartcard, 'plan' => $plan->name],
+                'response'    => ['error' => $e->getMessage()],
+                'duration_ms' => $duration,
+                'success'     => false,
+            ]);
+
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
@@ -1209,6 +1445,20 @@ class BillsApiController extends Controller
                 'response'  => $data,
             ];
         } catch (\Throwable $e) {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'     => auth()->id(),
+                'service'     => 'epin',
+                'provider'    => $api ?? 'epin',
+                'reference'   => $reference,
+                'endpoint'    => $endpoint ?? 'N/A',
+                'method'      => 'POST',
+                'payload'     => ['exam_type' => $examType->code ?? $examType->name ?? 'epin', 'quantity' => $quantity, 'phone' => $phone],
+                'response'    => ['error' => $e->getMessage()],
+                'duration_ms' => $duration,
+                'success'     => false,
+            ]);
+
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }

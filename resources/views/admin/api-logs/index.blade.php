@@ -2,7 +2,7 @@
 
 @section('title', 'API Logs')
 @section('heading', 'API Logs')
-@section('subheading', 'Outbound API call history')
+@section('subheading', 'Outbound API call & webhook history')
 
 @section('content')
 
@@ -12,6 +12,15 @@
         <label class="block text-xs font-medium text-slate-500 mb-1">Search Reference</label>
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Reference, endpoint..."
                class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+    </div>
+    <div>
+        <label class="block text-xs font-medium text-slate-500 mb-1">Source / Channel</label>
+        <select name="channel" class="px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none">
+            <option value="">All Sources</option>
+            <option value="mobile"  {{ request('channel')==='mobile'  ? 'selected' : '' }}>📱 Mobile App</option>
+            <option value="web"     {{ request('channel')==='web'     ? 'selected' : '' }}>💻 Web Interface</option>
+            <option value="webhook" {{ request('channel')==='webhook' ? 'selected' : '' }}>⚡ Webhook</option>
+        </select>
     </div>
     <div>
         <label class="block text-xs font-medium text-slate-500 mb-1">Service</label>
@@ -50,7 +59,7 @@
                class="px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none">
     </div>
     <button type="submit" class="px-4 py-2 text-sm font-medium bg-vtu-primary text-white rounded-xl hover:bg-indigo-700">Filter</button>
-    @if(request()->hasAny(['search','service','provider','status','date_from','date_to']))
+    @if(request()->hasAny(['search','channel','service','provider','status','date_from','date_to']))
     <a href="{{ route('admin.api-logs.index') }}" class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-white">Clear</a>
     @endif
 </form>
@@ -63,6 +72,7 @@
                 <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
                     <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reference</th>
                     <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">User</th>
+                    <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Source</th>
                     <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Service</th>
                     <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Provider</th>
                     <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Endpoint</th>
@@ -78,6 +88,17 @@
                     onclick="toggleLogDetail('log-{{ $log->id }}')">
                     <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">{{ Str::limit($log->reference, 20) }}</td>
                     <td class="px-4 py-2.5 text-xs text-slate-600 dark:text-slate-400">{{ $log->user?->name ?? '-' }}</td>
+                    <td class="px-4 py-2.5 text-xs">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $log->channelBadgeClass }}">
+                            @if($log->channelLabel === 'Mobile App')
+                                📱 Mobile
+                            @elseif($log->channelLabel === 'Webhook')
+                                ⚡ Webhook
+                            @else
+                                💻 Web
+                            @endif
+                        </span>
+                    </td>
                     <td class="px-4 py-2.5 text-xs capitalize font-medium text-slate-700 dark:text-slate-300">{{ $log->service }}</td>
                     <td class="px-4 py-2.5 text-xs capitalize text-slate-500">{{ $log->provider }}</td>
                     <td class="px-4 py-2.5 font-mono text-[11px] text-slate-400 max-w-[150px] truncate">{{ $log->endpoint }}</td>
@@ -98,7 +119,7 @@
                 </tr>
                 {{-- Detail row --}}
                 <tr id="log-{{ $log->id }}" class="hidden bg-slate-50 dark:bg-slate-800/30">
-                    <td colspan="9" class="px-4 py-4">
+                    <td colspan="10" class="px-4 py-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                             <div>
                                 <p class="font-semibold text-slate-500 mb-1 uppercase tracking-wider text-[10px]">Payload</p>
@@ -112,7 +133,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="9" class="px-5 py-8 text-center text-sm text-slate-400">No API logs found.</td></tr>
+                <tr><td colspan="10" class="px-5 py-8 text-center text-sm text-slate-400">No API logs found.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -124,13 +145,10 @@
     @endif
 </div>
 
-@endsection
-
-@section('scripts')
 <script>
 function toggleLogDetail(id) {
-    const row = document.getElementById(id);
-    if (row) row.classList.toggle('hidden');
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('hidden');
 }
 </script>
 @endsection

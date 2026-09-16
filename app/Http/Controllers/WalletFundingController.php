@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApiLog;
 use App\Models\AppSetting;
 use App\Models\Coupon;
 use App\Models\CouponRedemption;
 use App\Models\FundingRequest;
+use App\Models\ServiceTransaction;
 use App\Models\VirtualAccount;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
@@ -685,38 +687,40 @@ class WalletFundingController extends Controller implements HasMiddleware
     public function paystackWebhook(Request $request): \Illuminate\Http\Response
     {
         $signature = $request->header('x-paystack-signature');
-        $payload   = $request->getContent();
+        $payloadRaw = $request->getContent();
+        $payload    = $request->all();
 
-        if (!hash_equals(
-            hash_hmac('sha512', $payload, config('services.paystack.secret_key')),
+        $data       = $request->json('data') ?? [];
+        $event      = $request->json('event') ?? '';
+        $reference  = $data['reference'] ?? ('PAYSTACK_' . time());
+        $email      = $data['customer']['email'] ?? null;
+        $user       = $email ? \App\Models\User::where('email', $email)->first() : null;
+
+        $isValid = hash_equals(
+            hash_hmac('sha512', $payloadRaw, config('services.paystack.secret_key')),
             (string) $signature
-        )) {
+        );
+
+        ApiLog::record([
+            'user_id'     => $user?->id,
+            'service'     => 'webhook',
+            'provider'    => 'paystack',
+            'reference'   => $reference,
+            'endpoint'    => route('webhook.paystack'),
+            'method'      => 'POST',
+            'payload'     => $payload,
+            'response'    => ['status' => $isValid ? 'Paystack webhook received and verified' : 'Invalid Paystack signature', 'event' => $event],
+            'http_status' => $isValid ? 200 : 401,
+            'duration_ms' => 0,
+            'success'     => $isValid,
+        ]);
+
+        if (!$isValid) {
             abort(401);
         }
 
-        $event = $request->json('event');
-        $data  = $request->json('data');
-
         if ($event === 'charge.success') {
-            $reference = $data['reference'] ?? null;
             if (!$reference) return response('ok');
-
-            // Log incoming webhook event
-            $email = $data['customer']['email'] ?? null;
-            $user = $email ? \App\Models\User::where('email', $email)->first() : null;
-            \App\Models\ApiLog::record([
-                'user_id' => $user ? $user->id : null,
-                'service' => 'webhook',
-                'provider' => 'paystack',
-                'reference' => $reference,
-                'endpoint' => route('webhook.paystack'),
-                'method' => 'POST',
-                'payload' => $request->all(),
-                'response' => ['status' => 'Webhook received successfully'],
-                'http_status' => 200,
-                'duration_ms' => 0,
-                'success' => true
-            ]);
 
             // Already processed
             if (WalletTransaction::where('reference', $reference)->exists()) {
@@ -821,31 +825,32 @@ class WalletFundingController extends Controller implements HasMiddleware
      */
     public function flutterwaveWebhook(Request $request): \Illuminate\Http\Response
     {
-        $hash = $request->header('verif-hash');
+        $hash     = $request->header('verif-hash');
+        $payload  = $request->all();
+        $data     = $request->json('data') ?? [];
 
-        if ($hash !== config('services.flutterwave.hash')) {
+        $isValid   = ($hash === config('services.flutterwave.hash'));
+        $reference = $data['tx_ref'] ?? $data['flw_ref'] ?? ('FLW_' . time());
+        $email     = $data['customer']['email'] ?? null;
+        $user      = $email ? \App\Models\User::where('email', $email)->first() : null;
+
+        ApiLog::record([
+            'user_id'     => $user?->id,
+            'service'     => 'webhook',
+            'provider'    => 'flutterwave',
+            'reference'   => $reference,
+            'endpoint'    => route('webhook.flutterwave'),
+            'method'      => 'POST',
+            'payload'     => $payload,
+            'response'    => ['status' => $isValid ? 'Flutterwave webhook received and verified' : 'Invalid verif-hash'],
+            'http_status' => $isValid ? 200 : 401,
+            'duration_ms' => 0,
+            'success'     => $isValid,
+        ]);
+
+        if (!$isValid) {
             abort(401);
         }
-
-        $data = $request->json('data');
-
-        // Log incoming webhook event
-        $reference = $data['tx_ref'] ?? $data['flw_ref'] ?? null;
-        $email = $data['customer']['email'] ?? null;
-        $user = $email ? \App\Models\User::where('email', $email)->first() : null;
-        \App\Models\ApiLog::record([
-            'user_id' => $user ? $user->id : null,
-            'service' => 'webhook',
-            'provider' => 'flutterwave',
-            'reference' => $reference ?? 'WEBHOOK_FLW_' . time(),
-            'endpoint' => route('webhook.flutterwave'),
-            'method' => 'POST',
-            'payload' => $request->all(),
-            'response' => ['status' => 'Webhook received successfully'],
-            'http_status' => 200,
-            'duration_ms' => 0,
-            'success' => true
-        ]);
 
         if (($data['status'] ?? '') === 'successful') {
             // Check for DVA payment first (has virtual_account_number field)
@@ -955,19 +960,39 @@ class WalletFundingController extends Controller implements HasMiddleware
      */
     public function monnifyWebhook(Request $request): \Illuminate\Http\Response
     {
-        $signature = $request->header('monnify-signature');
-        $payload   = $request->getContent();
-        $secretKey = AppSetting::get('monnify_secret_key');
+        $signature  = $request->header('monnify-signature');
+        $payloadRaw = $request->getContent();
+        $payload    = $request->all();
+        $secretKey  = AppSetting::get('monnify_secret_key');
 
-        if (!$secretKey || !hash_equals(
-            hash_hmac('sha512', $payload, $secretKey),
+        $isValid = ($secretKey && hash_equals(
+            hash_hmac('sha512', $payloadRaw, $secretKey),
             (string) $signature
-        )) {
+        ));
+
+        $eventType = $request->json('eventType') ?? '';
+        $eventData = $request->json('eventData') ?? [];
+        $reference = $eventData['transactionReference'] ?? $eventData['paymentReference'] ?? ('MONNIFY_' . time());
+        $email     = $eventData['customer']['email'] ?? null;
+        $user      = $email ? \App\Models\User::where('email', $email)->first() : null;
+
+        ApiLog::record([
+            'user_id'     => $user?->id,
+            'service'     => 'webhook',
+            'provider'    => 'monnify',
+            'reference'   => $reference,
+            'endpoint'    => route('webhook.monnify'),
+            'method'      => 'POST',
+            'payload'     => $payload,
+            'response'    => ['status' => $isValid ? 'Monnify webhook received and verified' : 'Invalid Monnify signature', 'eventType' => $eventType],
+            'http_status' => $isValid ? 200 : 401,
+            'duration_ms' => 0,
+            'success'     => $isValid,
+        ]);
+
+        if (!$isValid) {
             abort(401);
         }
-
-        $eventType = $request->json('eventType');
-        $eventData = $request->json('eventData');
 
         if ($eventType === 'SUCCESSFUL_TRANSACTION') {
             $reference = $eventData['transactionReference'] ?? null;
@@ -1017,6 +1042,109 @@ class WalletFundingController extends Controller implements HasMiddleware
         }
 
         return response('ok');
+    }
+
+    /**
+     * VTpass webhook - handle real-time status notifications for VTpass transactions.
+     */
+    public function vtpassWebhook(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $payload = $request->all();
+
+        // Extract Request ID / Transaction ID from VTpass webhook format
+        $requestId = $request->json('requestId')
+            ?? $request->json('content.transactions.requestId')
+            ?? $request->json('content.transactions.transactionId')
+            ?? $request->json('code_data.requestId')
+            ?? null;
+
+        if (!$requestId) {
+            return response()->json(['status' => 'ignored', 'message' => 'No request ID present in payload.'], 400);
+        }
+
+        // Extract status
+        $code = (string) ($request->json('code') ?? '');
+        $txnStatus = strtolower((string) ($request->json('content.transactions.status') ?? ''));
+
+        $isSuccessful = ($code === '000' || in_array($txnStatus, ['delivered', 'successful', 'success'], true));
+        $isFailed = (in_array($code, ['016', '084', '089', '091'], true) || in_array($txnStatus, ['failed', 'cancelled', 'reversed'], true));
+
+        // Find corresponding ServiceTransaction
+        $serviceTxn = ServiceTransaction::where('api_reference', $requestId)
+            ->orWhere('reference', $requestId)
+            ->first();
+
+        // Record API Log for audit
+        ApiLog::record([
+            'user_id'     => $serviceTxn?->user_id,
+            'service'     => 'webhook',
+            'provider'    => 'vtpass',
+            'reference'   => (string) $requestId,
+            'endpoint'    => route('webhook.vtpass'),
+            'method'      => 'POST',
+            'payload'     => $payload,
+            'response'    => ['status' => 'Webhook received and processed'],
+            'http_status' => 200,
+            'duration_ms' => 0,
+            'success'     => true,
+        ]);
+
+        if (!$serviceTxn) {
+            return response()->json(['status' => 'ok', 'message' => 'Transaction not found or non-service event logged.']);
+        }
+
+        if ($isSuccessful) {
+            if ($serviceTxn->status !== 'success') {
+                $serviceTxn->update([
+                    'status' => 'success',
+                    'api_response' => array_merge($serviceTxn->api_response ?? [], ['webhook' => $payload]),
+                ]);
+
+                // Send push notification to user
+                $formattedService = match($serviceTxn->service_type) {
+                    'epin' => 'Exam Pin',
+                    'cable' => 'Cable TV',
+                    default => ucfirst($serviceTxn->service_type)
+                };
+                $title = $formattedService . ' Purchase Successful';
+                $message = "Your purchase of {$formattedService} (₦" . number_format((float) $serviceTxn->amount, 2) . ") for {$serviceTxn->recipient} was completed successfully.";
+
+                try {
+                    \App\Services\OneSignalService::sendNotificationToUser((string) $serviceTxn->user_id, $title, $message);
+                } catch (\Throwable $e) {}
+            }
+        } elseif ($isFailed) {
+            if ($serviceTxn->status !== 'failed' && $serviceTxn->status !== 'refunded') {
+                DB::transaction(function () use ($serviceTxn, $payload) {
+                    $serviceTxn->update([
+                        'status' => 'refunded',
+                        'api_response' => array_merge($serviceTxn->api_response ?? [], ['webhook' => $payload]),
+                    ]);
+
+                    $user = $serviceTxn->user;
+                    if ($user && $user->wallet) {
+                        $refundRef = 'REF_' . $serviceTxn->reference;
+                        if (!WalletTransaction::where('reference', $refundRef)->exists()) {
+                            $user->wallet->credit(
+                                (float) $serviceTxn->amount,
+                                'Refund for failed ' . ucfirst($serviceTxn->service_type) . ' purchase (' . $serviceTxn->recipient . ')',
+                                $refundRef,
+                                ['type' => 'refund', 'service_transaction_id' => $serviceTxn->id]
+                            );
+                        }
+                    }
+                });
+
+                // Send push notification for refund
+                $title = 'Transaction Refunded';
+                $message = "Your failed transaction of ₦" . number_format((float) $serviceTxn->amount, 2) . " for " . $serviceTxn->recipient . " has been refunded to your wallet.";
+                try {
+                    \App\Services\OneSignalService::sendNotificationToUser((string) $serviceTxn->user_id, $title, $message);
+                } catch (\Throwable $e) {}
+            }
+        }
+
+        return response()->json(['status' => 'ok', 'message' => 'VTpass webhook processed.']);
     }
 
     // ─── Manual Funding ───────────────────────────────────────────────────────

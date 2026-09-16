@@ -202,11 +202,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/lockscreen/fingerprint/verify',   [LockScreenController::class, 'fingerprintVerify'])->name('lockscreen.biometric.verify');
 });
 
-// ── Payment Webhooks (no auth, no CSRF) ──────────────────────────────────────
+// ── Payment & Provider Webhooks (no auth, no CSRF) ─────────────────────────
 Route::withoutMiddleware(['web'])->group(function () {
     Route::post('/webhook/paystack',    [WalletFundingController::class, 'paystackWebhook'])->name('webhook.paystack');
     Route::post('/webhook/flutterwave', [WalletFundingController::class, 'flutterwaveWebhook'])->name('webhook.flutterwave');
     Route::post('/webhook/monnify',     [WalletFundingController::class, 'monnifyWebhook'])->name('webhook.monnify');
+    Route::post('/webhook/vtpass',      [WalletFundingController::class, 'vtpassWebhook'])->name('webhook.vtpass');
 });
 
 // ── Admin Panel ───────────────────────────────────────────────────────────────

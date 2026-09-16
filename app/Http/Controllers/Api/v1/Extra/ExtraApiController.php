@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1\Extra;
 
 use App\Http\Controllers\Controller;
 use App\Models\AirtimeToCashRequest;
+use App\Models\ApiLog;
 use App\Models\AppSetting;
 use App\Models\BettingPlatform;
 use App\Models\DataPlan;
@@ -75,11 +76,18 @@ class ExtraApiController extends Controller
 
         $payscribeKey = AppSetting::get('payscribe_public_key');
         if ($payscribeKey) {
+            $start = hrtime(true);
+            $endpoint = "https://api.payscribe.ng/api/v1/betting/lookup?platform={$platform->slug}&customer_id={$customer}";
+            $requestHeaders = ['Authorization' => 'Bearer ' . $payscribeKey];
+            $body = [];
+            $success = false;
+
             try {
-                $response = Http::withHeaders(['Authorization' => 'Bearer ' . $payscribeKey])
-                    ->get("https://api.payscribe.ng/api/v1/betting/lookup?platform={$platform->slug}&customer_id={$customer}");
-                $body = $response->json();
-                if (($body['status'] ?? false) && isset($body['data']['customer_name'])) {
+                $response = Http::withHeaders($requestHeaders)->timeout(20)->get($endpoint);
+                $body     = $response->json() ?? [];
+                $success  = ($body['status'] ?? false) && isset($body['data']['customer_name']);
+
+                if ($success) {
                     return response()->json([
                         'status'  => true,
                         'message' => 'Betting account validated successfully.',
@@ -90,7 +98,24 @@ class ExtraApiController extends Controller
                         ],
                     ]);
                 }
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+                $body = ['error' => $e->getMessage()];
+            } finally {
+                $duration = (int) ((hrtime(true) - $start) / 1e6);
+                ApiLog::record([
+                    'user_id'         => auth()->id(),
+                    'service'         => 'betting_validate',
+                    'provider'        => 'payscribe',
+                    'reference'       => $customer,
+                    'endpoint'        => $endpoint,
+                    'method'          => 'GET',
+                    'payload'         => ['platform' => $platform->slug, 'customer_id' => $customer],
+                    'request_headers' => ['Authorization' => 'Bearer ***'],
+                    'response'        => $body,
+                    'duration_ms'     => $duration,
+                    'success'         => $success,
+                ]);
+            }
         }
 
         // Fallback demo validation payload

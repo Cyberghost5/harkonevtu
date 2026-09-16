@@ -13,6 +13,7 @@ class ApiLog extends Model
         'user_id',
         'service',
         'provider',
+        'channel',
         'reference',
         'endpoint',
         'method',
@@ -40,21 +41,27 @@ class ApiLog extends Model
     }
 
     /**
-     * Log an outgoing API call and its response.
-     *
-     * @param  array{
-     *   user_id: int|null,
-     *   service: string,
-     *   provider: string,
-     *   reference: string,
-     *   endpoint: string,
-     *   method: string,
-     *   payload: array,
-     *   response: mixed,
-     *   http_status: int|null,
-     *   duration_ms: int|null,
-     *   success: bool
-     * } $data
+     * Determine channel dynamically if not provided.
+     */
+    public static function detectChannel(?string $providedChannel = null, ?string $service = null, ?string $endpoint = null): string
+    {
+        if ($providedChannel && in_array($providedChannel, ['mobile', 'web', 'webhook'], true)) {
+            return $providedChannel;
+        }
+
+        if ($service === 'webhook' || ($endpoint && str_contains($endpoint, 'webhook')) || request()?->is('webhook/*')) {
+            return 'webhook';
+        }
+
+        if (request()?->is('api/*') || request()?->wantsJson()) {
+            return 'mobile';
+        }
+
+        return 'web';
+    }
+
+    /**
+     * Log an outgoing API call or webhook event.
      */
     public static function record(array $data): self
     {
@@ -69,10 +76,17 @@ class ApiLog extends Model
         $respHeaders = static::scrubSensitiveData($respHeaders);
         $resp        = static::scrubSensitiveData($resp);
 
+        $channel = static::detectChannel(
+            $data['channel'] ?? null,
+            $data['service'] ?? null,
+            $data['endpoint'] ?? null
+        );
+
         return static::create([
             'user_id'          => $data['user_id']    ?? null,
             'service'          => $data['service'],
             'provider'         => $data['provider'],
+            'channel'          => $channel,
             'reference'        => $data['reference'],
             'endpoint'         => $data['endpoint'],
             'method'           => $data['method']     ?? 'POST',
@@ -84,6 +98,34 @@ class ApiLog extends Model
             'duration_ms'      => $data['duration_ms'] ?? null,
             'success'          => $data['success']    ?? false,
         ]);
+    }
+
+    public function getChannelLabelAttribute(): string
+    {
+        $chan = $this->channel;
+        if (!$chan) {
+            $chan = static::detectChannel(null, $this->service, $this->endpoint);
+        }
+
+        return match ($chan) {
+            'mobile'  => 'Mobile App',
+            'webhook' => 'Webhook',
+            default   => 'Web',
+        };
+    }
+
+    public function getChannelBadgeClassAttribute(): string
+    {
+        $chan = $this->channel;
+        if (!$chan) {
+            $chan = static::detectChannel(null, $this->service, $this->endpoint);
+        }
+
+        return match ($chan) {
+            'mobile'  => 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
+            'webhook' => 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400',
+            default   => 'bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-400',
+        };
     }
 
     /**

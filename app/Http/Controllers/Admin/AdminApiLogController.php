@@ -12,6 +12,15 @@ class AdminApiLogController extends Controller
     {
         $query = ApiLog::with('user')->orderByDesc('created_at');
 
+        if ($request->filled('channel')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('channel', $request->channel);
+                if ($request->channel === 'webhook') {
+                    $q->orWhere('service', 'webhook')->orWhere('endpoint', 'like', '%webhook%');
+                }
+            });
+        }
+
         if ($request->filled('service')) {
             $query->where('service', $request->service);
         }

@@ -55,24 +55,34 @@ class BettingController extends Controller
             return response()->json(['error' => 'Payscribe API credentials not configured.'], 422);
         }
 
+        $start = hrtime(true);
+        $endpoint = 'https://api.payscribe.ng/api/v1/betting/lookup/';
+        $payload  = [
+            'bet_id'      => $request->platform,
+            'customer_id' => $request->customer_id,
+        ];
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . $payscribeKey,
+            'Accept'        => 'application/json',
+        ];
+        $res = [];
+        $httpStatus = null;
+        $success = false;
+
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $payscribeKey,
-                'Accept'        => 'application/json',
-            ])->get('https://api.payscribe.ng/api/v1/betting/lookup/', [
-                'bet_id'      => $request->platform,
-                'customer_id' => $request->customer_id,
-            ]);
+            $response = Http::withHeaders($requestHeaders)->timeout(20)->get($endpoint, $payload);
+            $httpStatus = $response->status();
+            $res = $response->json() ?? [];
 
             if ($response->failed()) {
                 return response()->json(['error' => 'Unable to connect to service provider lookup.'], 400);
             }
 
-            $res = $response->json();
             if (empty($res['status']) || $res['status'] !== true) {
                 return response()->json(['error' => $res['description'] ?? 'Could not validate customer ID.'], 400);
             }
 
+            $success = true;
             $customerName = null;
             if (isset($res['details']['customer_name'])) {
                 $customerName = $res['details']['customer_name'];
@@ -84,8 +94,25 @@ class BettingController extends Controller
 
             return response()->json(['customer_name' => $customerName]);
         } catch (\Exception $e) {
+            $res = ['error' => $e->getMessage()];
             Log::error('Betting lookup error: ' . $e->getMessage());
             return response()->json(['error' => 'An error occurred while validating customer ID.'], 500);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'betting_validate',
+                'provider'         => 'payscribe',
+                'reference'        => $request->customer_id,
+                'endpoint'         => $endpoint,
+                'method'           => 'GET',
+                'payload'          => $payload,
+                'request_headers'  => ['Authorization' => 'Bearer ***'],
+                'response'         => $res,
+                'http_status'      => $httpStatus,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
         }
     }
 
