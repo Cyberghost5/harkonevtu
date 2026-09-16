@@ -60,10 +60,22 @@ class DataApiController extends Controller
 
         $networkList = $networks->map(function (NetworkAirtime $net) use ($allTypes) {
             $key = $net->network_key;
+            $api = AppSetting::get('data_api_' . $key, 'autopilot');
+            if ($api === 'mtn_ers' && $key !== 'mtn') {
+                $api = 'autopilot';
+            }
+
             $enabledTypes = [];
 
             foreach ($allTypes as $type) {
-                if (AppSetting::get("data_type_{$key}_{$type}", '1') === '1') {
+                $settingEnabled = AppSetting::get("data_type_{$key}_{$type}", '1') === '1';
+                $hasActivePlans = DataPlan::active()
+                    ->forNetwork($key)
+                    ->forType($type)
+                    ->forApi($api)
+                    ->exists();
+
+                if ($settingEnabled && $hasActivePlans) {
                     $enabledTypes[] = [
                         'type_key' => $type,
                         'name'     => $this->typeLabels[$type] ?? strtoupper($type),
@@ -72,9 +84,9 @@ class DataApiController extends Controller
             }
 
             return [
-                'id'                  => $net->id,
-                'name'                => $net->name,
-                'network_key'         => $key,
+                'id'                   => $net->id,
+                'name'                 => $net->name,
+                'network_key'          => $key,
                 'available_data_types' => $enabledTypes,
             ];
         });
@@ -419,7 +431,7 @@ class DataApiController extends Controller
         $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response        = Http::withHeaders($requestHeaders)->timeout(60)->post($endpoint, $payload);
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
             $raw             = $response->json();
@@ -546,7 +558,7 @@ class DataApiController extends Controller
         $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response        = Http::withHeaders($requestHeaders)->timeout(60)->post($endpoint, $payload);
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
             $data            = $response->json() ?? [];
@@ -602,7 +614,7 @@ class DataApiController extends Controller
         $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response        = Http::withHeaders($requestHeaders)->timeout(60)->post($endpoint, $payload);
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
             $data            = $response->json() ?? [];
@@ -657,7 +669,7 @@ class DataApiController extends Controller
         $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response        = Http::withHeaders($requestHeaders)->timeout(60)->asForm()->post($endpoint, $payload);
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->asForm()->post($endpoint, $payload);
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
             $data            = $response->json() ?? [];
@@ -712,7 +724,7 @@ class DataApiController extends Controller
         $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response        = Http::withHeaders($requestHeaders)->timeout(60)->post($endpoint, $payload);
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
             $data            = $response->json() ?? [];
@@ -772,7 +784,7 @@ class DataApiController extends Controller
         $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response        = Http::withHeaders($requestHeaders)->timeout(60)->post($endpoint, $payload);
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
             $data            = $response->json() ?? [];

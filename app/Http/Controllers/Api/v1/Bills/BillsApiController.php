@@ -968,7 +968,7 @@ class BillsApiController extends Controller
                 $res  = Http::withHeaders([
                     'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
                     'Content-Type'  => 'application/json',
-                ])->timeout(60)->post($endpoint, $payload);
+                ])->timeout(30)->post($endpoint, $payload);
                 $data     = $res->json() ?? [];
                 $success  = ($data['status'] ?? false) === true;
                 $duration = (int) ((hrtime(true) - $start) / 1e6);
@@ -1016,7 +1016,7 @@ class BillsApiController extends Controller
             //     $headers['public-key'] = $publicKey;
             // }
 
-            $res     = Http::withHeaders($headers)->timeout(60)->post($endpoint, $payload);
+            $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
             $data    = $res->json() ?? [];
             $code    = $data['code'] ?? '';
             $content = $data['content'] ?? [];
@@ -1274,7 +1274,7 @@ class BillsApiController extends Controller
                 $res  = Http::withHeaders([
                     'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
                     'Content-Type'  => 'application/json',
-                ])->timeout(60)->post($endpoint, $payload);
+                ])->timeout(30)->post($endpoint, $payload);
                 $data     = $res->json() ?? [];
                 $success  = ($data['status'] ?? false) === true;
                 $duration = (int) ((hrtime(true) - $start) / 1e6);
@@ -1320,7 +1320,7 @@ class BillsApiController extends Controller
             //     $headers['public-key'] = $publicKey;
             // }
 
-            $res     = Http::withHeaders($headers)->timeout(60)->post($endpoint, $payload);
+            $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
             $data    = $res->json() ?? [];
             $code    = $data['code'] ?? '';
             $content = $data['content'] ?? [];
@@ -1417,7 +1417,7 @@ class BillsApiController extends Controller
             //     $headers['public-key'] = $publicKey;
             // }
 
-            $res     = Http::withHeaders($headers)->timeout(60)->post($endpoint, $payload);
+            $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
             $data    = $res->json() ?? [];
             $code    = $data['code'] ?? '';
             $content = $data['content'] ?? [];

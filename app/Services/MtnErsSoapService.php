@@ -240,7 +240,7 @@ class MtnErsSoapService
                 'version'     => 1.0,
                 'http_errors' => false,
             ])->connectTimeout(0)
-              ->timeout(60)
+              ->timeout(30)
               ->withBody($xmlPayload, 'text/xml; charset=utf-8')
               ->post($this->endpoint);
 

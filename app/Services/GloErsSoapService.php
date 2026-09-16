@@ -249,7 +249,7 @@ class GloErsSoapService
             $response = Http::withHeaders([
                 'Content-Type' => 'text/xml; charset=utf-8',
                 'SOAPAction'   => $soapAction,
-            ])->timeout(60)->send('POST', $this->endpoint, [
+            ])->timeout(30)->send('POST', $this->endpoint, [
                 'body' => $xmlPayload
             ]);
 
