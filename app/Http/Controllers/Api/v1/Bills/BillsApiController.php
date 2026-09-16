@@ -883,17 +883,24 @@ class BillsApiController extends Controller
             $httpStatus = $res->status();
             $resHeaders = $res->headers();
             $data       = $res->json() ?? [];
-            $success    = (($data['code'] ?? '') === '000');
+            $code       = $data['code'] ?? '';
+            $content    = $data['content'] ?? [];
 
-            if ($success) {
-                $content = $data['content'] ?? [];
+            $hasError          = !empty($content['error']);
+            $isWrongBillerCode = isset($content['WrongBillersCode']) && ($content['WrongBillersCode'] === true || $content['WrongBillersCode'] === 'true');
+            $customerName      = $content['Customer_Name'] ?? $content['name'] ?? $content['customer_name'] ?? null;
+
+            if ($code === '000' && !$hasError && !$isWrongBillerCode && !empty($customerName)) {
+                $success = true;
                 return [
                     'success'       => true,
-                    'customer_name' => $content['Customer_Name'] ?? $content['name'] ?? 'VALIDATED CUSTOMER',
+                    'customer_name' => $customerName,
                     'address'       => $content['Address'] ?? $content['address'] ?? null,
                 ];
             }
-            return ['success' => false, 'message' => $data['response_description'] ?? 'Meter validation failed.'];
+
+            $errorMessage = $content['error'] ?? $data['response_description'] ?? 'Meter validation failed. Please verify the meter number.';
+            return ['success' => false, 'message' => $errorMessage];
         } catch (\Throwable $e) {
             $data = ['error' => $e->getMessage()];
             return ['success' => false, 'message' => $e->getMessage()];
@@ -1012,7 +1019,10 @@ class BillsApiController extends Controller
             $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
             $data    = $res->json() ?? [];
             $code    = $data['code'] ?? '';
-            $success = in_array($code, ['000', '099']);
+            $content = $data['content'] ?? [];
+            $success = in_array($code, ['000', '099'])
+                && empty($content['error'])
+                && !(isset($content['WrongBillersCode']) && ($content['WrongBillersCode'] === true || $content['WrongBillersCode'] === 'true'));
             $txn     = $data['content']['transactions'] ?? [];
             $rawToken= $txn['token'] ?? $data['purchased_code'] ?? $data['Token'] ?? null;
             $token   = $rawToken ? preg_replace('/^Token\s*:\s*/i', '', trim((string) $rawToken)) : 'N/A';
@@ -1184,16 +1194,23 @@ class BillsApiController extends Controller
             $httpStatus = $res->status();
             $resHeaders = $res->headers();
             $data       = $res->json() ?? [];
-            $success    = (($data['code'] ?? '') === '000');
+            $code       = $data['code'] ?? '';
+            $content    = $data['content'] ?? [];
 
-            if ($success) {
-                $content = $data['content'] ?? [];
+            $hasError          = !empty($content['error']);
+            $isWrongBillerCode = isset($content['WrongBillersCode']) && ($content['WrongBillersCode'] === true || $content['WrongBillersCode'] === 'true');
+            $customerName      = $content['Customer_Name'] ?? $content['name'] ?? $content['customer_name'] ?? null;
+
+            if ($code === '000' && !$hasError && !$isWrongBillerCode && !empty($customerName)) {
+                $success = true;
                 return [
                     'success'       => true,
-                    'customer_name' => $content['Customer_Name'] ?? $content['name'] ?? 'VALIDATED SUBSCRIBER',
+                    'customer_name' => $customerName,
                 ];
             }
-            return ['success' => false, 'message' => $data['response_description'] ?? 'Smartcard validation failed.'];
+
+            $errorMessage = $content['error'] ?? $data['response_description'] ?? 'Smartcard validation failed. Please check the IUC/Smartcard number.';
+            return ['success' => false, 'message' => $errorMessage];
         } catch (\Throwable $e) {
             $data = ['error' => $e->getMessage()];
             return ['success' => false, 'message' => $e->getMessage()];
@@ -1306,7 +1323,10 @@ class BillsApiController extends Controller
             $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
             $data    = $res->json() ?? [];
             $code    = $data['code'] ?? '';
-            $success = in_array($code, ['000', '099']);
+            $content = $data['content'] ?? [];
+            $success = in_array($code, ['000', '099'])
+                && empty($content['error'])
+                && !(isset($content['WrongBillersCode']) && ($content['WrongBillersCode'] === true || $content['WrongBillersCode'] === 'true'));
             $txn     = $data['content']['transactions'] ?? [];
             $duration= (int) ((hrtime(true) - $start) / 1e6);
 
@@ -1400,7 +1420,10 @@ class BillsApiController extends Controller
             $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
             $data    = $res->json() ?? [];
             $code    = $data['code'] ?? '';
-            $success = in_array($code, ['000', '099']);
+            $content = $data['content'] ?? [];
+            $success = in_array($code, ['000', '099'])
+                && empty($content['error'])
+                && !(isset($content['WrongBillersCode']) && ($content['WrongBillersCode'] === true || $content['WrongBillersCode'] === 'true'));
             $txn     = $data['content']['transactions'] ?? [];
             $pins    = [];
 

@@ -226,7 +226,10 @@ class ExamPinController extends Controller
             $raw             = $response->json();
             $data            = is_array($raw) ? $raw : ['message' => 'Unknown VTPass response'];
             $code            = $data['code'] ?? '';
-            $success         = in_array($code, ['000', '099']);
+            $content         = $data['content'] ?? [];
+            $success         = in_array($code, ['000', '099'])
+                && empty($content['error'])
+                && !(isset($content['WrongBillersCode']) && ($content['WrongBillersCode'] === true || $content['WrongBillersCode'] === 'true'));
             $txn             = $data['content']['transactions'] ?? [];
             $apiRef          = $txn['transactionId'] ?? ($data['requestId'] ?? $vtpassRef);
 

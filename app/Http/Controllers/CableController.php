@@ -272,20 +272,24 @@ class CableController extends Controller
             $httpStatus      = $httpResponse->status();
             $responseHeaders = $httpResponse->headers();
             $data            = $httpResponse->json() ?? [];
-            $code       = $data['code'] ?? '';
+            $code              = $data['code'] ?? '';
+            $content           = $data['content'] ?? [];
+            $hasError          = !empty($content['error']);
+            $isWrongBillerCode = isset($content['WrongBillersCode']) && ($content['WrongBillersCode'] === true || $content['WrongBillersCode'] === 'true');
+            $customerName      = $content['Customer_Name'] ?? $content['name'] ?? $content['customer_name'] ?? null;
 
-            if ($code === '000') {
-                $content = $data['content'] ?? [];
+            if ($code === '000' && !$hasError && !$isWrongBillerCode && !empty($customerName)) {
                 $success = true;
                 $result  = response()->json([
                     'success'       => true,
-                    'customer_name' => $content['Customer_Name'] ?? $content['name'] ?? null,
+                    'customer_name' => $customerName,
                     'smartcard'     => $smartcard,
                 ]);
             } else {
+                $errMsg = $content['error'] ?? $data['response_description'] ?? 'Invalid smartcard number.';
                 $result = response()->json([
                     'success' => false,
-                    'message' => $data['response_description'] ?? 'Invalid smartcard number.',
+                    'message' => $errMsg,
                 ], 422);
             }
         } catch (\Exception $e) {
@@ -507,7 +511,10 @@ class CableController extends Controller
             $raw        = $response->json();
             $data       = is_array($raw) ? $raw : ['message' => 'Unknown VTPass response'];
             $code       = $data['code'] ?? '';
-            $success    = in_array($code, ['000', '099']);
+            $content    = $data['content'] ?? [];
+            $success    = in_array($code, ['000', '099'])
+                && empty($content['error'])
+                && !(isset($content['WrongBillersCode']) && ($content['WrongBillersCode'] === true || $content['WrongBillersCode'] === 'true'));
             $apiRef     = $data['content']['transactions']['transactionId'] ?? $data['requestId'] ?? $vtpassRef;
 
             if ($success) {
