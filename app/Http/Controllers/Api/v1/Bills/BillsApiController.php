@@ -775,9 +775,9 @@ class BillsApiController extends Controller
 
         try {
             $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
-            if ($publicKey) {
-                $headers['public-key'] = $publicKey;
-            }
+            // if ($publicKey) {
+            //     $headers['public-key'] = $publicKey;
+            // }
             $res  = Http::withHeaders($headers)->timeout(20)->post($endpoint, $payload);
             $data = $res->json() ?? [];
             if (($data['code'] ?? '') === '000') {
@@ -882,9 +882,9 @@ class BillsApiController extends Controller
             $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
 
             $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
-            if ($publicKey) {
-                $headers['public-key'] = $publicKey;
-            }
+            // if ($publicKey) {
+            //     $headers['public-key'] = $publicKey;
+            // }
 
             $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
             $data    = $res->json() ?? [];
@@ -977,9 +977,9 @@ class BillsApiController extends Controller
 
         try {
             $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
-            if ($publicKey) {
-                $headers['public-key'] = $publicKey;
-            }
+            // if ($publicKey) {
+            //     $headers['public-key'] = $publicKey;
+            // }
             $res  = Http::withHeaders($headers)->timeout(20)->post($endpoint, $payload);
             $data = $res->json() ?? [];
             if (($data['code'] ?? '') === '000') {
@@ -1077,9 +1077,9 @@ class BillsApiController extends Controller
             $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
 
             $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
-            if ($publicKey) {
-                $headers['public-key'] = $publicKey;
-            }
+            // if ($publicKey) {
+            //     $headers['public-key'] = $publicKey;
+            // }
 
             $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
             $data    = $res->json() ?? [];
@@ -1157,9 +1157,9 @@ class BillsApiController extends Controller
             $publicKey = config('services.vtpass.public_key') ?: AppSetting::get('vtpass_public_key') ?: $apiKey;
 
             $headers = ['api-key' => $apiKey, 'secret-key' => $secretKey];
-            if ($publicKey) {
-                $headers['public-key'] = $publicKey;
-            }
+            // if ($publicKey) {
+            //     $headers['public-key'] = $publicKey;
+            // }
 
             $res     = Http::withHeaders($headers)->timeout(30)->post($endpoint, $payload);
             $data    = $res->json() ?? [];

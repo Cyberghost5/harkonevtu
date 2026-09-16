@@ -412,9 +412,9 @@ class DataApiController extends Controller
             'api-key'    => $apiKey,
             'secret-key' => $secretKey,
         ];
-        if ($publicKey) {
-            $requestHeaders['public-key'] = $publicKey;
-        }
+        // if ($publicKey) {
+        //     $requestHeaders['public-key'] = $publicKey;
+        // }
 
         $responseHeaders = null;
         $start = hrtime(true);
