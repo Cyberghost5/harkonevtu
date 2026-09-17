@@ -257,21 +257,42 @@ class ExtraApiController extends Controller
         $max = (float) AppSetting::get('airtime2cash_max_per_payment', 50000);
 
         $request->validate([
-            'network'    => ['required', 'string', 'in:mtn,airtel,glo,9mobile'],
-            'phone'      => ['required', 'string', 'digits:11'],
-            'amount'     => ['required', 'numeric', "min:{$min}", "max:{$max}"],
-            'screenshot' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'network'         => ['required', 'string', 'in:mtn,airtel,glo,9mobile,MTN,AIRTEL,GLO,9MOBILE'],
+            'phone'           => ['required', 'string', 'digits:11'],
+            'amount'          => ['required', 'numeric', "min:{$min}", "max:{$max}"],
+            'pin'             => ['nullable', 'digits:4'],
+            'transaction_pin' => ['nullable', 'digits:4'],
+            'screenshot'      => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'proof'           => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'receipt'         => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'image'           => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
-        $user          = auth()->user();
+        $user = auth()->user();
+
+        // Validate Transaction PIN if set on user profile
+        $providedPin = $request->pin ?? $request->transaction_pin;
+        if ($user->transaction_pin && (!$providedPin || !$user->verifyPin($providedPin))) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Invalid transaction PIN provided.',
+            ], 422);
+        }
+
+        $network       = strtolower((string) $request->network);
         $amount        = (float) $request->amount;
         $chargePercent = (float) AppSetting::get('airtime2cash_tx_charge', 20);
         $charge        = ($amount * $chargePercent) / 100;
         $receiveAmount = $amount - $charge;
 
         $screenshotPath = 'api_submission';
-        if ($request->hasFile('screenshot')) {
-            $screenshotPath = $request->file('screenshot')->store('airtime-proofs', 'public');
+        $uploadedFile   = $request->file('screenshot')
+            ?? $request->file('proof')
+            ?? $request->file('receipt')
+            ?? $request->file('image');
+
+        if ($uploadedFile) {
+            $screenshotPath = $uploadedFile->store('airtime-proofs', 'public');
         }
 
         $req = AirtimeToCashRequest::create([

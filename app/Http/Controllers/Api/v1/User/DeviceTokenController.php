@@ -15,15 +15,29 @@ class DeviceTokenController extends Controller
      */
     public function updateDeviceToken(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'device_token' => ['required', 'string', 'max:500'],
-            'device_type'  => ['nullable', 'string', 'in:android,ios,web'],
-        ]);
+        $token = $request->input('device_token')
+            ?? $request->input('fcm_token')
+            ?? $request->input('push_token')
+            ?? $request->input('token');
+
+        $type = $request->input('device_type')
+            ?? $request->input('platform')
+            ?? 'android';
+
+        if (empty($token) || !is_string($token)) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Validation failed.',
+                'errors'  => [
+                    'device_token' => ['A valid push notification token (device_token, fcm_token, push_token, or token) is required.'],
+                ],
+            ], 422);
+        }
 
         $user = $request->user();
         $user->update([
-            'fcm_device_token' => $validated['device_token'],
-            'device_type'      => $validated['device_type'] ?? 'android',
+            'fcm_device_token' => $token,
+            'device_type'      => strtolower((string) $type),
         ]);
 
         return response()->json([
