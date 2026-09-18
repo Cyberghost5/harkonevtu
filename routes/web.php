@@ -238,8 +238,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::post('/airtime-to-cash/{id}/approve', [\App\Http\Controllers\Admin\AdminAirtimeToCashController::class, 'approve'])->name('airtime-to-cash.approve');
     Route::post('/airtime-to-cash/{id}/reject',  [\App\Http\Controllers\Admin\AdminAirtimeToCashController::class, 'reject'])->name('airtime-to-cash.reject');
 
-    // API Logs
+    // API Logs & User Logs
     Route::get('/api-logs',            [AdminApiLogController::class, 'index'])->name('api-logs.index');
+    Route::get('/user-logs',           [\App\Http\Controllers\Admin\AdminUserLogController::class, 'index'])->name('user-logs.index');
 
     // Settings - redirect legacy index to general
     Route::get('/settings',                        fn() => redirect()->route('admin.settings.general'))->name('settings.index');

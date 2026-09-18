@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\VerifyEmailOtpMail;
 use App\Models\AppSetting;
 use App\Models\User;
+use App\Models\UserLoginLog;
 use App\Models\Wallet;
 use App\Services\TermiiService;
 use Illuminate\Http\JsonResponse;
@@ -249,6 +250,13 @@ class AuthController extends Controller
         // Issue fresh Sanctum access token
         $token = $user->createToken('mobile-app')->plainTextToken;
 
+        UserLoginLog::record([
+            'user_id'           => $user->id,
+            'email_or_username' => $user->email,
+            'channel'           => 'mobile',
+            'status'            => 'success',
+        ]);
+
         Log::info("[API OTP Verified Success] User ID: {$user->id} ({$user->email})");
 
         return $this->jsonResponse(true, 'OTP verified successfully.', [
@@ -342,10 +350,23 @@ class AuthController extends Controller
             ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            UserLoginLog::record([
+                'email_or_username' => $login,
+                'channel'           => 'mobile',
+                'status'            => 'failed',
+                'failure_reason'    => 'Invalid login credentials',
+            ]);
             return $this->jsonResponse(false, 'Invalid login credentials.', null, 401);
         }
 
         if (!$user->is_active) {
+            UserLoginLog::record([
+                'user_id'           => $user->id,
+                'email_or_username' => $login,
+                'channel'           => 'mobile',
+                'status'            => 'failed',
+                'failure_reason'    => 'Account deactivated',
+            ]);
             return $this->jsonResponse(false, 'Your account is deactivated. Please contact support.', null, 403);
         }
 
@@ -383,6 +404,13 @@ class AuthController extends Controller
             $message = "Your " . AppSetting::get('site_name', 'PayPulse') . " login verification code is: " . $otp;
             TermiiService::sendSms($user->phone, $message);
 
+            UserLoginLog::record([
+                'user_id'           => $user->id,
+                'email_or_username' => $user->email,
+                'channel'           => 'mobile',
+                'status'            => 'otp_pending',
+            ]);
+
             return $this->jsonResponse(true, 'OTP verification required.', [
                 'requires_otp' => true,
                 'user_id'      => $user->id,
@@ -390,6 +418,13 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('mobile-app')->plainTextToken;
+
+        UserLoginLog::record([
+            'user_id'           => $user->id,
+            'email_or_username' => $user->email,
+            'channel'           => 'mobile',
+            'status'            => 'success',
+        ]);
 
         return $this->jsonResponse(true, 'Login successful.', [
             'requires_otp' => false,

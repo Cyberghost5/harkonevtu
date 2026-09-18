@@ -58,6 +58,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(PrintedVoucher::class);
     }
 
+    public function loginLogs(): HasMany
+    {
+        return $this->hasMany(UserLoginLog::class);
+    }
+
     // ─── PIN Helpers ──────────────────────────────────────────────────────────
 
     public function hasPinSet(): bool

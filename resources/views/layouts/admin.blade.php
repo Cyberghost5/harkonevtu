@@ -254,6 +254,15 @@
                     API Logs
                 </a>
 
+                @php $a = request()->routeIs('admin.user-logs.*'); @endphp
+                <a href="{{ route('admin.user-logs.index') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+                   style="{{ $a ? 'background:'.$themeColor.';color:#fff' : 'color:rgba(255,255,255,0.7)' }}"
+                   @unless($a) onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff';" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.7)';" @endunless>
+                    <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 004 11c0 2.473.345 4.866.99 7.132"/></svg>
+                    User Logs
+                </a>
+
                 @php $a = request()->routeIs('admin.monitoring'); @endphp
                 <a href="{{ route('admin.monitoring') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"

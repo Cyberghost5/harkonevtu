@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
 use App\Models\User;
+use App\Models\UserLoginLog;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,20 +34,24 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
+            'email'    => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
         ]);
 
-        // Rate limiting: max 5 attempts per email+IP per minute
-        $key = Str::transliterate(Str::lower($request->input('email')).'|'.$request->ip());
+        $key = 'login_attempts:' . Str::lower($request->email) . '|' . $request->ip();
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
+
+            UserLoginLog::record([
+                'email_or_username' => $request->email,
+                'channel'           => 'web',
+                'status'            => 'failed',
+                'failure_reason'    => 'Too many login attempts',
+            ]);
+
             throw ValidationException::withMessages([
-                'email' => __('auth.throttle', [
-                    'seconds' => $seconds,
-                    'minutes' => ceil($seconds / 60),
-                ]),
+                'email' => __('auth.throttle', ['seconds' => $seconds, 'minutes' => ceil($seconds / 60)]),
             ]);
         }
 
@@ -65,14 +70,37 @@ class AuthController extends Controller
                     'login_otp_remember' => $request->boolean('remember'),
                 ]);
                 $this->sendLoginOtpEmail($user, $otp);
+
+                UserLoginLog::record([
+                    'user_id'           => $user->id,
+                    'email_or_username' => $user->email,
+                    'channel'           => 'web',
+                    'status'            => 'otp_pending',
+                ]);
+
                 return redirect()->route('login.otp');
             }
 
             $request->session()->regenerate();
+
+            UserLoginLog::record([
+                'user_id'           => $user->id,
+                'email_or_username' => $user->email,
+                'channel'           => 'web',
+                'status'            => 'success',
+            ]);
+
             return redirect()->intended(route('dashboard'));
         }
 
         RateLimiter::hit($key);
+
+        UserLoginLog::record([
+            'email_or_username' => $request->email,
+            'channel'           => 'web',
+            'status'            => 'failed',
+            'failure_reason'    => 'Invalid login credentials',
+        ]);
 
         throw ValidationException::withMessages([
             'email' => __('auth.failed'),
@@ -224,6 +252,13 @@ class AuthController extends Controller
 
         Auth::login($user, $remember);
         $request->session()->regenerate();
+
+        UserLoginLog::record([
+            'user_id'           => $user->id,
+            'email_or_username' => $user->email,
+            'channel'           => 'web',
+            'status'            => 'success',
+        ]);
 
         return redirect()->intended(route('dashboard'));
     }

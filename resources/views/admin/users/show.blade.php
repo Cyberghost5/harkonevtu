@@ -216,9 +216,66 @@
                     </tbody>
                 </table>
             </div>
-            @if($transactions?->hasPages())
+        </div>
+
+        {{-- User Login History --}}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mt-5">
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 font-outfit">Login History</h3>
+                <a href="{{ route('admin.user-logs.index', ['search' => $user->email]) }}" class="text-xs font-medium text-vtu-primary hover:underline">
+                    View All User Logs →
+                </a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-50 dark:border-slate-800">
+                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Channel</th>
+                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Device & Browser</th>
+                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">IP Address</th>
+                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
+                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50 dark:divide-slate-800">
+                        @forelse($loginLogs as $log)
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                            <td class="px-4 py-2.5 whitespace-nowrap">
+                                @if($log->channel === 'mobile')
+                                <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300">
+                                    📱 Mobile App
+                                </span>
+                                @else
+                                <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
+                                    💻 Website
+                                </span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-2.5 text-xs text-slate-600 dark:text-slate-400">
+                                <span class="font-medium text-slate-800 dark:text-slate-200">{{ $log->device_type }}</span>
+                                <span class="text-slate-400">•</span> {{ $log->browser }}
+                            </td>
+                            <td class="px-4 py-2.5 text-xs font-mono text-slate-500">{{ $log->ip_address ?? '—' }}</td>
+                            <td class="px-4 py-2.5">
+                                @if($log->status === 'success')
+                                <span class="text-[11px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 font-semibold">Success</span>
+                                @elseif($log->status === 'otp_pending')
+                                <span class="text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 font-semibold">OTP Pending</span>
+                                @else
+                                <span class="text-[11px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 font-semibold">Failed</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-2.5 text-[11px] text-slate-400 whitespace-nowrap">{{ $log->created_at->format('d M y, H:i') }}</td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="5" class="px-4 py-6 text-center text-sm text-slate-400">No login activity recorded yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            @if($loginLogs?->hasPages())
             <div class="px-5 py-4 border-t border-slate-100 dark:border-slate-800">
-                {{ $transactions->links() }}
+                {{ $loginLogs->appends(['log_page' => request('log_page')])->links() }}
             </div>
             @endif
         </div>

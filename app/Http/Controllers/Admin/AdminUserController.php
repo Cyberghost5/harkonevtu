@@ -46,8 +46,9 @@ class AdminUserController extends Controller
         $user->load('wallet');
         $transactions = $user->wallet?->transactions()->latest()->paginate(15);
         $serviceTransactions = $user->serviceTransactions()->latest()->take(10)->get();
+        $loginLogs = $user->loginLogs()->latest()->paginate(10, ['*'], 'log_page');
 
-        return view('admin.users.show', compact('user', 'transactions', 'serviceTransactions'));
+        return view('admin.users.show', compact('user', 'transactions', 'serviceTransactions', 'loginLogs'));
     }
 
     public function create()
