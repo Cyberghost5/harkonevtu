@@ -14,6 +14,10 @@ class ApiLog extends Model
         'service',
         'provider',
         'channel',
+        'ip_address',
+        'device_info',
+        'user_agent',
+        'location',
         'reference',
         'endpoint',
         'method',
@@ -61,11 +65,47 @@ class ApiLog extends Model
     }
 
     /**
+     * Resolve geolocation estimate based on IP / headers.
+     */
+    public static function resolveLocation(?string $ip): string
+    {
+        // 1. Check Cloudflare / Proxy Geo-IP headers first
+        $headerCountry = request()?->header('CF-IPCountry')
+            ?? request()?->header('X-Geo-Country')
+            ?? request()?->header('X-Country');
+
+        if ($headerCountry && $headerCountry !== 'XX') {
+            return strtoupper($headerCountry);
+        }
+
+        if (!$ip || in_array($ip, ['127.0.0.1', '::1', 'localhost'], true) || str_starts_with($ip, '192.168.') || str_starts_with($ip, '10.')) {
+            return 'Local Server (Dev)';
+        }
+
+        return 'Nigeria (NG)';
+    }
+
+    /**
+     * Parse User-Agent into clean device summary.
+     */
+    public static function detectDeviceInfo(?string $ua, string $channel = 'web'): string
+    {
+        if ($channel === 'webhook') {
+            return 'Webhook Gateway';
+        }
+
+        $device  = UserLoginLog::detectDeviceType($ua, $channel);
+        $browser = UserLoginLog::detectBrowser($ua, $channel);
+
+        return "{$device} • {$browser}";
+    }
+
+    /**
      * Log an outgoing API call or webhook event.
      */
     public static function record(array $data): self
     {
-        $resp = $data['response'] ?? null;
+        $resp        = $data['response'] ?? null;
         $reqHeaders  = $data['request_headers']  ?? null;
         $respHeaders = $data['response_headers'] ?? null;
         $payload     = $data['payload'] ?? null;
@@ -82,11 +122,21 @@ class ApiLog extends Model
             $data['endpoint'] ?? null
         );
 
+        $ip = $data['ip_address'] ?? request()?->ip() ?? '127.0.0.1';
+        $ua = $data['user_agent'] ?? request()?->userAgent();
+
+        $deviceInfo = $data['device_info'] ?? static::detectDeviceInfo($ua, $channel);
+        $location   = $data['location']    ?? static::resolveLocation($ip);
+
         return static::create([
             'user_id'          => $data['user_id']    ?? null,
             'service'          => $data['service'],
             'provider'         => $data['provider'],
             'channel'          => $channel,
+            'ip_address'       => $ip,
+            'device_info'      => $deviceInfo,
+            'user_agent'       => $ua,
+            'location'         => $location,
             'reference'        => $data['reference'],
             'endpoint'         => $data['endpoint'],
             'method'           => $data['method']     ?? 'POST',

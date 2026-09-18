@@ -37,7 +37,10 @@ class AdminApiLogController extends Controller
             $s = $request->search;
             $query->where(function ($q) use ($s) {
                 $q->where('reference', 'like', "%$s%")
-                  ->orWhere('endpoint', 'like', "%$s%");
+                  ->orWhere('endpoint', 'like', "%$s%")
+                  ->orWhere('ip_address', 'like', "%$s%")
+                  ->orWhere('device_info', 'like', "%$s%")
+                  ->orWhere('location', 'like', "%$s%");
             });
         }
 
