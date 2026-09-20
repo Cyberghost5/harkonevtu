@@ -753,6 +753,86 @@
                 </div>
             </div>
 
+            {{-- ── 9Mobile EVC (SOAP API Gateway) ───────────────────────── --}}
+            <div class="px-6 py-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        9Mobile EVC (SOAP API Gateway)
+                        <span class="text-sm font-normal text-slate-400">from
+                            <span class="text-emerald-600 font-semibold">9Mobile Direct EVC</span>
+                        </span>
+                    </h4>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="hidden" name="nine_mobile_evc_status" value="0">
+                        <input type="checkbox" name="nine_mobile_evc_status" value="1" {{ ($s['nine_mobile_evc_status'] ?? '1') === '1' ? 'checked' : '' }}
+                               class="sr-only peer provider-toggle" data-target="section-nine-mobile-evc">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-vtu-primary"></div>
+                        <span class="ml-2.5 text-xs font-bold status-label uppercase tracking-wider {{ ($s['nine_mobile_evc_status'] ?? '1') === '1' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500' }}">
+                            {{ ($s['nine_mobile_evc_status'] ?? '1') === '1' ? 'Enabled' : 'Disabled' }}
+                        </span>
+                    </label>
+                </div>
+                <div id="section-nine-mobile-evc" class="provider-content transition-all duration-300 {{ ($s['nine_mobile_evc_status'] ?? '1') === '1' ? '' : 'hidden' }}">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">EVC Username</label>
+                            <input type="text" name="nine_mobile_evc_username" value="{{ $s['nine_mobile_evc_username'] ?? '' }}"
+                                   placeholder="Enter Username"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">EVC Password</label>
+                            <input type="password" name="nine_mobile_evc_password" value="{{ $s['nine_mobile_evc_password'] ?? '' }}"
+                                   placeholder="Leave blank to keep current"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">One-Way Header Key</label>
+                            <input type="password" name="nine_mobile_evc_key" value="{{ $s['nine_mobile_evc_key'] ?? '' }}"
+                                   placeholder="Leave blank to keep current"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">One-Way Header Token</label>
+                            <input type="password" name="nine_mobile_evc_token" value="{{ $s['nine_mobile_evc_token'] ?? '' }}"
+                                   placeholder="Leave blank to keep current"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Source ID</label>
+                            <input type="text" name="nine_mobile_evc_source_id" value="{{ $s['nine_mobile_evc_source_id'] ?? '' }}"
+                                   placeholder="e.g. 1001"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">ThirdParty ID</label>
+                            <input type="text" name="nine_mobile_evc_third_party_id" value="{{ $s['nine_mobile_evc_third_party_id'] ?? '' }}"
+                                   placeholder="e.g. 1001"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Channel ID</label>
+                            <input type="text" name="nine_mobile_evc_channel_id" value="{{ $s['nine_mobile_evc_channel_id'] ?? 'WEB' }}"
+                                   placeholder="e.g. WEB or API"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Mode</label>
+                            <select name="nine_mobile_evc_mode" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                                <option value="sandbox" {{ ($s['nine_mobile_evc_mode'] ?? 'sandbox') === 'sandbox' ? 'selected' : '' }}>Sandbox / Mock</option>
+                                <option value="production" {{ ($s['nine_mobile_evc_mode'] ?? 'sandbox') === 'production' ? 'selected' : '' }}>Production</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block text-xs font-medium text-slate-500 mb-1">SOAP Gateway Endpoint Url</label>
+                            <input type="text" name="nine_mobile_evc_endpoint" value="{{ $s['nine_mobile_evc_endpoint'] ?? '' }}"
+                                   placeholder="e.g. https://<Host>:<Port>/EVC/SinglePointFulfilment/EVCPinlessInterfaceEndpoint"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- ── SMS API: Termii ──────────────────────────────────────── --}}
             <div class="px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">

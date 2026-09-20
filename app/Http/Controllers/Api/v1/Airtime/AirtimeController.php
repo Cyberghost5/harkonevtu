@@ -10,6 +10,7 @@ use App\Models\ServiceTransaction;
 use App\Models\Wallet;
 use App\Services\GloErsSoapService;
 use App\Services\MtnErsSoapService;
+use App\Services\NineMobileEvcSoapService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -301,17 +302,34 @@ class AirtimeController extends Controller
             $api = 'vtpass';
         }
 
+        if ($api === 'nine_mobile_evc' && $networkKey !== 'etisalat') {
+            $api = 'vtpass';
+        }
+
         return match ($api) {
-            'clubkonnect'  => $this->callClubkonnect($network, $amount, $phone, $reference),
-            'autopilot'    => $this->callAutopilot($network, $amount, $phone, $reference),
-            'easyaccess'   => $this->callEasyaccess($network, $amount, $phone, $reference),
-            'legitdataway' => $this->callLegitdataway($network, $amount, $phone, $reference),
-            'merrybills'   => $this->callMerrybills($network, $amount, $phone, $reference),
-            'payscribe'    => $this->callPayscribe($network, $amount, $phone, $reference),
-            'mtn_ers'      => $this->callMtnErs($network, $amount, $phone, $reference),
-            'glo_ers'      => $this->callGloErs($network, $amount, $phone, $reference),
-            default        => $this->callVtpass($network, $amount, $phone, $reference),
+            'clubkonnect'    => $this->callClubkonnect($network, $amount, $phone, $reference),
+            'autopilot'      => $this->callAutopilot($network, $amount, $phone, $reference),
+            'easyaccess'     => $this->callEasyaccess($network, $amount, $phone, $reference),
+            'legitdataway'   => $this->callLegitdataway($network, $amount, $phone, $reference),
+            'merrybills'     => $this->callMerrybills($network, $amount, $phone, $reference),
+            'payscribe'      => $this->callPayscribe($network, $amount, $phone, $reference),
+            'mtn_ers'        => $this->callMtnErs($network, $amount, $phone, $reference),
+            'glo_ers'        => $this->callGloErs($network, $amount, $phone, $reference),
+            'nine_mobile_evc'=> $this->callNineMobileEvc($network, $amount, $phone, $reference),
+            default          => $this->callVtpass($network, $amount, $phone, $reference),
         };
+    }
+
+    private function callNineMobileEvc(NetworkAirtime $network, float $amount, string $phone, string $reference): array
+    {
+        $evcService = app(NineMobileEvcSoapService::class);
+        $result = $evcService->vendAirtime($phone, $amount, $reference);
+
+        $success = $result['success'] ?? false;
+        $data = $result['response'] ?? ['message' => $result['message'] ?? 'Failed to communicate with 9Mobile EVC SOAP Gateway'];
+        $apiRef = $result['reference'] ?? $reference;
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
     }
 
     private function callGloErs(NetworkAirtime $network, float $amount, string $phone, string $reference): array
