@@ -75,10 +75,10 @@ return new class extends Migration
                 // Convert INSERT INTO to REPLACE INTO so existing primary keys/records are overwritten
                 $replaceSql = preg_replace('/^INSERT INTO/i', 'REPLACE INTO', trim($matches[0]));
 
-                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+                Schema::disableForeignKeyConstraints();
                 DB::table('data_plans')->truncate();
                 DB::unprepared($replaceSql);
-                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+                Schema::enableForeignKeyConstraints();
             }
         }
     }
