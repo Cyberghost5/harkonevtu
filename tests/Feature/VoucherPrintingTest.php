@@ -31,16 +31,18 @@ class VoucherPrintingTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->post(route('services.print-pins.generate'), [
+        $response = $this->postJson(route('services.print-pins.generate'), [
             'type' => 'airtime',
             'network' => 'mtn',
             'value' => '100',
             'quantity' => '5',
             'name_on_card' => 'Joy Shop',
+            'transaction_pin' => '1234',
         ]);
 
-        $response->assertRedirect();
-        $response->assertSessionHas('success', 'Successfully generated 5 vouchers!');
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('message', 'Successfully generated 5 vouchers!');
 
         // 5 vouchers generated in database
         $this->assertEquals(5, PrintedVoucher::where('user_id', $user->id)->count());
@@ -78,15 +80,18 @@ class VoucherPrintingTest extends TestCase
         $this->actingAs($user);
 
         // Attempting to generate total cost 500
-        $response = $this->post(route('services.print-pins.generate'), [
+        $response = $this->postJson(route('services.print-pins.generate'), [
             'type' => 'airtime',
             'network' => 'mtn',
             'value' => '100',
             'quantity' => '5',
             'name_on_card' => 'Joy Shop',
+            'transaction_pin' => '1234',
         ]);
 
-        $response->assertSessionHas('error', 'Insufficient wallet balance for this voucher generation.');
+        $response->assertStatus(422);
+        $response->assertJsonPath('success', false);
+        $response->assertJsonPath('message', 'Insufficient wallet balance for this voucher generation.');
         $this->assertEquals(0, PrintedVoucher::count());
         $this->assertEquals(100.00, $wallet->fresh()->balance); // unchanged
     }

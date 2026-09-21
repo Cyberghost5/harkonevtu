@@ -337,8 +337,8 @@ class MtnErsSoapService
             $tariffTypeId = $productId; // Data Bundle Tariff ID
         }
 
-        $execute = function (int $seq) use ($originator, $target, $amount, $tariffTypeId, &$execute) {
-            $xml = $this->buildVendXml($originator, $target, $amount, $seq, $tariffTypeId);
+        $execute = function (int $seq) use ($originator, $target, $amountFloat, $tariffTypeId, &$execute) {
+            $xml = $this->buildVendXml($originator, $target, $amountFloat, $seq, $tariffTypeId);
             return $this->sendRequest(
                 'urn:Vend', 
                 $xml, 
@@ -456,8 +456,33 @@ class MtnErsSoapService
         }
 
         $data = $parsed['data'];
+        $isSuccess = ((int)($data['responseCode'] ?? -1)) === 0;
+
+        $service = 'airtime';
+        if ($tariffTypeId === 7) {
+            $service = 'voucher';
+        } elseif ($tariffTypeId !== 1) {
+            $service = 'data';
+        }
+
+        ApiLog::record([
+            'user_id'          => auth()->id(),
+            'service'          => $service,
+            'provider'         => 'mtn_ers',
+            'reference'        => $data['txRefId'] ?? ('SEQ-' . $sequenceAttempt),
+            'endpoint'         => $this->endpoint . ' (Sandbox Mock)',
+            'method'           => 'POST',
+            'payload'          => ['xml' => $xmlPayload],
+            'request_headers'  => ['Content-Type' => 'text/xml', 'SOAPAction' => $soapAction],
+            'response'         => $data,
+            'http_status'      => 200,
+            'response_headers' => ['Content-Type' => 'text/xml'],
+            'duration_ms'      => 40,
+            'success'          => $isSuccess,
+        ]);
+
         return [
-            'status'  => ((int)$data['responseCode']) === 0,
+            'status'  => $isSuccess,
             'message' => $data['responseMessage'] ?? 'Success',
             'data'    => $data
         ];

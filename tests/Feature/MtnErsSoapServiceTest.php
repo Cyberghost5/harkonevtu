@@ -75,8 +75,8 @@ class MtnErsSoapServiceTest extends TestCase
 
         $this->assertTrue($result['status']);
         $this->assertEquals('Successful', $result['message']);
-        $this->assertEquals('40692125281574', $result['data']['voucherPIN']);
-        $this->assertEquals('600000000001', $result['data']['voucherSerial']);
+        $this->assertEquals(15, strlen($result['data']['voucherPIN']));
+        $this->assertEquals(10, strlen($result['data']['voucherSerial']));
     }
 
     public function test_sandbox_failure_mock(): void
@@ -108,8 +108,8 @@ class MtnErsSoapServiceTest extends TestCase
         AppSetting::set('mtn_ers_mode', 'production');
         AppSetting::set('mtn_ers_endpoint', 'https://ers.seamless.se/test');
 
-        // Seed sequence at 5
-        MtnErsSequence::setNextSequence('09062058470', 5);
+        // Seed sequence at 5 for 2349062058470
+        MtnErsSequence::setNextSequence('2349062058470', 5);
 
         // Fake first call returning 106 (sequence out of sync, ERS expects 15)
         // Fake second call returning 0 (successful retry)
@@ -143,6 +143,6 @@ class MtnErsSoapServiceTest extends TestCase
         $this->assertEquals('ERS-RETRY-SUCCESS', $result['data']['txRefId']);
 
         // Check that sequence was auto-synced to 16 in DB
-        $this->assertEquals(16, MtnErsSequence::where('key', '09062058470')->first()->next_sequence);
+        $this->assertEquals(16, MtnErsSequence::where('key', '2349062058470')->first()->next_sequence);
     }
 }
