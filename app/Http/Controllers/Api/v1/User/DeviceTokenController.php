@@ -16,6 +16,7 @@ class DeviceTokenController extends Controller
     public function updateDeviceToken(Request $request): JsonResponse
     {
         $token = $request->input('device_token')
+            ?? $request->input('fcm_device_token')
             ?? $request->input('fcm_token')
             ?? $request->input('push_token')
             ?? $request->input('token');

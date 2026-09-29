@@ -103,4 +103,10 @@ return [
         'base_url' => env('PRIMEBILLER_BASE_URL', 'https://primebiller.com/api/v1'),
     ],
 
+    'google' => [
+        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect'      => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
+    ],
+
 ];

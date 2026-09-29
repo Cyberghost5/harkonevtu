@@ -124,6 +124,7 @@ class AdminSettingsController extends Controller
             'mtn_ers_username','mtn_ers_pin','mtn_ers_endpoint','mtn_ers_mode','mtn_ers_originator_msisdn','mtn_ers_status',
             'glo_ers_username','glo_ers_password','glo_ers_endpoint','glo_ers_mode','glo_ers_client_id','glo_ers_distributor_id','glo_ers_distributor_userid','glo_ers_status',
             'nine_mobile_evc_username','nine_mobile_evc_password','nine_mobile_evc_key','nine_mobile_evc_token','nine_mobile_evc_source_id','nine_mobile_evc_third_party_id','nine_mobile_evc_channel_id','nine_mobile_evc_endpoint','nine_mobile_evc_mode','nine_mobile_evc_status',
+            'google_client_id','google_client_secret','google_redirect_uri','google_auth_status',
             'airtime2cash_phone','airtime2cash_tx_charge','airtime2cash_max_per_payment','airtime2cash_min_per_payment',
             'referral_commission','referral_min_withdrawal','referral_min_total_spent',
         ];
@@ -133,7 +134,7 @@ class AdminSettingsController extends Controller
             'flutterwave_status','paystack_status','monnify_status','payscribe_status','vtpass_status',
             'primebiller_status','aabaxztech_status','autopilot_status','easyaccess_status','legitdataway_status',
             'merrybills_status','clubkonnect_status','globacom_status','termii_status','bulksms_status',
-            'onesignal_status','qoreid_status','mtn_ers_status','glo_ers_status','nine_mobile_evc_status',
+            'onesignal_status','qoreid_status','mtn_ers_status','glo_ers_status','nine_mobile_evc_status','google_auth_status',
         ];
         foreach ($statusKeys as $stKey) {
             if (!isset($s[$stKey]) || $s[$stKey] === '') {
@@ -146,7 +147,7 @@ class AdminSettingsController extends Controller
 
     public function updateApiKeys(Request $request)
     {
-        $passwordFields = ['vtpass_password','aabaxztech_password','legitdataway_password','merrybills_password', 'mtn_ers_pin', 'glo_ers_password', 'nine_mobile_evc_password', 'nine_mobile_evc_key', 'nine_mobile_evc_token'];
+        $passwordFields = ['vtpass_password','aabaxztech_password','legitdataway_password','merrybills_password', 'mtn_ers_pin', 'glo_ers_password', 'nine_mobile_evc_password', 'nine_mobile_evc_key', 'nine_mobile_evc_token', 'google_client_secret'];
         $data = $request->except(['_token','_method']);
         foreach ($data as $key => $value) {
             if (in_array($key, $passwordFields) && $value === '') {

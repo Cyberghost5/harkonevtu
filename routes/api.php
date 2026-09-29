@@ -24,6 +24,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/resend-email-otp', [AuthController::class, 'resendEmailOtp']);
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
         Route::post('/reset-password',  [AuthController::class, 'resetPassword']);
+        Route::post('/google',          [AuthController::class, 'googleAuth']);
 
         // Authenticated Auth Routes (Sanctum Bearer Token Required)
         Route::middleware('auth:sanctum')->group(function () {
@@ -46,6 +47,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/dva/generate',      [\App\Http\Controllers\Api\v1\User\UserController::class, 'generateDva']);
         Route::delete('/account',         [\App\Http\Controllers\Api\v1\User\UserController::class, 'deleteAccount']);
         Route::post('/account/delete',    [\App\Http\Controllers\Api\v1\User\UserController::class, 'deleteAccount']);
+        Route::post('/device-token',      [\App\Http\Controllers\Api\v1\User\DeviceTokenController::class, 'updateDeviceToken']);
+        Route::delete('/device-token',    [\App\Http\Controllers\Api\v1\User\DeviceTokenController::class, 'removeDeviceToken']);
     });
 
     // ── Airtime Services Endpoints (Milestone 3) ──────────────────────────────

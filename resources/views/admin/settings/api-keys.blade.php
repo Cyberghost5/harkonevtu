@@ -1019,6 +1019,49 @@
                 </div>
             </div>
 
+            {{-- ── Google OAuth Sign-In ────────────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        Google OAuth (Sign In / Sign Up)
+                        <span class="text-sm font-normal text-slate-400">from
+                            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-500 hover:underline">Google Cloud Console</a>
+                        </span>
+                    </h4>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="hidden" name="google_auth_status" value="0">
+                        <input type="checkbox" name="google_auth_status" value="1" {{ ($s['google_auth_status'] ?? '1') === '1' ? 'checked' : '' }}
+                               class="sr-only peer provider-toggle" data-target="section-google-auth">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-vtu-primary"></div>
+                        <span class="ml-2.5 text-xs font-bold status-label uppercase tracking-wider {{ ($s['google_auth_status'] ?? '1') === '1' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500' }}">
+                            {{ ($s['google_auth_status'] ?? '1') === '1' ? 'Enabled' : 'Disabled' }}
+                        </span>
+                    </label>
+                </div>
+                <div id="section-google-auth" class="provider-content transition-all duration-300 {{ ($s['google_auth_status'] ?? '1') === '1' ? '' : 'hidden' }}">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Google Client ID</label>
+                            <input type="text" name="google_client_id" value="{{ $s['google_client_id'] ?? '' }}"
+                                   placeholder="Enter Google Client ID"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Google Client Secret</label>
+                            <input type="password" name="google_client_secret" value="{{ $s['google_client_secret'] ?? '' }}"
+                                   placeholder="Leave empty to keep existing secret"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Authorized Redirect URI</label>
+                            <input type="text" name="google_redirect_uri" value="{{ $s['google_redirect_uri'] ?? url('/auth/google/callback') }}"
+                                   placeholder="{{ url('/auth/google/callback') }}"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- ── Referral Commission ──────────────────────────────────── --}}
             <div class="px-6 py-6">
                 <h4 class="text-lg font-bold text-slate-800 mb-4">Referral Commission</h4>

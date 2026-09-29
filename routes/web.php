@@ -59,6 +59,10 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
     Route::post('/reset-password',        [AuthController::class, 'resetPassword'])->name('password.update');
+
+    // Google OAuth Routes
+    Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 
 // ── Login OTP (pre-auth state - no guest or auth middleware) ──────────────────
@@ -241,6 +245,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     // API Logs & User Logs
     Route::get('/api-logs',            [AdminApiLogController::class, 'index'])->name('api-logs.index');
     Route::get('/user-logs',           [\App\Http\Controllers\Admin\AdminUserLogController::class, 'index'])->name('user-logs.index');
+
+    // Push Notifications
+    Route::get('/notifications',       [\App\Http\Controllers\Admin\AdminNotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/send', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'send'])->name('notifications.send');
 
     // Settings - redirect legacy index to general
     Route::get('/settings',                        fn() => redirect()->route('admin.settings.general'))->name('settings.index');

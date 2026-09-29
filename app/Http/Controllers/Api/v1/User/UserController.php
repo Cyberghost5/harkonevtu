@@ -546,4 +546,32 @@ class UserController extends Controller
 
         return $this->jsonResponse(true, 'Your account has been deleted successfully.');
     }
+
+    /**
+     * Update Device Push Notification Token & Device Type.
+     * POST /api/v1/user/device-token
+     */
+    public function updateDeviceToken(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'fcm_device_token' => ['required', 'string'],
+            'device_type'      => ['nullable', 'string', 'in:android,ios,web'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
+        }
+
+        $user = $request->user();
+        $user->fcm_device_token = $request->fcm_device_token;
+        if ($request->filled('device_type')) {
+            $user->device_type = strtolower($request->device_type);
+        }
+        $user->save();
+
+        return $this->jsonResponse(true, 'Device push notification token updated successfully.', [
+            'fcm_device_token' => $user->fcm_device_token,
+            'device_type'      => $user->device_type,
+        ]);
+    }
 }

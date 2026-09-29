@@ -21,6 +21,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -360,5 +361,94 @@ class AuthController extends Controller
         return $status === Password::PasswordReset
             ? redirect()->route('login')->with('status', __($status))
             : back()->withErrors(['email' => [__($status)]]);
+    }
+
+    // ─── Google OAuth ─────────────────────────────────────────────────────────
+
+    public function redirectToGoogle()
+    {
+        if (AppSetting::get('google_auth_status', '1') === '0') {
+            return redirect()->route('login')->with('error', 'Google authentication is currently disabled.');
+        }
+
+        $clientId = AppSetting::get('google_client_id') ?: config('services.google.client_id');
+        $clientSecret = AppSetting::get('google_client_secret') ?: config('services.google.client_secret');
+        $redirectUri = AppSetting::get('google_redirect_uri') ?: config('services.google.redirect');
+
+        if (!$clientId || !$clientSecret) {
+            return redirect()->route('login')->with('error', 'Google authentication is not fully configured.');
+        }
+
+        return Socialite::buildProvider(\Laravel\Socialite\Two\GoogleProvider::class, [
+            'client_id'     => $clientId,
+            'client_secret' => $clientSecret,
+            'redirect'      => $redirectUri,
+        ])->redirect();
+    }
+
+    public function handleGoogleCallback(Request $request)
+    {
+        if (AppSetting::get('google_auth_status', '1') === '0') {
+            return redirect()->route('login')->with('error', 'Google authentication is currently disabled.');
+        }
+
+        try {
+            $clientId = AppSetting::get('google_client_id') ?: config('services.google.client_id');
+            $clientSecret = AppSetting::get('google_client_secret') ?: config('services.google.client_secret');
+            $redirectUri = AppSetting::get('google_redirect_uri') ?: config('services.google.redirect');
+
+            $socialiteUser = Socialite::buildProvider(\Laravel\Socialite\Two\GoogleProvider::class, [
+                'client_id'     => $clientId,
+                'client_secret' => $clientSecret,
+                'redirect'      => $redirectUri,
+            ])->user();
+        } catch (\Exception $e) {
+            Log::error('Google Auth Error: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', 'Google sign-in failed. Please try again or sign in with your email.');
+        }
+
+        $user = User::where('google_id', $socialiteUser->getId())
+            ->orWhere('email', $socialiteUser->getEmail())
+            ->first();
+
+        if ($user) {
+            if (!$user->google_id) {
+                $user->google_id = $socialiteUser->getId();
+                $user->save();
+            }
+        } else {
+            $baseUsername = Str::slug(explode('@', $socialiteUser->getEmail())[0], '');
+            $username = $baseUsername;
+            while (User::where('username', $username)->exists()) {
+                $username = $baseUsername . rand(100, 999);
+            }
+
+            $user = User::create([
+                'name'              => $socialiteUser->getName() ?? $socialiteUser->getNickname() ?? 'Google User',
+                'username'          => $username,
+                'email'             => $socialiteUser->getEmail(),
+                'google_id'         => $socialiteUser->getId(),
+                'email_verified_at' => now(),
+                'is_active'         => true,
+                'user_type'         => 'user',
+            ]);
+
+            $user->wallet()->create(['balance' => 0]);
+            event(new Registered($user));
+        }
+
+        Auth::login($user, true);
+
+        UserLoginLog::record([
+            'email_or_username' => $user->email,
+            'channel'           => 'web_google',
+            'status'            => 'success',
+        ]);
+
+        if (empty($user->transaction_pin)) {
+            return redirect()->route('pin.setup')->with('warning', 'Welcome! Please set up your 4-digit transaction PIN to secure your account.');
+        }
+
+        return redirect()->intended(route('dashboard'));
     }
 }

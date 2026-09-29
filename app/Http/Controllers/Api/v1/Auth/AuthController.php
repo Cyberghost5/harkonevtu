@@ -565,4 +565,117 @@ class AuthController extends Controller
 
         return $this->jsonResponse(true, 'Logged out successfully.');
     }
+
+    /**
+     * Authenticate or Register via Google OAuth (Mobile API).
+     * POST /api/v1/auth/google
+     */
+    public function googleAuth(Request $request): JsonResponse
+    {
+        if (AppSetting::get('google_auth_status', '1') === '0') {
+            return $this->jsonResponse(false, 'Google authentication is currently disabled.', null, 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'id_token'     => ['nullable', 'string'],
+            'access_token' => ['nullable', 'string'],
+            'email'        => ['required_without_all:id_token,access_token', 'nullable', 'email'],
+            'google_id'    => ['required_without_all:id_token,access_token', 'nullable', 'string'],
+            'name'         => ['nullable', 'string'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
+        }
+
+        $email = $request->input('email');
+        $googleId = $request->input('google_id');
+        $name = $request->input('name');
+
+        if ($request->filled('id_token')) {
+            try {
+                $verifyResponse = \Illuminate\Support\Facades\Http::get('https://oauth2.googleapis.com/tokeninfo', [
+                    'id_token' => $request->input('id_token'),
+                ]);
+
+                if ($verifyResponse->successful()) {
+                    $tokenData = $verifyResponse->json();
+                    $email = $tokenData['email'] ?? $email;
+                    $googleId = $tokenData['sub'] ?? $googleId;
+                    $name = $tokenData['name'] ?? $name;
+                } elseif (!$email || !$googleId) {
+                    return $this->jsonResponse(false, 'Invalid Google ID token.', null, 401);
+                }
+            } catch (\Exception $e) {
+                Log::error('Google ID Token verification exception: ' . $e->getMessage());
+                if (!$email || !$googleId) {
+                    return $this->jsonResponse(false, 'Unable to verify Google token with Google servers.', null, 500);
+                }
+            }
+        } elseif ($request->filled('access_token')) {
+            try {
+                $socialiteUser = \Laravel\Socialite\Facades\Socialite::driver('google')->userFromToken($request->input('access_token'));
+                if ($socialiteUser) {
+                    $email = $socialiteUser->getEmail();
+                    $googleId = $socialiteUser->getId();
+                    $name = $socialiteUser->getName() ?? $name;
+                }
+            } catch (\Exception $e) {
+                Log::error('Google Access Token verification exception: ' . $e->getMessage());
+                if (!$email || !$googleId) {
+                    return $this->jsonResponse(false, 'Invalid Google access token.', null, 401);
+                }
+            }
+        }
+
+        if (empty($email) || empty($googleId)) {
+            return $this->jsonResponse(false, 'Google email and Google ID are required.', null, 422);
+        }
+
+        $user = User::where('google_id', $googleId)
+            ->orWhere('email', $email)
+            ->first();
+
+        if ($user) {
+            if (!$user->google_id) {
+                $user->google_id = $googleId;
+                $user->save();
+            }
+        } else {
+            $baseUsername = Str::slug(explode('@', $email)[0], '');
+            $username = $baseUsername;
+            while (User::where('username', $username)->exists()) {
+                $username = $baseUsername . rand(100, 999);
+            }
+
+            $user = User::create([
+                'name'              => $name ?: 'Google User',
+                'username'          => $username,
+                'email'             => $email,
+                'google_id'         => $googleId,
+                'email_verified_at' => now(),
+                'is_active'         => true,
+                'user_type'         => 'user',
+            ]);
+
+            $user->wallet()->create(['balance' => 0]);
+        }
+
+        if (!$user->is_active) {
+            return $this->jsonResponse(false, 'Your account has been deactivated. Please contact support.', null, 403);
+        }
+
+        $tokenName = $request->input('device_name', 'mobile_app');
+        $token = $user->createToken($tokenName)->plainTextToken;
+
+        $isPinSet = !empty($user->transaction_pin);
+
+        return $this->jsonResponse(true, 'Google authentication successful.', [
+            'token'              => $token,
+            'token_type'         => 'Bearer',
+            'is_pin_set'         => $isPinSet,
+            'requires_pin_setup' => !$isPinSet,
+            'user'               => $user->load('wallet'),
+        ]);
+    }
 }
