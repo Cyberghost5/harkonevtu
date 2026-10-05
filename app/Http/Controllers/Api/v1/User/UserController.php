@@ -297,8 +297,9 @@ class UserController extends Controller
         $errors  = [];
 
         // ── 1. Paystack DVA (Wema Bank + Titan Bank) ──────────────────────────
+        $paystackStatus = AppSetting::get('paystack_status', '1');
         $paystackSecret = config('services.paystack.secret_key') ?: AppSetting::get('paystack_secret_key');
-        if ($paystackSecret) {
+        if ($paystackStatus === '1' && $paystackSecret) {
             try {
                 $customerCode = $this->getOrCreatePaystackCustomer($user, $bvn, $paystackSecret);
 
@@ -361,8 +362,9 @@ class UserController extends Controller
         }
 
         // ── 2. Flutterwave DVA ───────────────────────────────────────────────
+        $flwStatus = AppSetting::get('flutterwave_status', '1');
         $flwSecret = config('services.flutterwave.secret_key') ?: AppSetting::get('flutterwave_secret_key');
-        if ($flwSecret) {
+        if ($flwStatus === '1' && $flwSecret) {
             try {
                 $existing = VirtualAccount::where('user_id', $user->id)
                     ->where('provider', 'flutterwave')
@@ -422,8 +424,9 @@ class UserController extends Controller
         }
 
         // ── 3. Monnify DVA ───────────────────────────────────────────────────
+        $monnifyStatus = AppSetting::get('monnify_status', '1');
         $monnifyApiKey = AppSetting::get('monnify_api_key');
-        if ($monnifyApiKey) {
+        if ($monnifyStatus === '1' && $monnifyApiKey) {
             try {
                 $existing = VirtualAccount::where('user_id', $user->id)
                     ->where('provider', 'monnify')

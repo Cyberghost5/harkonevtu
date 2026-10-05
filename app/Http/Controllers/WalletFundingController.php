@@ -132,128 +132,137 @@ class WalletFundingController extends Controller implements HasMiddleware
         $errors  = [];
 
         // ── Paystack DVA (Wema Bank + Titan) ──────────────────────────────────
-        try {
-            $customerCode = $this->getOrCreatePaystackCustomer($user, $bvn);
+        $paystackStatus = AppSetting::get('paystack_status', '1');
+        $paystackSecret = config('services.paystack.secret_key') ?: AppSetting::get('paystack_secret_key');
+        if ($paystackStatus === '1' && $paystackSecret) {
+            try {
+                $customerCode = $this->getOrCreatePaystackCustomer($user, $bvn);
 
-            foreach (['wema-bank', 'titan-paystack'] as $bankCode) {
+                foreach (['wema-bank', 'titan-paystack'] as $bankCode) {
+                    $existing = VirtualAccount::where('user_id', $user->id)
+                        ->where('provider', 'paystack')
+                        ->where('bank_code', $bankCode)
+                        ->first();
+
+                    if ($existing) {
+                        $results[] = $existing->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
+                        continue;
+                    }
+
+                    $payload = [
+                        'customer'       => $customerCode,
+                        'preferred_bank' => $bankCode,
+                        'phone'          => $user->phone,
+                    ];
+                    $start = hrtime(true);
+                    $resp = Http::withToken($paystackSecret)
+                        ->timeout(20)
+                        ->post('https://api.paystack.co/dedicated_account', $payload);
+                    $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+                    \App\Models\ApiLog::record([
+                        'user_id'     => $user->id,
+                        'service'     => 'dva_generate',
+                        'provider'    => 'paystack',
+                        'reference'   => $bankCode,
+                        'endpoint'    => 'https://api.paystack.co/dedicated_account',
+                        'method'      => 'POST',
+                        'payload'     => $payload,
+                        'response'    => $resp->json(),
+                        'http_status' => $resp->status(),
+                        'duration_ms' => $duration,
+                        'success'     => $resp->successful() && $resp->json('status') === true,
+                    ]);
+
+                    if ($resp->successful() && $resp->json('status') === true) {
+                        $data = $resp->json('data');
+                        $va   = VirtualAccount::create([
+                            'user_id'        => $user->id,
+                            'provider'       => 'paystack',
+                            'bank_name'      => $data['bank']['name'],
+                            'bank_code'      => $bankCode,
+                            'account_number' => $data['account_number'],
+                            'account_name'   => $data['account_name'],
+                            'metadata'       => $data,
+                        ]);
+                        $results[] = $va->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
+                    } else {
+                        $errors[] = 'Paystack (' . $bankCode . '): ' . ($resp->json('message') ?? 'Request failed');
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('Paystack DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                $errors[] = 'Paystack: ' . $e->getMessage();
+            }
+        }
+
+        // ── Flutterwave DVA ───────────────────────────────────────────────────
+        $flwStatus = AppSetting::get('flutterwave_status', '1');
+        $flwSecret = config('services.flutterwave.secret_key') ?: AppSetting::get('flutterwave_secret_key');
+        if ($flwStatus === '1' && $flwSecret) {
+            try {
                 $existing = VirtualAccount::where('user_id', $user->id)
-                    ->where('provider', 'paystack')
-                    ->where('bank_code', $bankCode)
+                    ->where('provider', 'flutterwave')
                     ->first();
 
                 if ($existing) {
                     $results[] = $existing->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
-                    continue;
-                }
-
-                $payload = [
-                    'customer'       => $customerCode,
-                    'preferred_bank' => $bankCode,
-                    'phone'          => $user->phone,
-                ];
-                $start = hrtime(true);
-                $resp = Http::withToken(config('services.paystack.secret_key'))
-                    ->timeout(20)
-                    ->post('https://api.paystack.co/dedicated_account', $payload);
-                $duration = (int) ((hrtime(true) - $start) / 1e6);
-
-                \App\Models\ApiLog::record([
-                    'user_id'     => $user->id,
-                    'service'     => 'dva_generate',
-                    'provider'    => 'paystack',
-                    'reference'   => $bankCode,
-                    'endpoint'    => 'https://api.paystack.co/dedicated_account',
-                    'method'      => 'POST',
-                    'payload'     => $payload,
-                    'response'    => $resp->json(),
-                    'http_status' => $resp->status(),
-                    'duration_ms' => $duration,
-                    'success'     => $resp->successful() && $resp->json('status') === true,
-                ]);
-
-                if ($resp->successful() && $resp->json('status') === true) {
-                    $data = $resp->json('data');
-                    $va   = VirtualAccount::create([
-                        'user_id'        => $user->id,
-                        'provider'       => 'paystack',
-                        'bank_name'      => $data['bank']['name'],
-                        'bank_code'      => $bankCode,
-                        'account_number' => $data['account_number'],
-                        'account_name'   => $data['account_name'],
-                        'metadata'       => $data,
-                    ]);
-                    $results[] = $va->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
                 } else {
-                    $errors[] = 'Paystack (' . $bankCode . '): ' . ($resp->json('message') ?? 'Request failed');
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Paystack DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
-            $errors[] = 'Paystack: ' . $e->getMessage();
-        }
+                    $payload = [
+                        'email'        => $user->email,
+                        'currency'     => 'NGN',
+                        'is_permanent' => true,
+                        'bvn'          => $bvn,
+                        'tx_ref'       => 'DVA_FLW_' . $user->id . '_' . time(),
+                        'narration'    => $user->name,
+                    ];
+                    $start = hrtime(true);
+                    $resp = Http::withToken($flwSecret)
+                        ->timeout(20)
+                        ->post('https://api.flutterwave.com/v3/virtual-account-numbers', $payload);
+                    $duration = (int) ((hrtime(true) - $start) / 1e6);
 
-        // ── Flutterwave DVA ───────────────────────────────────────────────────
-        try {
-            $existing = VirtualAccount::where('user_id', $user->id)
-                ->where('provider', 'flutterwave')
-                ->first();
-
-            if ($existing) {
-                $results[] = $existing->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
-            } else {
-                $payload = [
-                    'email'        => $user->email,
-                    'currency'     => 'NGN',
-                    'is_permanent' => true,
-                    'bvn'          => $bvn,
-                    'tx_ref'       => 'DVA_FLW_' . $user->id . '_' . time(),
-                    'narration'    => $user->name,
-                ];
-                $start = hrtime(true);
-                $resp = Http::withToken(config('services.flutterwave.secret_key'))
-                    ->timeout(20)
-                    ->post('https://api.flutterwave.com/v3/virtual-account-numbers', $payload);
-                $duration = (int) ((hrtime(true) - $start) / 1e6);
-
-                \App\Models\ApiLog::record([
-                    'user_id'     => $user->id,
-                    'service'     => 'dva_generate',
-                    'provider'    => 'flutterwave',
-                    'reference'   => $payload['tx_ref'],
-                    'endpoint'    => 'https://api.flutterwave.com/v3/virtual-account-numbers',
-                    'method'      => 'POST',
-                    'payload'     => $payload,
-                    'response'    => $resp->json(),
-                    'http_status' => $resp->status(),
-                    'duration_ms' => $duration,
-                    'success'     => $resp->successful() && $resp->json('status') === 'success',
-                ]);
-
-                if ($resp->successful() && $resp->json('status') === 'success') {
-                    $data = $resp->json('data');
-                    $va   = VirtualAccount::create([
-                        'user_id'        => $user->id,
-                        'provider'       => 'flutterwave',
-                        'bank_name'      => $data['bank_name'],
-                        'bank_code'      => 'flutterwave_dva',
-                        'account_number' => $data['account_number'],
-                        'account_name'   => $data['account_name'] ?? $user->name,
-                        'metadata'       => $data,
+                    \App\Models\ApiLog::record([
+                        'user_id'     => $user->id,
+                        'service'     => 'dva_generate',
+                        'provider'    => 'flutterwave',
+                        'reference'   => $payload['tx_ref'],
+                        'endpoint'    => 'https://api.flutterwave.com/v3/virtual-account-numbers',
+                        'method'      => 'POST',
+                        'payload'     => $payload,
+                        'response'    => $resp->json(),
+                        'http_status' => $resp->status(),
+                        'duration_ms' => $duration,
+                        'success'     => $resp->successful() && $resp->json('status') === 'success',
                     ]);
-                    $results[] = $va->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
-                } else {
-                    $errors[] = 'Flutterwave: ' . ($resp->json('message') ?? 'Request failed');
+
+                    if ($resp->successful() && $resp->json('status') === 'success') {
+                        $data = $resp->json('data');
+                        $va   = VirtualAccount::create([
+                            'user_id'        => $user->id,
+                            'provider'       => 'flutterwave',
+                            'bank_name'      => $data['bank_name'],
+                            'bank_code'      => 'flutterwave_dva',
+                            'account_number' => $data['account_number'],
+                            'account_name'   => $data['account_name'] ?? $user->name,
+                            'metadata'       => $data,
+                        ]);
+                        $results[] = $va->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
+                    } else {
+                        $errors[] = 'Flutterwave: ' . ($resp->json('message') ?? 'Request failed');
+                    }
                 }
+            } catch (\Exception $e) {
+                Log::error('Flutterwave DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                $errors[] = 'Flutterwave: ' . $e->getMessage();
             }
-        } catch (\Exception $e) {
-            Log::error('Flutterwave DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
-            $errors[] = 'Flutterwave: ' . $e->getMessage();
         }
 
         // ── Monnify DVA ──────────────────────────────────────────────────────
-        try {
-            $monnifyApiKey = AppSetting::get('monnify_api_key');
-            if ($monnifyApiKey) {
+        $monnifyStatus = AppSetting::get('monnify_status', '1');
+        $monnifyApiKey = AppSetting::get('monnify_api_key');
+        if ($monnifyStatus === '1' && $monnifyApiKey) {
+            try {
                 // Check if we already have monnify accounts
                 $existing = VirtualAccount::where('user_id', $user->id)
                     ->where('provider', 'monnify')
@@ -289,10 +298,10 @@ class WalletFundingController extends Controller implements HasMiddleware
                         $results[] = $va->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
                     }
                 }
+            } catch (\Exception $e) {
+                Log::error('Monnify DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                $errors[] = 'Monnify: ' . $e->getMessage();
             }
-        } catch (\Exception $e) {
-            Log::error('Monnify DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
-            $errors[] = 'Monnify: ' . $e->getMessage();
         }
 
         if (empty($results)) {
