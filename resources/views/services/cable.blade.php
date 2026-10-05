@@ -9,7 +9,7 @@
     <div>
         <h1 class="text-2xl font-outfit font-bold text-slate-900 dark:text-white">Cable TV Subscription</h1>
         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Subscribe to DSTV, GOtv and Startimes at the best rates.
+            Subscribe to DSTV, GOtv and Startimes at affordable rates.
         </p>
     </div>
 

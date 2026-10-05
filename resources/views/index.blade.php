@@ -46,13 +46,13 @@
             <div class="text-center lg:text-left space-y-7">
                 {{-- Badge --}}
                 <div class="inline-flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full px-5 py-2 text-xs font-bold shadow-sm" style="color:{{ $themeColor }}">
-                    <span>#1 VTU Platform in Nigeria</span>
+                    <span>Reliable VTU Platform in Nigeria</span>
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
                 </div>
 
                 {{-- Headline --}}
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold font-outfit leading-tight text-slate-900 dark:text-white">
-                    Best app for your<br>
+                    Convenient app for your<br>
                     <span style="color:{{ $themeColor }}">various daily</span> needs
                 </h1>
 
@@ -460,9 +460,9 @@
         {{-- Testimonial carousel --}}
         <div class="relative">
             @foreach([
-                ['Fast & Cheap Quality Service.','I must say that this platform has the best cheap and ultimately fast VTU service I have ever experienced. The user interface looks smooth and awesome - it\'s highly responsive and looks/feels cool. Giving this my 5 star and also recommend to everyone.','A.C.','CEO, Harkone Designs'],
+                ['Fast & Quality Service.','I must say that this platform has a fast, affordable and reliable VTU service. The user interface looks smooth and awesome - it\'s highly responsive and looks/feels cool. Giving this my 5 star and also recommend to everyone.','A.C.','CEO, Harkone Designs'],
                 ['Super Reliable Platform!','Funding my wallet and buying data has never been this smooth. The transactions are instant and the support team is always available when I need help. Highly recommended for everyone.','O.B.','Freelance Developer'],
-                ['Best VTU Site in Nigeria','I have tried several VTU platforms but this one stands out. The prices are very affordable and the service is always instant. No delays, no stress. My go-to platform for all bills.','E.N.','Business Owner'],
+                ['Reliable VTU Site in Nigeria','I have tried several VTU platforms but this one stands out. The prices are very affordable and the service is always instant. No delays, no stress. My go-to platform for all bills.','E.N.','Business Owner'],
             ] as $i => [$title,$quote,$name,$role])
             <div class="testimonial-item {{ $i === 0 ? 'active' : '' }} flex-col items-center text-center gap-6">
                 <div class="flex justify-center mb-4 gap-1">
@@ -505,7 +505,7 @@
 
         <div class="space-y-4" id="faq-list">
             @foreach([
-                ['Who/What is '.$siteName.'?', $siteName.' is a reliable Nigerian VTU platform that lets you buy airtime, data bundles, pay electricity bills, and renew cable TV subscriptions instantly at the best prices.'],
+                ['Who/What is '.$siteName.'?', $siteName.' is a reliable Nigerian VTU platform that lets you buy airtime, data bundles, pay electricity bills, and renew cable TV subscriptions instantly at affordable prices.'],
                 ['How do I register on '.$siteName.'?','Simply click on "Sign Up", fill in your name, email address, and create a password. Your account is activated immediately - no verification delays.'],
                 ['How do I fund my wallet?','You can fund your wallet via bank transfer, USSD, or online card payment through Paystack/Flutterwave. Funding is reflected instantly on your account.'],
                 ['How do I purchase services on '.$siteName.'?','After funding your wallet, navigate to the service you want (Airtime, Data, Cable, or Electricity), fill in the required details, and confirm. Delivery is instant.'],

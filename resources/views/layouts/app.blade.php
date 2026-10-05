@@ -313,7 +313,7 @@
                                 </div>
                             <span class="text-lg font-bold font-outfit tracking-tight text-white">{{ $siteName }}</span>
                         </div>
-                        <p class="text-sm">Nigeria's most reliable platform for cheap data, airtime, electricity, and cable TV subscription topups.</p>
+                        <p class="text-sm">A reliable platform for airtime, data, electricity, and cable TV subscription topups in Nigeria.</p>
                     </div>
                     
                     <!-- Services column -->
