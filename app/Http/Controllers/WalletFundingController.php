@@ -311,6 +311,10 @@ class WalletFundingController extends Controller implements HasMiddleware
             ], 422);
         }
 
+        if ($user->kyc_status !== 'verified') {
+            $user->update(['kyc_status' => 'verified']);
+        }
+
         return response()->json(['success' => true, 'accounts' => $results]);
     }
 

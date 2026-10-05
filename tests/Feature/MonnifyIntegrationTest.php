@@ -78,6 +78,9 @@ class MonnifyIntegrationTest extends TestCase
             'bank_code' => '035',
             'account_number' => '9876543210',
         ]);
+
+        $user->refresh();
+        $this->assertEquals('verified', $user->kyc_status);
     }
 
     public function test_monnify_webhook_credits_user_wallet(): void

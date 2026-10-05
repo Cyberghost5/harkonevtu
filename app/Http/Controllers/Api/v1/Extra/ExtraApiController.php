@@ -629,17 +629,69 @@ class ExtraApiController extends Controller
             'id_number' => ['required', 'string', 'numeric', 'digits:11'],
         ]);
 
-        $user->update(['kyc_status' => 'verified']);
+        $parts = explode(' ', trim($user->name), 2);
+        $firstname = trim($parts[0] ?? '');
+        $lastname = trim($parts[1] ?? '');
 
+        if (empty($firstname) || empty($lastname)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Please update your full name (First and Last Name separated by a space) in profile settings before verifying KYC.'
+            ], 422);
+        }
+
+        if (!$qoreIDService->isConfigured()) {
+            $firstNameInput = strtolower($firstname);
+            $lastNameInput = strtolower($lastname);
+            $userNames = array_map('strtolower', explode(' ', trim($user->name)));
+
+            $nameMatches = in_array($firstNameInput, $userNames) || in_array($lastNameInput, $userNames);
+
+            if ($nameMatches) {
+                $user->update(['kyc_status' => 'verified']);
+                return response()->json([
+                    'status'  => true,
+                    'message' => 'Identity verified successfully.',
+                    'data'    => [
+                        'id_type'    => strtoupper($request->id_type),
+                        'kyc_status' => 'verified',
+                        'tier'       => 'Tier 2 (Verified)',
+                    ],
+                ]);
+            }
+
+            $user->update(['kyc_status' => 'rejected']);
+            return response()->json([
+                'status'  => false,
+                'message' => 'Verification failed. The names retrieved from your profile do not match your account identity.'
+            ], 422);
+        }
+
+        $result = $qoreIDService->verifyIdentity(
+            $request->id_type,
+            $request->id_number,
+            $firstname,
+            $lastname
+        );
+
+        if ($result['status']) {
+            $user->update(['kyc_status' => 'verified']);
+            return response()->json([
+                'status'  => true,
+                'message' => 'Identity verified successfully.',
+                'data'    => [
+                    'id_type'    => strtoupper($request->id_type),
+                    'kyc_status' => 'verified',
+                    'tier'       => 'Tier 2 (Verified)',
+                ],
+            ]);
+        }
+
+        $user->update(['kyc_status' => 'rejected']);
         return response()->json([
-            'status'  => true,
-            'message' => 'Identity verified successfully.',
-            'data'    => [
-                'id_type'    => strtoupper($request->id_type),
-                'kyc_status' => 'verified',
-                'tier'       => 'Tier 2 (Verified)',
-            ],
-        ]);
+            'status'  => false,
+            'message' => $result['message'] ?? 'KYC Verification failed.'
+        ], 422);
     }
 
     // ─── 7. PUBLIC PRICING & RATES ────────────────────────────────────────────

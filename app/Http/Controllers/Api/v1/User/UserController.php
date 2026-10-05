@@ -472,6 +472,10 @@ class UserController extends Controller
             return $this->jsonResponse(false, 'Could not generate virtual accounts. ' . implode(' | ', $errors), null, 400);
         }
 
+        if ($user->kyc_status !== 'verified') {
+            $user->update(['kyc_status' => 'verified']);
+        }
+
         return $this->jsonResponse(true, 'Virtual bank accounts generated successfully.', [
             'accounts' => $results,
         ]);
