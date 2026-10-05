@@ -508,6 +508,7 @@ class UserController extends Controller
             'user_id'     => $user->id,
             'service'     => 'dva_customer_create',
             'provider'    => 'paystack',
+            'reference'   => 'dva_cust_' . $user->id,
             'endpoint'    => 'https://api.paystack.co/customer',
             'method'      => 'POST',
             'payload'     => $payload,

@@ -330,15 +330,31 @@ class WalletFundingController extends Controller implements HasMiddleware
         }
 
         // Create customer on Paystack
-        $nameParts = explode(' ', $user->name, 2);
+        $start = hrtime(true);
+        $payload = [
+            'email'      => $user->email,
+            'first_name' => $nameParts[0],
+            'last_name'  => $nameParts[1] ?? '',
+            'phone'      => $user->phone ?? '',
+        ];
         $resp = Http::withToken(config('services.paystack.secret_key'))
             ->timeout(20)
-            ->post('https://api.paystack.co/customer', [
-                'email'      => $user->email,
-                'first_name' => $nameParts[0],
-                'last_name'  => $nameParts[1] ?? '',
-                'phone'      => $user->phone ?? '',
-            ]);
+            ->post('https://api.paystack.co/customer', $payload);
+        $duration = (int) ((hrtime(true) - $start) / 1e6);
+
+        \App\Models\ApiLog::record([
+            'user_id'     => $user->id,
+            'service'     => 'dva_customer_create',
+            'provider'    => 'paystack',
+            'reference'   => 'dva_cust_' . $user->id,
+            'endpoint'    => 'https://api.paystack.co/customer',
+            'method'      => 'POST',
+            'payload'     => $payload,
+            'response'    => $resp->json(),
+            'http_status' => $resp->status(),
+            'duration_ms' => $duration,
+            'success'     => $resp->successful() && $resp->json('status') === true,
+        ]);
 
         if (!$resp->successful() || !$resp->json('status')) {
             throw new \RuntimeException($resp->json('message') ?? 'Failed to create Paystack customer');
