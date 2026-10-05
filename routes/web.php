@@ -247,8 +247,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::get('/user-logs',           [\App\Http\Controllers\Admin\AdminUserLogController::class, 'index'])->name('user-logs.index');
 
     // Push Notifications
-    Route::get('/notifications',       [\App\Http\Controllers\Admin\AdminNotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/send', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'send'])->name('notifications.send');
+    Route::get('/notifications',            [\App\Http\Controllers\Admin\AdminNotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/send',      [\App\Http\Controllers\Admin\AdminNotificationController::class, 'send'])->name('notifications.send');
+    Route::post('/notifications/{id}/resend',[\App\Http\Controllers\Admin\AdminNotificationController::class, 'resend'])->name('notifications.resend');
 
     // Settings - redirect legacy index to general
     Route::get('/settings',                        fn() => redirect()->route('admin.settings.general'))->name('settings.index');

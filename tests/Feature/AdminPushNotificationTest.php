@@ -100,4 +100,31 @@ class AdminPushNotificationTest extends TestCase
             'device_type'      => 'android',
         ]);
     }
+
+    public function test_admin_can_resend_push_notification(): void
+    {
+        Http::fake([
+            'api.onesignal.com/*' => Http::response(['id' => 'notif-999'], 200),
+        ]);
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $this->actingAs($admin);
+
+        $notification = PushNotification::create([
+            'admin_id'        => $admin->id,
+            'title'           => 'Weekly Update',
+            'message'         => 'System maintenance tonight at 12 AM.',
+            'target_audience' => 'all',
+            'recipient_count' => 10,
+            'status'          => 'sent',
+        ]);
+
+        $response = $this->post(route('admin.notifications.resend', $notification->id));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('push_notifications', [
+            'title'   => 'Weekly Update (Resent)',
+            'status'  => 'sent',
+        ]);
+    }
 }

@@ -144,7 +144,8 @@
                             <th class="px-4 py-3">Recipients</th>
                             <th class="px-4 py-3">Status</th>
                             <th class="px-4 py-3">Sent By</th>
-                            <th class="px-6 py-3 text-right">Date</th>
+                            <th class="px-4 py-3">Date</th>
+                            <th class="px-6 py-3 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
@@ -189,8 +190,21 @@
                             <td class="px-4 py-4 whitespace-nowrap font-medium text-slate-600 dark:text-slate-400">
                                 {{ $notif->admin->name ?? 'Admin' }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-slate-400">
+                            <td class="px-4 py-4 whitespace-nowrap text-slate-400">
                                 {{ $notif->created_at->format('M d, Y H:i') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <form method="POST" action="{{ route('admin.notifications.resend', $notif->id) }}" class="inline-block" onsubmit="return confirm('Are you sure you want to resend this push notification?');">
+                                    @csrf
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-vtu-primary hover:text-white bg-vtu-primary/10 hover:bg-vtu-primary transition-all duration-150 shadow-sm"
+                                            title="Resend this push notification">
+                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                        </svg>
+                                        Resend
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                         @empty

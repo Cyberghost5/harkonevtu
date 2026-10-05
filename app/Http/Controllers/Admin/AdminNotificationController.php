@@ -103,4 +103,56 @@ class AdminNotificationController extends Controller
 
         return back()->with('success', "Push notification sent successfully to {$recipientCount} recipient(s).");
     }
+
+    public function resend(Request $request, $id)
+    {
+        $notification = PushNotification::findOrFail($id);
+
+        $title = preg_replace('/\s*\(Resent\)$/i', '', $notification->title);
+        $message = $notification->message;
+        $targetAudience = $notification->target_audience;
+        $deviceType = $notification->device_type;
+        $extraData = $notification->extra_data ?? [];
+
+        unset($extraData['error']);
+
+        $recipientCount = 0;
+        $success = false;
+
+        if ($targetAudience === 'all') {
+            $recipientCount = User::count();
+            $success = OneSignalService::sendNotificationToAll($title, $message, $extraData);
+        } elseif ($targetAudience === 'device_type') {
+            $recipientCount = User::where('device_type', $deviceType)->count();
+            if ($recipientCount === 0) {
+                $recipientCount = User::count();
+            }
+            $success = OneSignalService::sendNotificationByDeviceType($deviceType ?? 'all', $title, $message, $extraData);
+        } else {
+            $recipientCount = $notification->recipient_count ?: User::count();
+            $success = OneSignalService::sendNotificationToAll($title, $message, $extraData);
+        }
+
+        if (!$success && OneSignalService::$lastError) {
+            $extraData['error'] = OneSignalService::$lastError;
+        }
+
+        PushNotification::create([
+            'admin_id'        => Auth::id(),
+            'title'           => $title . ' (Resent)',
+            'message'         => $message,
+            'target_audience' => $targetAudience,
+            'device_type'     => $deviceType,
+            'recipient_count' => $recipientCount,
+            'status'          => $success ? 'sent' : 'failed',
+            'extra_data'      => $extraData,
+        ]);
+
+        if (!$success) {
+            $errorReason = OneSignalService::$lastError ?? 'Failed to resend notification via OneSignal API.';
+            return back()->with('error', "Push notification resend failed: {$errorReason}");
+        }
+
+        return back()->with('success', "Push notification resent successfully!");
+    }
 }
