@@ -81,6 +81,10 @@ class AdminNotificationController extends Controller
             }
         }
 
+        if (!$success && OneSignalService::$lastError) {
+            $extraData['error'] = OneSignalService::$lastError;
+        }
+
         PushNotification::create([
             'admin_id'        => Auth::id(),
             'title'           => $title,
@@ -91,6 +95,11 @@ class AdminNotificationController extends Controller
             'status'          => $success ? 'sent' : 'failed',
             'extra_data'      => $extraData,
         ]);
+
+        if (!$success) {
+            $errorReason = OneSignalService::$lastError ?? 'Failed to send notification via OneSignal API.';
+            return back()->with('error', "Push notification delivery failed: {$errorReason}");
+        }
 
         return back()->with('success', "Push notification sent successfully to {$recipientCount} recipient(s).");
     }

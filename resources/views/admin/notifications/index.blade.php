@@ -174,9 +174,16 @@
                                     Sent
                                 </span>
                                 @else
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400">
-                                    Failed
-                                </span>
+                                <div>
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400" title="{{ $notif->extra_data['error'] ?? 'Delivery failed' }}">
+                                        Failed
+                                    </span>
+                                    @if(!empty($notif->extra_data['error']))
+                                    <div class="text-[10px] text-red-500 max-w-xs mt-1 truncate" title="{{ $notif->extra_data['error'] }}">
+                                        {{ $notif->extra_data['error'] }}
+                                    </div>
+                                    @endif
+                                </div>
                                 @endif
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap font-medium text-slate-600 dark:text-slate-400">

@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 class OneSignalService
 {
+    public static ?string $lastError = null;
+
     /**
      * Send a push notification to a specific user.
      *
@@ -29,6 +31,7 @@ class OneSignalService
     public static function sendNotificationToUsers(array $userIds, string $title, string $message, ?array $data = null): bool
     {
         if (empty($userIds)) {
+            self::$lastError = 'No user IDs provided for notification.';
             return false;
         }
 
@@ -88,11 +91,14 @@ class OneSignalService
      */
     protected static function dispatchNotification(array $extraPayload, string $title, string $message, ?array $additionalData = null): bool
     {
+        self::$lastError = null;
+
         $appId = AppSetting::get('onesignal_app_id');
         $apiKey = AppSetting::get('onesignal_api_key');
 
         if (!$appId || !$apiKey) {
-            Log::debug('OneSignal is not fully configured. Push notification skipped.', [
+            self::$lastError = 'OneSignal is not configured. Please enter your OneSignal App ID and REST API Key in Admin Settings -> API Keys.';
+            Log::warning(self::$lastError, [
                 'title'   => $title,
                 'message' => $message,
             ]);
@@ -119,7 +125,13 @@ class OneSignalService
             $response = Http::withHeaders($requestHeaders)->post('https://api.onesignal.com/notifications?c=push', $payload);
             $duration = (int) ((hrtime(true) - $start) / 1e6);
 
-            if ($response->failed()) {
+            $responseBody = $response->json();
+            $errorsList = $responseBody['errors'] ?? null;
+            
+            if ($response->failed() || !empty($errorsList)) {
+                $errorMsg = is_array($errorsList) ? implode(', ', $errorsList) : ($responseBody['message'] ?? 'OneSignal API returned an error (HTTP ' . $response->status() . ')');
+                self::$lastError = 'OneSignal Error: ' . $errorMsg;
+
                 ApiLog::record([
                     'service'         => 'notification',
                     'provider'        => 'one_signal',
@@ -128,7 +140,7 @@ class OneSignalService
                     'method'          => 'POST',
                     'payload'         => $payload,
                     'request_headers' => $requestHeaders,
-                    'response'        => $response->json(),
+                    'response'        => $responseBody,
                     'http_status'     => $response->status(),
                     'response_headers'=> $response->headers(),
                     'duration_ms'     => $duration,
@@ -136,7 +148,7 @@ class OneSignalService
                 ]);
                 Log::error('OneSignal notification delivery failed', [
                     'status'   => $response->status(),
-                    'response' => $response->json(),
+                    'response' => $responseBody,
                     'payload'  => $payload,
                 ]);
                 return false;
@@ -144,7 +156,8 @@ class OneSignalService
 
             return true;
         } catch (\Exception $e) {
-            Log::error('OneSignal request exception: ' . $e->getMessage());
+            self::$lastError = 'OneSignal Request Exception: ' . $e->getMessage();
+            Log::error(self::$lastError);
             return false;
         }
     }
