@@ -315,11 +315,33 @@
                 <button onclick="openSidebar()" class="lg:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
-                <div class="flex-1 max-w-xs hidden sm:block">
-                    <div class="relative">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <input type="text" placeholder="Search Transaction/User"
-                               class="w-full pl-9 pr-4 py-2 text-sm rounded-lg text-gray-600 dark:text-slate-300 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+                {{-- Global Search Bar --}}
+                <div class="flex-1 max-w-xs sm:max-w-sm md:max-w-md hidden sm:block relative" id="admin-search-wrapper">
+                    <form action="{{ route('admin.search') }}" method="GET" class="relative flex items-center">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input type="text"
+                               name="q"
+                               id="admin-search-input"
+                               value="{{ request('q', '') }}"
+                               placeholder="Search Transaction / User..."
+                               autocomplete="off"
+                               class="w-full pl-9 pr-8 py-2 text-sm rounded-xl text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 transition-all">
+                        <button type="button" id="admin-search-clear" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                        <div id="admin-search-spinner" class="hidden absolute right-3 top-1/2 -translate-y-1/2">
+                            <svg class="animate-spin h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                        </div>
+                    </form>
+
+                    {{-- Live Search Autocomplete Dropdown --}}
+                    <div id="admin-search-dropdown" class="hidden absolute left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden max-h-[440px] overflow-y-auto">
+                        <!-- Injected via JS -->
                     </div>
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
@@ -514,6 +536,188 @@
                 profileDrop.classList.add('hidden');
             }
         });
+
+        // ── Admin Live Search Autocomplete ───────────────────────────────
+        (function() {
+            var searchInput = document.getElementById('admin-search-input');
+            var searchClear = document.getElementById('admin-search-clear');
+            var searchSpinner = document.getElementById('admin-search-spinner');
+            var searchDropdown = document.getElementById('admin-search-dropdown');
+            var searchWrapper = document.getElementById('admin-search-wrapper');
+
+            if (!searchInput || !searchDropdown) return;
+
+            var debounceTimer = null;
+            var abortController = null;
+
+            function updateClearBtn() {
+                if (searchInput.value.trim().length > 0) {
+                    if (searchClear) searchClear.classList.remove('hidden');
+                } else {
+                    if (searchClear) searchClear.classList.add('hidden');
+                }
+            }
+
+            if (searchClear) {
+                searchClear.addEventListener('click', function() {
+                    searchInput.value = '';
+                    updateClearBtn();
+                    searchDropdown.classList.add('hidden');
+                    searchDropdown.innerHTML = '';
+                    searchInput.focus();
+                });
+            }
+
+            searchInput.addEventListener('input', function() {
+                updateClearBtn();
+                var query = searchInput.value.trim();
+
+                if (debounceTimer) clearTimeout(debounceTimer);
+                if (abortController) abortController.abort();
+
+                if (query.length < 2) {
+                    if (searchSpinner) searchSpinner.classList.add('hidden');
+                    searchDropdown.classList.add('hidden');
+                    searchDropdown.innerHTML = '';
+                    return;
+                }
+
+                if (searchSpinner) searchSpinner.classList.remove('hidden');
+                if (searchClear) searchClear.classList.add('hidden');
+
+                debounceTimer = setTimeout(function() {
+                    abortController = new AbortController();
+                    fetch('{{ route('admin.search.live') }}?q=' + encodeURIComponent(query), {
+                        signal: abortController.signal,
+                        headers: { 'Accept': 'application/json' }
+                    })
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (searchSpinner) searchSpinner.classList.add('hidden');
+                        updateClearBtn();
+                        renderLiveResults(query, data);
+                    })
+                    .catch(function(err) {
+                        if (err.name !== 'AbortError') {
+                            if (searchSpinner) searchSpinner.classList.add('hidden');
+                            updateClearBtn();
+                        }
+                    });
+                }, 250);
+            });
+
+            searchInput.addEventListener('focus', function() {
+                if (searchInput.value.trim().length >= 2 && searchDropdown.innerHTML.trim() !== '') {
+                    searchDropdown.classList.remove('hidden');
+                }
+            });
+
+            window.addEventListener('click', function(e) {
+                if (searchWrapper && !searchWrapper.contains(e.target)) {
+                    searchDropdown.classList.add('hidden');
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && searchDropdown && !searchDropdown.classList.contains('hidden')) {
+                    searchDropdown.classList.add('hidden');
+                }
+            });
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function renderLiveResults(query, data) {
+                var users = data.users || [];
+                var txs = data.transactions || [];
+
+                if (users.length === 0 && txs.length === 0) {
+                    searchDropdown.innerHTML = 
+                        '<div class="p-4 text-center text-xs text-slate-500 dark:text-slate-400">' +
+                            '<p class="font-medium text-slate-700 dark:text-slate-300">No matches found for "' + escapeHtml(query) + '"</p>' +
+                            '<p class="mt-1 text-[11px] text-slate-400">Press Enter for complete multi-table search</p>' +
+                        '</div>';
+                    searchDropdown.classList.remove('hidden');
+                    return;
+                }
+
+                var html = '';
+
+                // Users section
+                if (users.length > 0) {
+                    html += '<div class="px-3 pt-2.5 pb-1 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 flex items-center justify-between">' +
+                        '<span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Users (' + users.length + ')</span>' +
+                        '<a href="{{ route('admin.users.index') }}?search=' + encodeURIComponent(query) + '" class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">View in Users &rarr;</a>' +
+                    '</div>' +
+                    '<div class="divide-y divide-slate-100 dark:divide-slate-800/60">';
+
+                    users.forEach(function(u) {
+                        var avatar = u.avatar
+                            ? '<img src="' + escapeHtml(u.avatar) + '" class="h-8 w-8 rounded-full object-cover">'
+                            : '<div class="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:{{ $themeColor }}">' + escapeHtml(u.initials) + '</div>';
+
+                        html += '<a href="' + escapeHtml(u.url) + '" class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
+                            avatar +
+                            '<div class="min-w-0 flex-1">' +
+                                '<div class="flex items-center justify-between gap-2">' +
+                                    '<p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">' + escapeHtml(u.name) + '</p>' +
+                                    '<span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">&#8358;' + escapeHtml(u.balance) + '</span>' +
+                                '</div>' +
+                                '<p class="text-[11px] text-slate-400 truncate">' + escapeHtml(u.email || u.phone || '') + '</p>' +
+                            '</div>' +
+                        '</a>';
+                    });
+                    html += '</div>';
+                }
+
+                // Transactions section
+                if (txs.length > 0) {
+                    html += '<div class="px-3 pt-2.5 pb-1 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 flex items-center justify-between">' +
+                        '<span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Transactions (' + txs.length + ')</span>' +
+                        '<a href="{{ route('admin.transactions.index') }}?search=' + encodeURIComponent(query) + '" class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">View in Transactions &rarr;</a>' +
+                    '</div>' +
+                    '<div class="divide-y divide-slate-100 dark:divide-slate-800/60">';
+
+                    txs.forEach(function(t) {
+                        var badgeStyle = 'background:#f1f5f9;color:#475569';
+                        if (t.status === 'success') badgeStyle = 'background:#f0fdf4;color:#166534';
+                        else if (t.status === 'failed') badgeStyle = 'background:#fef2f2;color:#991b1b';
+                        else if (t.status === 'pending') badgeStyle = 'background:#fffbeb;color:#92400e';
+
+                        html += '<a href="' + escapeHtml(t.url) + '" class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">' +
+                            '<div class="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center flex-shrink-0">' +
+                                '<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' +
+                            '</div>' +
+                            '<div class="min-w-0 flex-1">' +
+                                '<div class="flex items-center justify-between gap-2">' +
+                                    '<span class="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 truncate">' + escapeHtml(t.reference) + '</span>' +
+                                    '<span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex-shrink-0">&#8358;' + escapeHtml(t.amount) + '</span>' +
+                                '</div>' +
+                                '<div class="flex items-center justify-between text-[11px] text-slate-400 mt-0.5">' +
+                                    '<span class="truncate">' + escapeHtml(t.service_type) + ' &bull; ' + escapeHtml(t.user_name) + '</span>' +
+                                    '<span class="text-[9px] font-semibold px-1.5 py-0.2 rounded capitalize" style="' + badgeStyle + '">' + escapeHtml(t.status) + '</span>' +
+                                '</div>' +
+                            '</div>' +
+                        '</a>';
+                    });
+                    html += '</div>';
+                }
+
+                // Full Search Footer
+                html += '<a href="{{ route('admin.search') }}?q=' + encodeURIComponent(query) + '" class="block px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border-t border-slate-100 dark:border-slate-800 text-center text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">' +
+                    'View all results for "' + escapeHtml(query) + '" &rarr;' +
+                '</a>';
+
+                searchDropdown.innerHTML = html;
+                searchDropdown.classList.remove('hidden');
+            }
+        })();
     </script>
     @yield('scripts')
 

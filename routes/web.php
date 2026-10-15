@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\AdminFundingController;
 use App\Http\Controllers\Admin\AdminApiLogController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminCouponController;
+use App\Http\Controllers\Admin\AdminSearchController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\TransactionController;
@@ -217,6 +218,10 @@ Route::withoutMiddleware(['web'])->group(function () {
 // ── Admin Panel ───────────────────────────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not_locked'])->group(function () {
     Route::get('/',                    [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    // Search
+    Route::get('/search',              [AdminSearchController::class, 'index'])->name('search');
+    Route::get('/search/live',         [AdminSearchController::class, 'live'])->name('search.live');
 
     // Users
     Route::get('/users',                       [AdminUserController::class, 'index'])->name('users.index');

@@ -56,6 +56,7 @@ class AdminTransactionController extends Controller
                 $s = $request->search;
                 $query->where(function ($q) use ($s) {
                     $q->where('reference', 'like', "%$s%")
+                      ->orWhere('recipient', 'like', "%$s%")
                       ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%$s%")
                           ->orWhere('email', 'like', "%$s%")
                           ->orWhere('phone', 'like', "%$s%"));

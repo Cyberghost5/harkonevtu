@@ -18,19 +18,21 @@ class AdminDashboardController extends Controller
             'total_users'     => User::where('is_admin', false)->count(),
             'total_admins'    => User::where('is_admin', true)->count(),
             'active_users'    => User::where('is_admin', false)->where('is_active', true)->count(),
-            'total_revenue'   => ServiceTransaction::where('status', 'success')->sum('amount'),
-            'today_revenue'   => ServiceTransaction::where('status', 'success')
-                                     ->whereDate('created_at', today())->sum('amount'),
-            'users_balance'   => \App\Models\Wallet::sum('balance'),
+            'total_revenue'   => (float) ServiceTransaction::where('status', 'success')->sum('amount'),
+            'today_revenue'   => (float) ServiceTransaction::where('status', 'success')
+                                     ->where('created_at', '>=', now()->startOfDay())->sum('amount'),
+            'users_balance'   => (float) \App\Models\Wallet::whereHas('user', function ($q) {
+                                     $q->where('is_admin', false);
+                                 })->sum('balance'),
             'pending_funding' => FundingRequest::where('status', 'pending')->count(),
             'total_tx'        => ServiceTransaction::count(),
-            'today_tx'        => ServiceTransaction::whereDate('created_at', today())->count(),
-            'failed_tx'       => ServiceTransaction::where('status', 'failed')->whereDate('created_at', today())->count(),
+            'today_tx'        => ServiceTransaction::where('created_at', '>=', now()->startOfDay())->count(),
+            'failed_tx'       => ServiceTransaction::where('status', 'failed')
+                                     ->where('created_at', '>=', now()->startOfDay())->count(),
         ];
 
-        // Revenue by service (last 30 days)
+        // Revenue by service (All-time, matching "Total Spendings / All-time platform spending" on the card)
         $revenueByService = ServiceTransaction::where('status', 'success')
-            ->where('created_at', '>=', now()->subDays(30))
             ->select('service_type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('service_type')
             ->get()
