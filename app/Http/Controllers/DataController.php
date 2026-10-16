@@ -900,7 +900,7 @@ class DataController extends Controller
         $endpoint = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/data/vend';
         $payload  = [
             'network'   => $payscribeNetwork,
-            'plan_code' => $planCode,
+            'plan' => $planCode,
             'recipient' => $phone,
             'ref'       => $reference,
         ];
