@@ -235,7 +235,10 @@ class AdminSettingsController extends Controller
 
         $availableProviders = [];
         foreach ($providerCredentialMap as $name => $cfg) {
-            $hasCred  = !empty($credValues[$cfg['cred']]);
+            $hasCred  = !empty($credValues[$cfg['cred']])
+                || !empty(config("services.{$name}.secret_key"))
+                || !empty(config("services.{$name}.api_key"))
+                || !empty(config("services.{$name}.token"));
             $isEnabled = ($credValues[$cfg['status']] ?? '1') !== '0';
             if ($hasCred && $isEnabled) {
                 $availableProviders[] = $name;
@@ -247,7 +250,7 @@ class AdminSettingsController extends Controller
         $airtimeIntegrated   = ['vtpass', 'clubkonnect', 'autopilot', 'legitdataway', 'merrybills', 'payscribe', 'mtn_ers', 'glo_ers', 'nine_mobile_evc'];
         $airtimeProviders    = array_values(array_intersect($availableProviders, $airtimeIntegrated));
 
-        $dataIntegrated      = ['vtpass', 'clubkonnect', 'autopilot', 'merrybills', 'easyaccess', 'aabaxztech', 'legitdataway', 'globacom', 'mtn_ers', 'glo_ers'];
+        $dataIntegrated      = ['vtpass', 'clubkonnect', 'autopilot', 'merrybills', 'easyaccess', 'aabaxztech', 'legitdataway', 'globacom', 'mtn_ers', 'glo_ers', 'payscribe'];
         $dataProviders       = array_values(array_intersect($availableProviders, $dataIntegrated));
 
         $electricityIntegrated = ['vtpass', 'easyaccess', 'payscribe'];
@@ -256,7 +259,7 @@ class AdminSettingsController extends Controller
         $cableIntegrated     = ['vtpass', 'easyaccess', 'payscribe'];
         $cableProviders      = array_values(array_intersect($availableProviders, $cableIntegrated));
 
-        $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller'];
+        $epinsIntegrated     = ['vtpass', 'easyaccess', 'primebiller', 'payscribe'];
         $epinsProviders      = array_values(array_intersect($availableProviders, $epinsIntegrated));
 
         $datacardIntegrated  = ['vtpass'];
@@ -433,6 +436,7 @@ class AdminSettingsController extends Controller
             'merrybills_product_id' => 'nullable|string|max:100',
             'merrybills_id'         => 'nullable|string|max:100',
             'mtn_ers_id'            => 'nullable|string|max:100',
+            'payscribe_id'          => 'nullable|string|max:100',
             'amount'                => 'required|numeric|min:0',
             'amount_agent'          => 'nullable|numeric|min:0',
             'sort_order'            => 'nullable|integer|min:0',
@@ -442,7 +446,7 @@ class AdminSettingsController extends Controller
                 'network_key','data_type','plan_name','validity',
                 'vtpass_id','clubkonnect_id','easyaccess_id','aabaxztech_id',
                 'legitdataway_id','globacom_id','glo_ers_id','autopilot_id',
-                'merrybills_product_id','merrybills_id','mtn_ers_id',
+                'merrybills_product_id','merrybills_id','mtn_ers_id','payscribe_id',
                 'amount','amount_agent','sort_order',
             ]),
             ['enabled' => $request->boolean('enabled', true)]
@@ -458,7 +462,7 @@ class AdminSettingsController extends Controller
                 'network_key','data_type','plan_name','validity',
                 'vtpass_id','clubkonnect_id','easyaccess_id','aabaxztech_id',
                 'legitdataway_id','globacom_id','glo_ers_id','autopilot_id',
-                'merrybills_product_id','merrybills_id','mtn_ers_id',
+                'merrybills_product_id','merrybills_id','mtn_ers_id','payscribe_id',
                 'amount','amount_agent','sort_order',
             ]),
             ['enabled' => $request->boolean('enabled', false)]

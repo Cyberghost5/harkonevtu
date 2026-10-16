@@ -738,6 +738,7 @@ class BillsApiController extends Controller
             'message' => $quantity . 'x ' . $examType->name . ' scratch card(s) purchased successfully.',
             'data'    => [
                 'reference'     => $reference,
+                'api_reference' => $apiRes['reference'] ?? $reference,
                 'exam_name'     => $examType->name,
                 'quantity'      => $quantity,
                 'total_paid'    => $amount,
@@ -802,17 +803,22 @@ class BillsApiController extends Controller
 
     private function validateMeterPayscribe($disco, $meterType, $meterNumber): array
     {
+        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
+        if (!$secretKey) {
+            return ['success' => false, 'message' => 'Payscribe secret key is not configured.'];
+        }
+
         $start    = hrtime(true);
-        $endpoint = config('services.payscribe.base_url') . '/electricity/validate';
+        $endpoint = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/electricity/validate';
         $payload  = [
-            'service'      => $disco->slug,
+            'service'      => $disco->idForApi('payscribe'),
             'meter_number' => $meterNumber,
             'amount'       => '1000',
             'meter_type'   => $meterType,
         ];
         $rawBody        = json_encode($payload);
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
+            'Authorization' => 'Bearer ' . $secretKey,
             'Content-Type'  => 'text/plain',
         ];
         $data       = [];
@@ -825,23 +831,28 @@ class BillsApiController extends Controller
             $httpStatus   = $httpResponse->status();
             $resHeaders   = $httpResponse->headers();
             $data         = $httpResponse->json() ?? [];
-            $status       = $data['status'] ?? false;
-            $success      = (bool) $status;
+            $rawStatus    = $data['status'] ?? false;
+            $success      = $httpResponse->successful() && ($rawStatus === true || $rawStatus === 'true' || $rawStatus === 'success');
 
-            if ($status) {
-                $details = $data['message']['details'] ?? [];
+            if ($success) {
+                $details = $data['message']['details'] ?? ($data['details'] ?? ($data['data'] ?? []));
                 return [
                     'success'       => true,
-                    'customer_name' => $details['customer_name'] ?? 'VALIDATED CUSTOMER',
+                    'customer_name' => $details['customer_name'] ?? ($details['name'] ?? 'VALIDATED CUSTOMER'),
                     'address'       => $details['address'] ?? null,
                 ];
             }
-            return ['success' => false, 'message' => $data['description'] ?? 'Meter validation failed.'];
+            $errMsg = is_array($data['message'] ?? null)
+                ? ($data['message']['description'] ?? ($data['message']['message'] ?? ($data['description'] ?? 'Meter validation failed.')))
+                : ($data['description'] ?? ($data['message'] ?? 'Meter validation failed.'));
+            return ['success' => false, 'message' => $errMsg];
         } catch (\Throwable $e) {
             $data = ['error' => $e->getMessage()];
-            return ['success' => false, 'message' => $e->getMessage()];
+            return ['success' => false, 'message' => 'Unable to connect to Payscribe service provider.'];
         } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $loggedHeaders = $requestHeaders;
+            $loggedHeaders['Authorization'] = 'Bearer ***';
             ApiLog::record([
                 'user_id'          => auth()->id(),
                 'service'          => 'electricity_validate',
@@ -850,7 +861,7 @@ class BillsApiController extends Controller
                 'endpoint'         => $endpoint,
                 'method'           => 'POST',
                 'payload'          => $payload,
-                'request_headers'  => $requestHeaders,
+                'request_headers'  => $loggedHeaders,
                 'response'         => $data,
                 'http_status'      => $httpStatus,
                 'response_headers' => $resHeaders,
@@ -956,41 +967,87 @@ class BillsApiController extends Controller
             }
 
             if ($api === 'payscribe') {
-                $endpoint = config('services.payscribe.base_url') . '/electricity/pay';
+                $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
+                if (!$secretKey) {
+                    return [
+                        'success'   => false,
+                        'reference' => $reference,
+                        'token'     => 'N/A',
+                        'units'     => null,
+                        'message'   => 'Payscribe secret key is not configured.',
+                        'response'  => ['message' => 'Payscribe secret key is not configured.'],
+                    ];
+                }
+
+                $endpoint = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/electricity/vend';
                 $payload  = [
-                    'service'      => $disco->slug,
-                    'meter_number' => $meterNumber,
-                    'amount'       => (int) $amount,
-                    'phone'        => $phone,
-                    'meter_type'   => $meterType,
-                    'ref'          => $reference,
+                    'service'       => $disco->idForApi('payscribe'),
+                    'meter_number'  => $meterNumber,
+                    'amount'        => (string) (int) $amount,
+                    'phone'         => $phone,
+                    'meter_type'    => $meterType,
+                    'customer_name' => auth()->user()?->name ?? 'Customer',
+                    'ref'           => $reference,
                 ];
-                $res  = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
+                $requestHeaders = [
+                    'Authorization' => 'Bearer ' . $secretKey,
+                    'Accept'        => 'application/json',
                     'Content-Type'  => 'application/json',
-                ])->timeout(30)->post($endpoint, $payload);
-                $data     = $res->json() ?? [];
-                $success  = ($data['status'] ?? false) === true;
+                ];
+                $resHeaders = null;
+                $res  = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+                $httpStatus = $res->status();
+                $resHeaders = $res->headers();
+                $data       = $res->json() ?? [];
+                $rawStatus  = $data['status'] ?? null;
+                $statusCode = $data['status_code'] ?? '';
+                $success    = $res->successful() && (
+                    $rawStatus === true ||
+                    $rawStatus === 'true' ||
+                    $rawStatus === 'success' ||
+                    in_array($statusCode, ['200', '201', 200, 201]) ||
+                    (($data['message']['status'] ?? null) === 'success')
+                );
                 $duration = (int) ((hrtime(true) - $start) / 1e6);
 
+                $details = $data['message']['details'] ?? ($data['details'] ?? ($data['data'] ?? []));
+                $token   = isset($details['token']) ? trim((string) $details['token']) : ($data['token'] ?? ($data['message']['token'] ?? 'N/A'));
+                $units   = $details['unit'] ?? ($details['units'] ?? ($data['message']['units'] ?? ($data['units'] ?? null)));
+                $apiRef  = $details['transid'] ?? ($details['transaction_id'] ?? ($data['reference'] ?? ($data['message']['ref'] ?? ($data['transid'] ?? $reference))));
+
+                $errMsg = null;
+                if (!$success) {
+                    if (is_array($data['message'] ?? null)) {
+                        $errMsg = $data['message']['description'] ?? ($data['message']['message'] ?? ($data['description'] ?? 'Payscribe electricity vending failed.'));
+                    } else {
+                        $errMsg = $data['description'] ?? ($data['message'] ?? 'Payscribe electricity vending failed.');
+                    }
+                }
+
+                $loggedHeaders = $requestHeaders;
+                $loggedHeaders['Authorization'] = 'Bearer ***';
                 ApiLog::record([
-                    'user_id'     => auth()->id(),
-                    'service'     => 'electricity',
-                    'provider'    => 'payscribe',
-                    'reference'   => $reference,
-                    'endpoint'    => $endpoint,
-                    'method'      => 'POST',
-                    'payload'     => $payload,
-                    'response'    => $data,
-                    'duration_ms' => $duration,
-                    'success'     => $success,
+                    'user_id'          => auth()->id(),
+                    'service'          => 'electricity',
+                    'provider'         => 'payscribe',
+                    'reference'        => $reference,
+                    'endpoint'         => $endpoint,
+                    'method'           => 'POST',
+                    'payload'          => $payload,
+                    'request_headers'  => $loggedHeaders,
+                    'response'         => $data,
+                    'http_status'      => $httpStatus,
+                    'response_headers' => $resHeaders,
+                    'duration_ms'      => $duration,
+                    'success'          => $success,
                 ]);
 
                 return [
                     'success'   => $success,
-                    'reference' => $data['message']['ref'] ?? $reference,
-                    'token'     => $data['message']['token'] ?? 'N/A',
-                    'units'     => $data['message']['units'] ?? null,
+                    'reference' => $apiRef,
+                    'token'     => $token,
+                    'units'     => $units,
+                    'message'   => $errMsg,
                     'response'  => $data,
                 ];
             }
@@ -1117,15 +1174,21 @@ class BillsApiController extends Controller
 
     private function validateCardPayscribe($provider, $smartcard): array
     {
+        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
+        if (!$secretKey) {
+            return ['success' => false, 'message' => 'Payscribe secret key is not configured.'];
+        }
+
         $start    = hrtime(true);
-        $endpoint = config('services.payscribe.base_url') . '/multichoice/validate';
+        $endpoint = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/multichoice/validate';
         $payload  = [
-            'service' => $provider->slug,
+            'service' => $provider->idForApi('payscribe'),
             'account' => $smartcard,
         ];
         $rawBody        = json_encode($payload);
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
+            'Authorization' => 'Bearer ' . $secretKey,
+            'Accept'        => 'application/json',
             'Content-Type'  => 'application/json',
         ];
         $data       = [];
@@ -1138,22 +1201,27 @@ class BillsApiController extends Controller
             $httpStatus = $res->status();
             $resHeaders = $res->headers();
             $data       = $res->json() ?? [];
-            $status     = $data['status'] ?? false;
-            $success    = (bool) $status;
+            $rawStatus  = $data['status'] ?? false;
+            $success    = $res->successful() && ($rawStatus === true || $rawStatus === 'true' || $rawStatus === 'success');
 
-            if ($status) {
-                $details = $data['message']['details'] ?? [];
+            if ($success) {
+                $details = $data['message']['details'] ?? ($data['details'] ?? ($data['data'] ?? []));
                 return [
                     'success'       => true,
-                    'customer_name' => $details['customer_name'] ?? 'VALIDATED SUBSCRIBER',
+                    'customer_name' => $details['customer_name'] ?? ($details['name'] ?? 'VALIDATED SUBSCRIBER'),
                 ];
             }
-            return ['success' => false, 'message' => $data['description'] ?? 'Smartcard validation failed.'];
+            $errMsg = is_array($data['message'] ?? null)
+                ? ($data['message']['description'] ?? ($data['message']['message'] ?? ($data['description'] ?? 'Smartcard validation failed.')))
+                : ($data['description'] ?? ($data['message'] ?? 'Smartcard validation failed.'));
+            return ['success' => false, 'message' => $errMsg];
         } catch (\Throwable $e) {
             $data = ['error' => $e->getMessage()];
-            return ['success' => false, 'message' => $e->getMessage()];
+            return ['success' => false, 'message' => 'Unable to connect to Payscribe service provider.'];
         } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $loggedHeaders = $requestHeaders;
+            $loggedHeaders['Authorization'] = 'Bearer ***';
             ApiLog::record([
                 'user_id'          => auth()->id(),
                 'service'          => 'cable_validate',
@@ -1162,7 +1230,7 @@ class BillsApiController extends Controller
                 'endpoint'         => $endpoint,
                 'method'           => 'POST',
                 'payload'          => $payload,
-                'request_headers'  => $requestHeaders,
+                'request_headers'  => $loggedHeaders,
                 'response'         => $data,
                 'http_status'      => $httpStatus,
                 'response_headers' => $resHeaders,
@@ -1264,37 +1332,79 @@ class BillsApiController extends Controller
             }
 
             if ($api === 'payscribe') {
-                $endpoint = config('services.payscribe.base_url') . '/multichoice/pay';
+                $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
+                if (!$secretKey) {
+                    return [
+                        'success'   => false,
+                        'reference' => $reference,
+                        'message'   => 'Payscribe secret key is not configured.',
+                        'response'  => ['message' => 'Payscribe secret key is not configured.'],
+                    ];
+                }
+
+                $endpoint = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/multichoice/vend';
                 $payload  = [
-                    'service' => $provider->slug,
-                    'account' => $smartcard,
-                    'plan_id' => $plan->payscribe_id ?? $plan->vtpass_id,
-                    'ref'     => $reference,
+                    'service'       => $provider->idForApi('payscribe'),
+                    'account'       => $smartcard,
+                    'plan_id'       => $plan->idForApi('payscribe'),
+                    'customer_name' => auth()->user()?->name ?? 'Customer',
+                    'ref'           => $reference,
                 ];
-                $res  = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . (config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key')),
+                $requestHeaders = [
+                    'Authorization' => 'Bearer ' . $secretKey,
+                    'Accept'        => 'application/json',
                     'Content-Type'  => 'application/json',
-                ])->timeout(30)->post($endpoint, $payload);
-                $data     = $res->json() ?? [];
-                $success  = ($data['status'] ?? false) === true;
+                ];
+                $resHeaders = null;
+                $res  = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+                $httpStatus = $res->status();
+                $resHeaders = $res->headers();
+                $data       = $res->json() ?? [];
+                $rawStatus  = $data['status'] ?? null;
+                $statusCode = $data['status_code'] ?? '';
+                $success    = $res->successful() && (
+                    $rawStatus === true ||
+                    $rawStatus === 'true' ||
+                    $rawStatus === 'success' ||
+                    in_array($statusCode, ['200', '201', 200, 201]) ||
+                    (($data['message']['status'] ?? null) === 'success')
+                );
                 $duration = (int) ((hrtime(true) - $start) / 1e6);
 
+                $details = $data['message']['details'] ?? ($data['details'] ?? ($data['data'] ?? []));
+                $apiRef  = $details['transid'] ?? ($details['transaction_id'] ?? ($data['reference'] ?? ($data['message']['ref'] ?? ($data['transid'] ?? $reference))));
+
+                $errMsg = null;
+                if (!$success) {
+                    if (is_array($data['message'] ?? null)) {
+                        $errMsg = $data['message']['description'] ?? ($data['message']['message'] ?? ($data['description'] ?? 'Payscribe cable subscription failed.'));
+                    } else {
+                        $errMsg = $data['description'] ?? ($data['message'] ?? 'Payscribe cable subscription failed.');
+                    }
+                }
+
+                $loggedHeaders = $requestHeaders;
+                $loggedHeaders['Authorization'] = 'Bearer ***';
                 ApiLog::record([
-                    'user_id'     => auth()->id(),
-                    'service'     => 'cable',
-                    'provider'    => 'payscribe',
-                    'reference'   => $reference,
-                    'endpoint'    => $endpoint,
-                    'method'      => 'POST',
-                    'payload'     => $payload,
-                    'response'    => $data,
-                    'duration_ms' => $duration,
-                    'success'     => $success,
+                    'user_id'          => auth()->id(),
+                    'service'          => 'cable',
+                    'provider'         => 'payscribe',
+                    'reference'        => $reference,
+                    'endpoint'         => $endpoint,
+                    'method'           => 'POST',
+                    'payload'          => $payload,
+                    'request_headers'  => $loggedHeaders,
+                    'response'         => $data,
+                    'http_status'      => $httpStatus,
+                    'response_headers' => $resHeaders,
+                    'duration_ms'      => $duration,
+                    'success'          => $success,
                 ]);
 
                 return [
                     'success'   => $success,
-                    'reference' => $data['message']['ref'] ?? $reference,
+                    'reference' => $apiRef,
+                    'message'   => $errMsg,
                     'response'  => $data,
                 ];
             }
@@ -1397,6 +1507,97 @@ class BillsApiController extends Controller
                 ];
             }
 
+            if ($api === 'payscribe') {
+                $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
+                if (!$secretKey) {
+                    return [
+                        'success'   => false,
+                        'reference' => $reference,
+                        'tokens'    => [],
+                        'pins'      => [],
+                        'message'   => 'Payscribe secret key is not configured.',
+                    ];
+                }
+
+                $serviceCode = method_exists($examType, 'idForApi') ? $examType->idForApi('payscribe') : ($examType->payscribe_service_id ?? $examType->slug);
+                $endpoint    = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/education/vend';
+                $payload     = [
+                    'service'   => $serviceCode,
+                    'quantity'  => $quantity,
+                    'recipient' => $phone,
+                    'phone'     => $phone,
+                    'ref'       => $reference,
+                ];
+
+                $requestHeaders = [
+                    'Authorization' => 'Bearer ' . $secretKey,
+                    'Accept'        => 'application/json',
+                    'Content-Type'  => 'application/json',
+                ];
+
+                $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+                $httpStatus      = $response->status();
+                $responseHeaders = $response->headers();
+                $data            = $response->json() ?? [];
+                $rawStatus       = $data['status'] ?? null;
+                $success         = $response->successful() && (
+                    $rawStatus === true ||
+                    $rawStatus === 'true' ||
+                    $rawStatus === 'success' ||
+                    $rawStatus === 'process' ||
+                    (($data['message']['status'] ?? null) === 'success')
+                );
+
+                $apiRef = $data['data']['trans_id']
+                    ?? $data['data']['reference']
+                    ?? $data['data']['transaction_id']
+                    ?? $data['details']['transid']
+                    ?? $data['details']['transaction_id']
+                    ?? $data['message']['details']['transid']
+                    ?? $data['message']['transaction_id']
+                    ?? $data['transaction_id']
+                    ?? $data['transid']
+                    ?? $reference;
+
+                $pins = [];
+                if ($success) {
+                    $pins = $this->extractPayscribeExamPins($data);
+                } else {
+                    $errMsg = is_array($data['message'] ?? null)
+                        ? ($data['message']['description'] ?? $data['message']['message'] ?? $data['description'] ?? 'Payscribe exam pin purchase failed.')
+                        : ($data['description'] ?? $data['message'] ?? 'Payscribe exam pin purchase failed.');
+                    $data['message'] = $errMsg;
+                }
+
+                $duration = (int) ((hrtime(true) - $start) / 1e6);
+                $loggedHeaders = $requestHeaders;
+                $loggedHeaders['Authorization'] = 'Bearer ***';
+                ApiLog::record([
+                    'user_id'          => auth()->id(),
+                    'service'          => 'epin',
+                    'provider'         => 'payscribe',
+                    'reference'        => $reference,
+                    'endpoint'         => $endpoint,
+                    'method'           => 'POST',
+                    'payload'          => $payload,
+                    'request_headers'  => $loggedHeaders,
+                    'response'         => $data,
+                    'http_status'      => $httpStatus,
+                    'response_headers' => $responseHeaders,
+                    'duration_ms'      => $duration,
+                    'success'          => $success,
+                ]);
+
+                return [
+                    'success'   => $success,
+                    'reference' => $apiRef,
+                    'tokens'    => $pins,
+                    'pins'      => $pins,
+                    'message'   => $data['message'] ?? ($success ? 'Success' : 'Exam pin purchase failed.'),
+                    'response'  => $data,
+                ];
+            }
+
             // VTPass Exam Pin
             $vtpassRef = date('YmdHis') . Str::upper(Str::random(6));
             $baseUrl   = rtrim(config('services.vtpass.base_url') ?: AppSetting::get('vtpass_base_url', 'https://vtpass.com'), '/');
@@ -1484,5 +1685,57 @@ class BillsApiController extends Controller
 
             return ['success' => false, 'message' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Extract PINs from Payscribe data structure.
+     */
+    private function extractPayscribeExamPins(array $data): array
+    {
+        $pins = [];
+        $candidates = $data['cards']
+            ?? $data['data']['cards']
+            ?? $data['tokens']
+            ?? $data['data']['tokens']
+            ?? $data['pins']
+            ?? $data['data']['pins']
+            ?? $data['details']['cards']
+            ?? $data['details']['tokens']
+            ?? [];
+
+        if (is_array($candidates) && !empty($candidates)) {
+            foreach ($candidates as $item) {
+                if (is_array($item)) {
+                    $pin    = $item['pin'] ?? $item['Pin'] ?? $item['token'] ?? $item['code'] ?? '';
+                    $serial = $item['serial'] ?? $item['Serial'] ?? $item['serialnumber'] ?? $item['serial_no'] ?? null;
+                    if ($pin !== '') {
+                        $pins[] = ['pin' => (string) $pin, 'serial' => $serial ? (string) $serial : null];
+                    }
+                } elseif (is_string($item) && trim($item) !== '') {
+                    if (str_contains($item, '<=>')) {
+                        [$p, $s] = explode('<=>', $item, 2);
+                        $pins[] = ['pin' => trim($p), 'serial' => trim($s)];
+                    } else {
+                        $pins[] = ['pin' => trim($item), 'serial' => null];
+                    }
+                }
+            }
+        }
+
+        if (empty($pins)) {
+            $pool = is_array($data['data'] ?? null) ? array_merge($data, $data['data']) : $data;
+            foreach ($pool as $k => $v) {
+                if (preg_match('/^(pin|token)\d*$/i', (string) $k) && is_string($v) && trim($v) !== '') {
+                    if (str_contains($v, '<=>')) {
+                        [$p, $s] = explode('<=>', $v, 2);
+                        $pins[] = ['pin' => trim($p), 'serial' => trim($s)];
+                    } else {
+                        $pins[] = ['pin' => trim($v), 'serial' => null];
+                    }
+                }
+            }
+        }
+
+        return $pins;
     }
 }

@@ -186,7 +186,8 @@ class ExamPinController extends Controller
         return match ($api) {
             'easyaccess'  => $this->callEasyaccessExamPin($examType, $quantity, $reference),
             'primebiller' => $this->callPrimebillerExamPin($examType, $quantity, $reference),
-            'vtpass'       => $this->callVtpassExamPin($examType, $quantity, $phone, $reference),
+            'payscribe'   => $this->callPayscribeExamPin($examType, $quantity, $phone, $reference),
+            default       => $this->callVtpassExamPin($examType, $quantity, $phone, $reference),
         };
     }
 
@@ -431,6 +432,172 @@ class ExamPinController extends Controller
                 $pins[] = ['pin' => trim($value), 'serial' => null];
             }
         }
+        return $pins;
+    }
+
+    // ─── Payscribe: purchase ──────────────────────────────────────────────────
+
+    private function callPayscribeExamPin(
+        ExamPinType $examType,
+        int $quantity,
+        string $phone,
+        string $reference
+    ): array {
+        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
+        if (!$secretKey) {
+            return [
+                'success'   => false,
+                'apiRef'    => $reference,
+                'pins'      => [],
+                'tokens'    => [],
+                'response'  => ['message' => 'Payscribe secret key is not configured.'],
+            ];
+        }
+
+        $serviceCode = $examType->idForApi('payscribe');
+        $endpoint    = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/education/vend';
+        $payload     = [
+            'service'   => $serviceCode,
+            'quantity'  => $quantity,
+            'recipient' => $phone,
+            'phone'     => $phone,
+            'ref'       => $reference,
+        ];
+
+        $data            = [];
+        $httpStatus      = null;
+        $success         = false;
+        $apiRef          = $reference;
+        $pins            = [];
+        $responseHeaders = null;
+
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . $secretKey,
+            'Accept'        => 'application/json',
+            'Content-Type'  => 'application/json',
+        ];
+
+        $start = hrtime(true);
+        try {
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $data            = $response->json() ?? [];
+            $rawStatus       = $data['status'] ?? null;
+            $success         = $response->successful() && (
+                $rawStatus === true ||
+                $rawStatus === 'true' ||
+                $rawStatus === 'success' ||
+                $rawStatus === 'process' ||
+                (($data['message']['status'] ?? null) === 'success')
+            );
+
+            $apiRef = $data['data']['trans_id']
+                ?? $data['data']['reference']
+                ?? $data['data']['transaction_id']
+                ?? $data['details']['transid']
+                ?? $data['details']['transaction_id']
+                ?? $data['message']['details']['transid']
+                ?? $data['message']['transaction_id']
+                ?? $data['transaction_id']
+                ?? $data['transid']
+                ?? $reference;
+
+            if ($success) {
+                $pins = $this->extractPayscribePins($data, $quantity);
+                if (empty($pins)) {
+                    $pins = $this->parsePins($data['data'] ?? $data);
+                }
+            } else {
+                if (is_array($data['message'] ?? null)) {
+                    $errMsg = $data['message']['description']
+                        ?? $data['message']['message']
+                        ?? $data['description']
+                        ?? 'Payscribe exam pin purchase failed.';
+                } else {
+                    $errMsg = $data['description']
+                        ?? $data['message']
+                        ?? 'Payscribe exam pin purchase failed.';
+                }
+                $data['message'] = $errMsg;
+            }
+        } catch (\Exception $e) {
+            $data    = ['error' => $e->getMessage(), 'message' => 'Unable to connect to Payscribe service provider.'];
+            $success = false;
+            Log::error('Payscribe exam pin purchase failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $loggedHeaders = $requestHeaders;
+            $loggedHeaders['Authorization'] = 'Bearer ***';
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'epin',
+                'provider'         => 'payscribe',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $loggedHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
+        }
+
+        return compact('success', 'apiRef', 'pins') + ['tokens' => $pins, 'response' => $data];
+    }
+
+    /**
+     * Extract PINs from Payscribe data structure.
+     */
+    private function extractPayscribePins(array $data, int $quantity): array
+    {
+        $pins = [];
+        $candidates = $data['cards']
+            ?? $data['data']['cards']
+            ?? $data['tokens']
+            ?? $data['data']['tokens']
+            ?? $data['pins']
+            ?? $data['data']['pins']
+            ?? $data['details']['cards']
+            ?? $data['details']['tokens']
+            ?? [];
+
+        if (is_array($candidates) && !empty($candidates)) {
+            foreach ($candidates as $item) {
+                if (is_array($item)) {
+                    $pin    = $item['pin'] ?? $item['Pin'] ?? $item['token'] ?? $item['code'] ?? '';
+                    $serial = $item['serial'] ?? $item['Serial'] ?? $item['serialnumber'] ?? $item['serial_no'] ?? null;
+                    if ($pin !== '') {
+                        $pins[] = ['pin' => (string) $pin, 'serial' => $serial ? (string) $serial : null];
+                    }
+                } elseif (is_string($item) && trim($item) !== '') {
+                    if (str_contains($item, '<=>')) {
+                        [$p, $s] = explode('<=>', $item, 2);
+                        $pins[] = ['pin' => trim($p), 'serial' => trim($s)];
+                    } else {
+                        $pins[] = ['pin' => trim($item), 'serial' => null];
+                    }
+                }
+            }
+        }
+
+        if (empty($pins)) {
+            $pool = is_array($data['data'] ?? null) ? array_merge($data, $data['data']) : $data;
+            foreach ($pool as $k => $v) {
+                if (preg_match('/^(pin|token)\d*$/i', (string) $k) && is_string($v) && trim($v) !== '') {
+                    if (str_contains($v, '<=>')) {
+                        [$p, $s] = explode('<=>', $v, 2);
+                        $pins[] = ['pin' => trim($p), 'serial' => trim($s)];
+                    } else {
+                        $pins[] = ['pin' => trim($v), 'serial' => null];
+                    }
+                }
+            }
+        }
+
         return $pins;
     }
 }

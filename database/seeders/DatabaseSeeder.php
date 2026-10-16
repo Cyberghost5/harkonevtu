@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             // LegacyUserSeeder::class,
             // ExamPinTypeSeeder::class,
             // NewMilleUserSeeder::class,
+            VTPassDataSeeder::class,
+            PayscribeDataSeeder::class,
         ]);
     }
 }

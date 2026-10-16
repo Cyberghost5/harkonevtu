@@ -467,12 +467,21 @@ class AirtimeController extends Controller
 
     private function callPayscribe(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
-        $endpoint   = config('services.payscribe.base_url') . '/airtime';
-        $payload    = [
-            'network' => strtolower($network->name), //change to small letters
-            'amount' => (int) $amount,
+        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
+        if (!$secretKey) {
+            return [
+                'success'   => false,
+                'reference' => $reference,
+                'response'  => ['message' => 'Payscribe secret key is not configured.'],
+            ];
+        }
+
+        $endpoint = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/airtime';
+        $payload  = [
+            'network'   => $network->idForApi('payscribe'),
+            'amount'    => (int) $amount,
             'recipient' => $phone,
-            'ref' => $reference,
+            'ref'       => $reference,
         ];
         $data       = [];
         $httpStatus = null;
@@ -480,36 +489,62 @@ class AirtimeController extends Controller
         $apiRef     = $reference;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . config('services.payscribe.public_key'),
-            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . $secretKey,
+            'Accept'        => 'application/json',
+            'Content-Type'  => 'application/json',
         ];
         $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
-            $data       = $response->json() ?? [];
-            $status     = $data['status'] ?? '';
-            // 'process' means queued - treat as success (wallet already debited)
-            $success    = in_array($status, ['success', 'process'], true);
+            $data            = $response->json() ?? [];
+            $rawStatus       = $data['status'] ?? null;
+            $success         = $response->successful() && (
+                $rawStatus === true ||
+                $rawStatus === 'true' ||
+                $rawStatus === 'success' ||
+                $rawStatus === 'process' ||
+                (($data['message']['status'] ?? null) === 'success')
+            );
+            $apiRef          = $data['details']['transid']
+                ?? $data['details']['transaction_id']
+                ?? $data['message']['details']['transid']
+                ?? $data['message']['transaction_id']
+                ?? $data['transaction_id']
+                ?? $data['transid']
+                ?? $reference;
+
             if (!$success) {
-                $data['message'] = $data['message'] ?? 'Payscribe transaction failed.';
+                if (is_array($data['message'] ?? null)) {
+                    $errMsg = $data['message']['description']
+                        ?? $data['message']['message']
+                        ?? $data['description']
+                        ?? 'Payscribe transaction failed.';
+                } else {
+                    $errMsg = $data['description']
+                        ?? $data['message']
+                        ?? 'Payscribe transaction failed.';
+                }
+                $data['message'] = $errMsg;
             }
         } catch (\Exception $e) {
-            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            $data = ['error' => $e->getMessage(), 'message' => 'Unable to connect to Payscribe service provider.'];
             Log::error('Payscribe request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
         } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $loggedHeaders = $requestHeaders;
+            $loggedHeaders['Authorization'] = 'Bearer ***';
             ApiLog::record([
-                'user_id'     => auth()->id(),
+                'user_id'          => auth()->id(),
                 'service'          => 'airtime',
                 'provider'         => 'payscribe',
                 'reference'        => $reference,
                 'endpoint'         => $endpoint,
                 'method'           => 'POST',
                 'payload'          => $payload,
-                'request_headers'  => $requestHeaders,
+                'request_headers'  => $loggedHeaders,
                 'response'         => $data,
                 'http_status'      => $httpStatus,
                 'response_headers' => $responseHeaders,

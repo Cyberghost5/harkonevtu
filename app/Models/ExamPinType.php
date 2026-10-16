@@ -14,6 +14,7 @@ class ExamPinType extends Model
         'vtpass_service_id',
         'easyaccess_endpoint',
         'primebiller_provider_id',
+        'payscribe_service_id',
         'instructions',
         'is_active',
     ];
@@ -28,5 +29,18 @@ class ExamPinType extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    public function idForApi(string $api): ?string
+    {
+        return match ($api) {
+            'payscribe'   => $this->payscribe_service_id ?: $this->slug,
+            'vtpass'      => $this->vtpass_service_id ?: $this->slug,
+            'easyaccess'  => $this->easyaccess_endpoint ?: $this->slug,
+            'primebiller' => (string) ($this->primebiller_provider_id ?: $this->slug),
+            default       => $this->slug,
+        };
     }
 }

@@ -327,22 +327,28 @@ class ElectricityController extends Controller
 
     private function validateMeterPayscribe(ElectricityDisco $disco, string $meterType, string $meterNumber): JsonResponse
     {
-        $endpoint = config('services.payscribe.base_url') . '/electricity/validate';
+        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
+        if (!$secretKey) {
+            return response()->json(['success' => false, 'message' => 'Payscribe secret key is not configured.'], 422);
+        }
+
+        $endpoint = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/electricity/validate';
 
         // Payscribe requires a raw JSON string body with Content-Type: text/plain
-        $rawBody = json_encode([
+        $payload = [
             'service'      => $disco->idForApi('payscribe'),
             'meter_number' => $meterNumber,
             'amount'       => '1000',
             'meter_type'   => $meterType,
-        ]);
+        ];
+        $rawBody = json_encode($payload);
         $data       = [];
         $httpStatus = null;
         $success    = false;
         $result     = null;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . config('services.payscribe.secret_key'),
+            'Authorization' => 'Bearer ' . $secretKey,
             'Content-Type'  => 'text/plain',
         ];
         $responseHeaders = null;
@@ -353,12 +359,15 @@ class ElectricityController extends Controller
             $httpStatus      = $httpResponse->status();
             $responseHeaders = $httpResponse->headers();
             $data            = $httpResponse->json() ?? [];
-            $status        = $data['status']      ?? false;
-            $statusMessage = $data['description'] ?? 'Invalid meter number or details not found.';
+            $rawStatus       = $data['status'] ?? false;
+            $status          = $httpResponse->successful() && ($rawStatus === true || $rawStatus === 'true' || $rawStatus === 'success');
+            $statusMessage   = is_array($data['message'] ?? null)
+                ? ($data['message']['description'] ?? ($data['message']['message'] ?? ($data['description'] ?? 'Invalid meter number or details not found.')))
+                : ($data['description'] ?? ($data['message'] ?? 'Invalid meter number or details not found.'));
 
             if ($status) {
-                $details      = $data['message']['details'] ?? [];
-                $customerName = $details['customer_name']   ?? null;
+                $details      = $data['message']['details'] ?? ($data['details'] ?? ($data['data'] ?? []));
+                $customerName = $details['customer_name'] ?? ($details['name'] ?? null);
 
                 if ($customerName === null) {
                     $result = response()->json([
@@ -383,15 +392,17 @@ class ElectricityController extends Controller
             $result = response()->json(['success' => false, 'message' => 'Meter validation unavailable. Please try again.'], 503);
         } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $loggedHeaders = $requestHeaders;
+            $loggedHeaders['Authorization'] = 'Bearer ***';
             ApiLog::record([
-                'user_id'     => auth()->id(),
+                'user_id'          => auth()->id(),
                 'service'          => 'electricity_validate',
                 'provider'         => 'payscribe',
                 'reference'        => $meterNumber,
                 'endpoint'         => $endpoint,
                 'method'           => 'POST',
-                'payload'          => json_decode($rawBody, true),
-                'request_headers'  => $requestHeaders,
+                'payload'          => $payload,
+                'request_headers'  => $loggedHeaders,
                 'response'         => $data,
                 'http_status'      => $httpStatus,
                 'response_headers' => $responseHeaders,
@@ -575,13 +586,25 @@ class ElectricityController extends Controller
         float $amount,
         string $reference
     ): array {
-        $endpoint = config('services.payscribe.base_url') . '/electricity/vend';
+        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
+        if (!$secretKey) {
+            return [
+                'success'       => false,
+                'reference'     => $reference,
+                'token'         => null,
+                'units'         => null,
+                'customer_name' => null,
+                'response'      => ['message' => 'Payscribe secret key is not configured.'],
+            ];
+        }
+
+        $endpoint = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/electricity/vend';
         $payload  = [
             'service'       => $disco->idForApi('payscribe'),
             'meter_number'  => $meterNumber,
             'meter_type'    => $meterType,
             'amount'        => (string) (int) $amount,
-            'customer_name' => auth()->user()->name,
+            'customer_name' => auth()->user()?->name ?? 'Customer',
             'ref'           => $reference,
         ];
         $data         = [];
@@ -593,44 +616,61 @@ class ElectricityController extends Controller
         $customerName = null;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . config('services.payscribe.secret_key'),
+            'Authorization' => 'Bearer ' . $secretKey,
             'Accept'        => 'application/json',
             'Content-Type'  => 'application/json',
         ];
         $responseHeaders = null;
         $start = hrtime(true);
         try {
-            $response   = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
-            $raw        = $response->json();
-            $data       = is_array($raw) ? $raw : ['message' => 'Unknown Payscribe response'];
-            $statusCode = $data['status_code'] ?? '';
-            $success    = in_array($statusCode, ['200', '201']);
+            $raw             = $response->json();
+            $data            = is_array($raw) ? $raw : ['message' => 'Unknown Payscribe response'];
+            $rawStatus       = $data['status'] ?? null;
+            $statusCode      = $data['status_code'] ?? '';
+            $success         = $response->successful() && (
+                $rawStatus === true ||
+                $rawStatus === 'true' ||
+                $rawStatus === 'success' ||
+                in_array($statusCode, ['200', '201', 200, 201]) ||
+                (($data['message']['status'] ?? null) === 'success')
+            );
 
             if ($success) {
-                $details      = $data['message']['details'] ?? [];
-                $token        = isset($details['token']) ? trim((string) $details['token']) : null;
-                $units        = $details['unit'] ?? null;
-                $customerName = $details['customer_name'] ?? null;
-                $apiRef       = $data['reference'] ?? $reference;
+                $details      = $data['message']['details'] ?? ($data['details'] ?? ($data['data'] ?? []));
+                $token        = isset($details['token']) ? trim((string) $details['token']) : ($data['token'] ?? null);
+                $units        = $details['unit'] ?? ($details['units'] ?? ($data['units'] ?? null));
+                $customerName = $details['customer_name'] ?? ($data['customer_name'] ?? null);
+                $apiRef       = $details['transid'] ?? ($details['transaction_id'] ?? ($data['reference'] ?? ($data['transid'] ?? $reference)));
             } else {
-                $data['message'] = $data['description'] ?? 'Payscribe electricity vending failed.';
+                if (is_array($data['message'] ?? null)) {
+                    $errMsg = $data['message']['description']
+                        ?? ($data['message']['message']
+                        ?? ($data['description']
+                        ?? 'Payscribe electricity vending failed.'));
+                } else {
+                    $errMsg = $data['description'] ?? ($data['message'] ?? 'Payscribe electricity vending failed.');
+                }
+                $data['message'] = $errMsg;
             }
         } catch (\Exception $e) {
-            $data = ['error' => $e->getMessage(), 'message' => $e->getMessage()];
+            $data = ['error' => $e->getMessage(), 'message' => 'Unable to connect to Payscribe service provider.'];
             Log::error('Payscribe electricity request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
         } finally {
             $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $loggedHeaders = $requestHeaders;
+            $loggedHeaders['Authorization'] = 'Bearer ***';
             ApiLog::record([
-                'user_id'     => auth()->id(),
+                'user_id'          => auth()->id(),
                 'service'          => 'electricity',
                 'provider'         => 'payscribe',
                 'reference'        => $reference,
                 'endpoint'         => $endpoint,
                 'method'           => 'POST',
                 'payload'          => $payload,
-                'request_headers'  => $requestHeaders,
+                'request_headers'  => $loggedHeaders,
                 'response'         => $data,
                 'http_status'      => $httpStatus,
                 'response_headers' => $responseHeaders,

@@ -359,6 +359,7 @@ class DataApiController extends Controller
             'globacom'     => $this->callGlobacomData($network, $plan, $phone, $reference),
             'mtn_ers'      => $this->callMtnErsData($network, $plan, $phone, $reference),
             'glo_ers'      => $this->callGloErsData($network, $plan, $phone, $reference),
+            'payscribe'    => $this->callPayscribeData($network, $plan, $phone, $reference),
             default        => $this->callVtpassData($network, $plan, $phone, $reference),
         };
     }
@@ -885,6 +886,121 @@ class DataApiController extends Controller
                 'method'           => 'POST',
                 'payload'          => $payload,
                 'request_headers'  => $requestHeaders,
+                'response'         => $data,
+                'http_status'      => $httpStatus,
+                'response_headers' => $responseHeaders,
+                'duration_ms'      => $duration,
+                'success'          => $success,
+            ]);
+        }
+
+        return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
+    }
+
+    // ─── Payscribe ─────────────────────────────────────────────────────────
+
+    private function callPayscribeData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
+    {
+        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
+        if (!$secretKey) {
+            return [
+                'success'   => false,
+                'reference' => $reference,
+                'response'  => ['message' => 'Payscribe secret key is not configured.'],
+            ];
+        }
+
+        $planCode = $plan->idForApi('payscribe');
+        if (!$planCode) {
+            return [
+                'success'   => false,
+                'reference' => $reference,
+                'response'  => ['message' => 'Selected data plan is not configured for Payscribe.'],
+            ];
+        }
+
+        $networkMap = [
+            'mtn'      => 'mtn',
+            'glo'      => 'glo',
+            'airtel'   => 'airtel',
+            'etisalat' => '9mobile',
+            '9mobile'  => '9mobile',
+        ];
+        $payscribeNetwork = $networkMap[$network->network_key] ?? $network->network_key;
+
+        $endpoint = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/data/vend';
+        $payload  = [
+            'network'   => $payscribeNetwork,
+            'plan_code' => $planCode,
+            'recipient' => $phone,
+            'ref'       => $reference,
+        ];
+        $data            = [];
+        $httpStatus      = null;
+        $success         = false;
+        $apiRef          = $reference;
+        $responseHeaders = null;
+
+        $requestHeaders = [
+            'Authorization' => 'Bearer ' . $secretKey,
+            'Accept'        => 'application/json',
+            'Content-Type'  => 'application/json',
+        ];
+
+        $start = hrtime(true);
+        try {
+            $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+            $httpStatus      = $response->status();
+            $responseHeaders = $response->headers();
+            $data            = $response->json() ?? [];
+            $rawStatus       = $data['status'] ?? null;
+            $success         = $response->successful() && (
+                $rawStatus === true ||
+                $rawStatus === 'true' ||
+                $rawStatus === 'success' ||
+                $rawStatus === 'process' ||
+                (($data['message']['status'] ?? null) === 'success')
+            );
+            $apiRef          = $data['data']['trans_id']
+                ?? $data['data']['reference']
+                ?? $data['data']['transaction_id']
+                ?? $data['details']['transid']
+                ?? $data['details']['transaction_id']
+                ?? $data['message']['details']['transid']
+                ?? $data['message']['transaction_id']
+                ?? $data['transaction_id']
+                ?? $data['transid']
+                ?? $reference;
+
+            if (!$success) {
+                if (is_array($data['message'] ?? null)) {
+                    $errMsg = $data['message']['description']
+                        ?? $data['message']['message']
+                        ?? $data['description']
+                        ?? 'Payscribe data vend failed.';
+                } else {
+                    $errMsg = $data['description']
+                        ?? $data['message']
+                        ?? 'Payscribe data vend failed.';
+                }
+                $data['message'] = $errMsg;
+            }
+        } catch (\Exception $e) {
+            $data = ['error' => $e->getMessage(), 'message' => 'Unable to connect to Payscribe service provider.'];
+            Log::error('Payscribe data request failed', ['reference' => $reference, 'error' => $e->getMessage()]);
+        } finally {
+            $duration = (int) ((hrtime(true) - $start) / 1e6);
+            $loggedHeaders = $requestHeaders;
+            $loggedHeaders['Authorization'] = 'Bearer ***';
+            ApiLog::record([
+                'user_id'          => auth()->id(),
+                'service'          => 'data',
+                'provider'         => 'payscribe',
+                'reference'        => $reference,
+                'endpoint'         => $endpoint,
+                'method'           => 'POST',
+                'payload'          => $payload,
+                'request_headers'  => $loggedHeaders,
                 'response'         => $data,
                 'http_status'      => $httpStatus,
                 'response_headers' => $responseHeaders,
