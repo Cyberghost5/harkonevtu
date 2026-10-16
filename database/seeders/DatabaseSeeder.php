@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             // NewMilleUserSeeder::class,
             VTPassDataSeeder::class,
             PayscribeDataSeeder::class,
+            PayscribeCableSeeder::class,
         ]);
     }
 }
