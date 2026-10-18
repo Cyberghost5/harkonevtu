@@ -153,6 +153,9 @@ class AdminSettingsController extends Controller
             if (in_array($key, $passwordFields) && $value === '') {
                 continue; // don't wipe existing passwords
             }
+            if (is_string($value)) {
+                $value = trim($value);
+            }
             AppSetting::set($key, $value ?? '');
         }
         return back()->with('success', 'API keys saved successfully.');

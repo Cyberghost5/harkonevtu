@@ -66,6 +66,22 @@
                 <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Broadcast instantly to web browsers and mobile apps</p>
             </div>
 
+            @php
+                $osAppId = \App\Models\AppSetting::get('onesignal_app_id');
+                $osApiKey = \App\Models\AppSetting::get('onesignal_api_key');
+                $osConfigured = !empty(trim((string)$osAppId)) && !empty(trim((string)$osApiKey));
+            @endphp
+            @if(!$osConfigured)
+            <div class="mx-6 mt-4 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-300">
+                <svg class="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div>
+                    <span class="font-bold">OneSignal Credentials Missing:</span> Please enter your OneSignal App ID and REST API Key under <a href="{{ route('admin.settings.api-keys') }}" class="underline font-semibold hover:text-amber-900 dark:hover:text-amber-200">Settings &rarr; API Keys</a> to send push notifications.
+                </div>
+            </div>
+            @endif
+
             <form method="POST" action="{{ route('admin.notifications.send') }}" class="p-6 space-y-4">
                 @csrf
 

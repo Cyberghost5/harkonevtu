@@ -127,4 +127,74 @@ class AdminPushNotificationTest extends TestCase
             'status'  => 'sent',
         ]);
     }
+
+    public function test_onesignal_uses_key_scheme_for_v2_keys(): void
+    {
+        AppSetting::set('onesignal_app_id', '99999999-8888-7777-6666-555555555555');
+        AppSetting::set('onesignal_api_key', 'os_v2_app_abcdef1234567890abcdef');
+
+        Http::fake([
+            'https://api.onesignal.com/notifications*' => Http::response(['id' => 'notif-v2-123'], 200),
+        ]);
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $this->actingAs($admin);
+
+        $response = $this->post(route('admin.notifications.send'), [
+            'title'           => 'Modern V2 Test',
+            'message'         => 'Testing modern OneSignal API key format',
+            'target_audience' => 'all',
+        ]);
+
+        $response->assertSessionHas('success');
+
+        Http::assertSent(function ($request) {
+            return $request->hasHeader('Authorization', 'Key os_v2_app_abcdef1234567890abcdef');
+        });
+    }
+
+    public function test_onesignal_sanitizes_prefixed_or_whitespace_keys(): void
+    {
+        AppSetting::set('onesignal_app_id', '99999999-8888-7777-6666-555555555555');
+        // Admin mistakenly pastes "Key os_v2_app_xyz" with spaces and quotes
+        AppSetting::set('onesignal_api_key', '  "Key os_v2_app_cleaned_key"  ');
+
+        Http::fake([
+            'https://api.onesignal.com/notifications*' => Http::response(['id' => 'notif-clean-123'], 200),
+        ]);
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $this->actingAs($admin);
+
+        $response = $this->post(route('admin.notifications.send'), [
+            'title'           => 'Sanitization Test',
+            'message'         => 'Testing key sanitization',
+            'target_audience' => 'all',
+        ]);
+
+        $response->assertSessionHas('success');
+
+        Http::assertSent(function ($request) {
+            return $request->hasHeader('Authorization', 'Key os_v2_app_cleaned_key');
+        });
+    }
+
+    public function test_onesignal_rejects_matching_app_id_as_api_key(): void
+    {
+        $appId = '11111111-2222-3333-4444-555555555555';
+        AppSetting::set('onesignal_app_id', $appId);
+        AppSetting::set('onesignal_api_key', $appId); // Wrongly set to same as App ID
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $this->actingAs($admin);
+
+        $response = $this->post(route('admin.notifications.send'), [
+            'title'           => 'App ID as Key Test',
+            'message'         => 'Testing error handling',
+            'target_audience' => 'all',
+        ]);
+
+        $response->assertSessionHas('error');
+        $this->assertStringContainsString('OneSignal API Key matches your App ID', session('error'));
+    }
 }

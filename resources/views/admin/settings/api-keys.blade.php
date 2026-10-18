@@ -929,16 +929,18 @@
                 <div id="section-onesignal" class="provider-content transition-all duration-300 {{ ($s['onesignal_status'] ?? '1') === '1' ? '' : 'hidden' }}">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1">App ID</label>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">OneSignal App ID</label>
                             <input type="text" name="onesignal_app_id" value="{{ $s['onesignal_app_id'] ?? '' }}"
-                                   placeholder="Enter App ID"
-                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                                   placeholder="e.g. 12345678-abcd-1234-abcd-1234567890ab"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono text-xs">
+                            <p class="mt-1 text-[11px] text-slate-400">Found in OneSignal Dashboard &rarr; Settings &rarr; Keys &amp; IDs &rarr; <strong>OneSignal App ID</strong> (36-character UUID format).</p>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1">API Key</label>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">REST API Key (App API Key)</label>
                             <input type="text" name="onesignal_api_key" value="{{ $s['onesignal_api_key'] ?? '' }}"
-                                   placeholder="Enter API Key"
-                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                                   placeholder="os_v2_app_... or REST API Key"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono text-xs">
+                            <p class="mt-1 text-[11px] text-slate-400">Must be the <strong>REST API Key (App API Key)</strong> under Settings &rarr; Keys &amp; IDs (usually starts with <code>os_v2_app_...</code>). Do not enter the App ID or User Auth Key.</p>
                         </div>
                     </div>
                 </div>
