@@ -45,12 +45,16 @@
                     {{-- Provider badge --}}
                     <div class="flex items-center justify-between mb-4">
                         <span class="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-2.5 py-1
-                            {{ $account->provider === 'paystack' ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400' }}">
                             @if($account->provider === 'paystack')
-                                <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                                bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400
+                            @elseif($account->provider === 'payscribe')
+                                bg-sky-100 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400
+                            @elseif($account->provider === 'monnify')
+                                bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400
                             @else
-                                <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 22,20 2,20"/></svg>
-                            @endif
+                                bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400
+                            @endif">
+                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
                             {{ $account->providerLabel() }}
                         </span>
                         <span class="text-xs text-slate-400 dark:text-slate-500">{{ $account->bank_name }}</span>
@@ -103,14 +107,17 @@
             $hasPaystack = $accounts->where('provider', 'paystack')->isNotEmpty();
             $hasFlutterwave = $accounts->where('provider', 'flutterwave')->isNotEmpty();
             $hasMonnify = $accounts->where('provider', 'monnify')->isNotEmpty();
+            $hasPayscribe = $accounts->where('provider', 'payscribe')->isNotEmpty();
             
             $paystackEnabled = !empty(\App\Models\AppSetting::get('paystack_secret_key')) && (\App\Models\AppSetting::get('paystack_status', '1') !== '0');
             $flutterwaveEnabled = !empty(\App\Models\AppSetting::get('flutterwave_secret_key')) && (\App\Models\AppSetting::get('flutterwave_status', '1') !== '0');
             $monnifyEnabled = !empty(\App\Models\AppSetting::get('monnify_api_key')) && (\App\Models\AppSetting::get('monnify_status', '1') !== '0');
+            $payscribeEnabled = \App\Services\PayscribePaymentService::isConfigured() && \App\Services\PayscribePaymentService::isEnabled();
             
             $canGenerateMore = ($paystackEnabled && !$hasPaystack) ||
                                ($flutterwaveEnabled && !$hasFlutterwave) ||
-                               ($monnifyEnabled && !$hasMonnify);
+                               ($monnifyEnabled && !$hasMonnify) ||
+                               ($payscribeEnabled && !$hasPayscribe);
         @endphp
 
         @if($canGenerateMore)
