@@ -121,6 +121,7 @@ class AdminSettingsController extends Controller
             'bulksms_sender','bulksms_api_key','bulksms_amount_per_unit','bulksms_status',
             'onesignal_app_id','onesignal_api_key','onesignal_status',
             'qoreid_client_key','qoreid_secret_key','qoreid_mode','qoreid_status',
+            'kyc_provider',
             'mtn_ers_username','mtn_ers_pin','mtn_ers_endpoint','mtn_ers_mode','mtn_ers_originator_msisdn','mtn_ers_status',
             'glo_ers_username','glo_ers_password','glo_ers_endpoint','glo_ers_mode','glo_ers_client_id','glo_ers_distributor_id','glo_ers_distributor_userid','glo_ers_status',
             'nine_mobile_evc_username','nine_mobile_evc_password','nine_mobile_evc_key','nine_mobile_evc_token','nine_mobile_evc_source_id','nine_mobile_evc_third_party_id','nine_mobile_evc_channel_id','nine_mobile_evc_endpoint','nine_mobile_evc_mode','nine_mobile_evc_status',

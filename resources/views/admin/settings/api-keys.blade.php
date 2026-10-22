@@ -947,6 +947,38 @@
                 </div>
             </div>
 
+            {{-- ── KYC Verification Provider ────────────────────────────── --}}
+            <div class="px-6 py-6 border-b border-slate-100">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            KYC Verification Provider
+                        </h4>
+                        <p class="text-xs text-slate-500 mt-0.5">Select the active service provider used to verify customer identity (BVN / NIN lookup).</p>
+                    </div>
+                    <div>
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ ($s['kyc_provider'] ?? 'qoreid') === 'payscribe' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700' }}">
+                            Active: {{ ($s['kyc_provider'] ?? 'qoreid') === 'payscribe' ? 'PayScribe (BVN Lookup)' : 'QoreID' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="max-w-md">
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Active KYC Verification Service</label>
+                    <select name="kyc_provider" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-semibold text-slate-700">
+                        <option value="qoreid" {{ ($s['kyc_provider'] ?? 'qoreid') === 'qoreid' ? 'selected' : '' }}>
+                            QoreID (BVN & NIN Match Verification)
+                        </option>
+                        <option value="payscribe" {{ ($s['kyc_provider'] ?? 'qoreid') === 'payscribe' ? 'selected' : '' }}>
+                            PayScribe (BVN Lookup & Verification)
+                        </option>
+                    </select>
+                    <p class="text-[11px] text-slate-400 mt-1.5">
+                        * When <strong>PayScribe</strong> is selected, customer BVN lookups will automatically use your configured <strong>PayScribe Secret Key</strong> above.
+                    </p>
+                </div>
+            </div>
+
             {{-- ── QoreID (KYC Verification) ────────────────────────────── --}}
             <div class="px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">

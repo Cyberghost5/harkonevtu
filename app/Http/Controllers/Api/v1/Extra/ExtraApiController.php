@@ -16,6 +16,7 @@ use App\Models\ServiceTransaction;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Services\KycService;
 use App\Services\QoreIDService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -601,15 +602,17 @@ class ExtraApiController extends Controller
     public function kycStatus(Request $request): JsonResponse
     {
         $user = auth()->user();
+        $kycService = app(KycService::class);
 
         return response()->json([
             'status'  => true,
             'message' => 'KYC status retrieved successfully.',
             'data'    => [
-                'kyc_status'   => $user->kyc_status ?? 'unverified',
-                'is_verified'  => $user->kyc_status === 'verified',
-                'tier'         => $user->kyc_status === 'verified' ? 'Tier 2 (Verified)' : 'Tier 1 (Unverified)',
+                'kyc_status'       => $user->kyc_status ?? 'unverified',
+                'is_verified'      => $user->kyc_status === 'verified',
+                'tier'             => $user->kyc_status === 'verified' ? 'Tier 2 (Verified)' : 'Tier 1 (Unverified)',
                 'verification_fee' => (float) AppSetting::get('kyc_fee', 0),
+                'active_provider'  => $kycService->getActiveProvider(),
             ],
         ]);
     }
@@ -617,7 +620,7 @@ class ExtraApiController extends Controller
     /**
      * Submit NIN / BVN for KYC verification.
      */
-    public function submitKyc(Request $request, QoreIDService $qoreIDService): JsonResponse
+    public function submitKyc(Request $request, KycService $kycService): JsonResponse
     {
         $user = auth()->user();
         if ($user->kyc_status === 'verified') {
@@ -631,66 +634,44 @@ class ExtraApiController extends Controller
 
         $parts = explode(' ', trim($user->name), 2);
         $firstname = trim($parts[0] ?? '');
-        $lastname = trim($parts[1] ?? '');
+        $lastname  = trim($parts[1] ?? '');
 
         if (empty($firstname) || empty($lastname)) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Please update your full name (First and Last Name separated by a space) in profile settings before verifying KYC.'
             ], 422);
         }
 
-        if (!$qoreIDService->isConfigured()) {
-            $firstNameInput = strtolower($firstname);
-            $lastNameInput = strtolower($lastname);
-            $userNames = array_map('strtolower', explode(' ', trim($user->name)));
-
-            $nameMatches = in_array($firstNameInput, $userNames) || in_array($lastNameInput, $userNames);
-
-            if ($nameMatches) {
-                $user->update(['kyc_status' => 'verified']);
-                return response()->json([
-                    'status'  => true,
-                    'message' => 'Identity verified successfully.',
-                    'data'    => [
-                        'id_type'    => strtoupper($request->id_type),
-                        'kyc_status' => 'verified',
-                        'tier'       => 'Tier 2 (Verified)',
-                    ],
-                ]);
-            }
-
-            $user->update(['kyc_status' => 'rejected']);
-            return response()->json([
-                'status'  => false,
-                'message' => 'Verification failed. The names retrieved from your profile do not match your account identity.'
-            ], 422);
-        }
-
-        $result = $qoreIDService->verifyIdentity(
+        // Delegate identity verification to unified KycService (PayScribe or QoreID)
+        $result = $kycService->verifyIdentity(
             $request->id_type,
             $request->id_number,
             $firstname,
-            $lastname
+            $lastname,
+            $user
         );
 
         if ($result['status']) {
             $user->update(['kyc_status' => 'verified']);
             return response()->json([
                 'status'  => true,
-                'message' => 'Identity verified successfully.',
+                'message' => $result['message'] ?? 'Identity verified successfully.',
                 'data'    => [
                     'id_type'    => strtoupper($request->id_type),
                     'kyc_status' => 'verified',
                     'tier'       => 'Tier 2 (Verified)',
+                    'provider'   => $result['provider'] ?? $kycService->getActiveProvider(),
+                    'details'    => $result['data'] ?? null,
                 ],
             ]);
         }
 
         $user->update(['kyc_status' => 'rejected']);
         return response()->json([
-            'status'  => false,
-            'message' => $result['message'] ?? 'KYC Verification failed.'
+            'status'   => false,
+            'message'  => $result['message'] ?? 'KYC Verification failed.',
+            'provider' => $result['provider'] ?? $kycService->getActiveProvider(),
         ], 422);
     }
 
