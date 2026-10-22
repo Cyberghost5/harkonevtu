@@ -72,7 +72,7 @@ class PayscribePaymentService
 
         $endpoint = self::getBaseUrl() . '/links';
         $body = [
-            'title'           => $payload['title'] ?? ('Wallet Funding - ' . ($payload['reference'] ?? '')),
+            'title'           => $payload['title'] ?? ($payload['reference'] ?? ''),
             'description'     => $payload['description'] ?? ('Payment for wallet funding - ' . ($payload['name'] ?? $payload['email'] ?? '')),
             'currency'        => $payload['currency'] ?? 'NGN',
             'amount'          => (float) $payload['amount'],
