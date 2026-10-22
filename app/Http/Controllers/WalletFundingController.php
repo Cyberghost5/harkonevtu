@@ -305,6 +305,45 @@ class WalletFundingController extends Controller implements HasMiddleware
             }
         }
 
+        // ── PayScribe DVA (9PSB & PalmPay) ───────────────────────────────────
+        $payscribeStatus = AppSetting::get('payscribe_status', '1');
+        if ($payscribeStatus === '1' && \App\Services\PayscribePaymentService::isConfigured()) {
+            try {
+                $existing = VirtualAccount::where('user_id', $user->id)
+                    ->where('provider', 'payscribe')
+                    ->get();
+
+                if ($existing->isNotEmpty()) {
+                    foreach ($existing as $acc) {
+                        $results[] = $acc->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
+                    }
+                } else {
+                    $data = \App\Services\PayscribePaymentService::generateVirtualAccounts($user, $bvn);
+                    $accountsList = $data['accounts'] ?? [];
+
+                    foreach ($accountsList as $acc) {
+                        $va = VirtualAccount::updateOrCreate(
+                            [
+                                'user_id'        => $user->id,
+                                'provider'       => 'payscribe',
+                                'account_number' => $acc['account_number'],
+                            ],
+                            [
+                                'bank_name'    => $acc['bank_name'] ?? 'PayScribe Bank',
+                                'bank_code'    => $acc['bank_code'] ?? null,
+                                'account_name' => $acc['account_name'] ?? $user->name,
+                                'metadata'     => $acc,
+                            ]
+                        );
+                        $results[] = $va->only(['id', 'provider', 'bank_name', 'bank_code', 'account_number', 'account_name']);
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('PayScribe DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                $errors[] = 'PayScribe: ' . $e->getMessage();
+            }
+        }
+
         if (empty($results)) {
             return response()->json([
                 'success' => false,
@@ -1237,6 +1276,75 @@ class WalletFundingController extends Controller implements HasMiddleware
         ], true) || in_array($statusStr, ['success', 'successful', 'paid', 'completed'], true);
 
         if ($isSuccessEvent) {
+            // ── 1. Check for PayScribe DVA Payment (virtual account transfer) ──────
+            $dvaAccountNumber = $payload['customer']['number'] 
+                ?? $data['customer']['number'] 
+                ?? $payload['account_number'] 
+                ?? $data['account_number'] 
+                ?? null;
+
+            if ($dvaAccountNumber) {
+                $va = VirtualAccount::where('account_number', $dvaAccountNumber)
+                    ->where('provider', 'payscribe')
+                    ->first();
+
+                if ($va) {
+                    $dvaRef = (string) (
+                        $payload['trans_id'] 
+                        ?? $data['trans_id'] 
+                        ?? ($payload['transaction']['session_id'] ?? null) 
+                        ?? ($data['transaction']['session_id'] ?? null) 
+                        ?? $reference
+                    );
+
+                    if (WalletTransaction::where('reference', $dvaRef)->exists()) {
+                        return response('ok');
+                    }
+
+                    $paidAmount = (float) (
+                        $payload['amount'] 
+                        ?? $data['amount'] 
+                        ?? ($payload['transaction']['amount'] ?? null) 
+                        ?? ($data['transaction']['amount'] ?? null) 
+                        ?? 0
+                    );
+
+                    if ($paidAmount > 0) {
+                        $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
+                        $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
+                        if ($chargeValue > 0) {
+                            if ($chargeType === 'percentage') {
+                                $amount = round($paidAmount / (1 + ($chargeValue / 100)), 2);
+                                $charge = round($paidAmount - $amount, 2);
+                            } else {
+                                $amount = max(0.0, $paidAmount - $chargeValue);
+                                $charge = round($paidAmount - $amount, 2);
+                            }
+                        } else {
+                            $amount = $paidAmount;
+                            $charge = 0.0;
+                        }
+
+                        $dvaIntent = [
+                            'user_id' => $va->user_id,
+                            'amount'  => $amount,
+                            'charge'  => $charge,
+                            'total'   => $paidAmount,
+                            'gateway' => 'payscribe_dva',
+                        ];
+
+                        try {
+                            $this->performCredit($dvaRef, $dvaIntent);
+                        } catch (\RuntimeException $e) {
+                            Log::info('PayScribe DVA webhook: transaction already processed', ['reference' => $dvaRef]);
+                        }
+
+                        return response('ok');
+                    }
+                }
+            }
+
+            // ── 2. Payment Link / Online Checkout Payment ──────────────────────
             if (empty($reference)) {
                 return response('ok');
             }

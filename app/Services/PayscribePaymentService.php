@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Models\ApiLog;
 use App\Models\AppSetting;
+use App\Models\User;
+use App\Models\VirtualAccount;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -324,5 +327,191 @@ class PayscribePaymentService
         }
 
         return false;
+    }
+
+    /**
+     * Get or create a PayScribe customer profile for Dedicated Virtual Accounts.
+     */
+    public static function getOrCreateCustomer(User $user): string
+    {
+        $cacheKey = 'payscribe_customer_id_' . $user->id;
+        $cachedId = Cache::get($cacheKey);
+        if ($cachedId) {
+            return (string) $cachedId;
+        }
+
+        // Check if an existing VirtualAccount has the customer_id stored
+        $existingVa = VirtualAccount::where('user_id', $user->id)
+            ->where('provider', 'payscribe')
+            ->first();
+        if ($existingVa && !empty($existingVa->metadata['customer']['id'])) {
+            $cId = (string) $existingVa->metadata['customer']['id'];
+            Cache::forever($cacheKey, $cId);
+            return $cId;
+        }
+
+        $secretKey = self::getSecretKey();
+        if (!$secretKey) {
+            throw new \Exception('PayScribe secret key is not configured.');
+        }
+
+        $nameParts = preg_split('/\s+/', trim($user->name ?: 'Customer User'), 2);
+        $firstName = $nameParts[0] ?? 'Customer';
+        $lastName  = $nameParts[1] ?? 'User';
+
+        $phone = preg_replace('/[^0-9]/', '', (string) ($user->phone ?? ''));
+        if (str_starts_with($phone, '0') && strlen($phone) === 11) {
+            $phone = '234' . substr($phone, 1);
+        } elseif (strlen($phone) === 10) {
+            $phone = '234' . $phone;
+        }
+        if (empty($phone)) {
+            $phone = '2348000000000';
+        }
+
+        $endpoint = self::getBaseUrl() . '/customers/create';
+        $body = [
+            'first_name' => $firstName,
+            'last_name'  => $lastName,
+            'phone'      => $phone,
+            'email'      => $user->email,
+            'country'    => 'NG',
+        ];
+
+        $startTime = hrtime(true);
+        try {
+            $response = Http::withToken($secretKey)
+                ->acceptJson()
+                ->timeout(20)
+                ->post($endpoint, $body);
+
+            $durationMs = (int) round((hrtime(true) - $startTime) / 1e6);
+            $resData = $response->json() ?? [];
+            $success = $response->successful() && ($resData['status'] ?? false);
+
+            ApiLog::record([
+                'user_id'     => $user->id,
+                'service'     => 'customer_create',
+                'provider'    => 'payscribe',
+                'reference'   => 'PSC_CUST_' . $user->id,
+                'endpoint'    => $endpoint,
+                'method'      => 'POST',
+                'payload'     => $body,
+                'response'    => $resData ?: ['raw' => $response->body()],
+                'http_status' => $response->status(),
+                'duration_ms' => $durationMs,
+                'success'     => $success ? 1 : 0,
+            ]);
+
+            $details = $resData['message']['details'] ?? $resData['data']['details'] ?? $resData['data'] ?? [];
+            $customerId = $details['customer_id'] ?? $details['id'] ?? null;
+
+            if ($customerId) {
+                Cache::forever($cacheKey, (string) $customerId);
+                return (string) $customerId;
+            }
+
+            // If customer creation failed because customer already exists, lookup customer via GET /customers/?search={email}
+            $searchEndpoint = self::getBaseUrl() . '/customers/?search=' . urlencode($user->email);
+            $searchResp = Http::withToken($secretKey)->acceptJson()->timeout(15)->get($searchEndpoint);
+            $searchData = $searchResp->json() ?? [];
+            $customers = $searchData['message']['details']['customers'] ?? $searchData['data']['customers'] ?? [];
+
+            foreach ($customers as $c) {
+                if (strtolower($c['email'] ?? '') === strtolower($user->email)) {
+                    $foundId = (string) ($c['customer_id'] ?? $c['id'] ?? '');
+                    if ($foundId) {
+                        Cache::forever($cacheKey, $foundId);
+                        return $foundId;
+                    }
+                }
+            }
+
+            $errMsg = $resData['description'] ?? $resData['message'] ?? 'Could not create PayScribe customer profile.';
+            throw new \Exception('PayScribe: ' . (is_array($errMsg) ? implode(', ', $errMsg) : (string) $errMsg));
+        } catch (\Exception $e) {
+            Log::error('PayScribe customer creation exception', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Generate Permanent / Dedicated Virtual Accounts (DVA) for a user with PayScribe.
+     *
+     * @param User $user
+     * @param string $bvn
+     * @param array $banks e.g. ['9psb', 'palmpay']
+     * @return array Array of generated account details
+     */
+    public static function generateVirtualAccounts(User $user, string $bvn, array $banks = ['9psb', 'palmpay']): array
+    {
+        $secretKey = self::getSecretKey();
+        if (!$secretKey) {
+            throw new \Exception('PayScribe secret key is not configured.');
+        }
+
+        $customerId = self::getOrCreateCustomer($user);
+
+        $endpoint = self::getBaseUrl() . '/collections/virtual-accounts/create';
+        $body = [
+            'account_type'    => 'static',
+            'currency'        => 'NGN',
+            'customer_id'     => $customerId,
+            'bank'            => $banks,
+            'identity_type'   => 'bvn',
+            'identity_number' => $bvn,
+        ];
+
+        $ref = 'DVA_PSC_' . $user->id . '_' . time();
+        $startTime = hrtime(true);
+
+        try {
+            $response = Http::withToken($secretKey)
+                ->acceptJson()
+                ->timeout(25)
+                ->post($endpoint, $body);
+
+            $durationMs = (int) round((hrtime(true) - $startTime) / 1e6);
+            $resData = $response->json() ?? [];
+            $status = $resData['status'] ?? false;
+            $success = $response->successful() && ($status === true || ($resData['status_code'] ?? null) == 200);
+
+            ApiLog::record([
+                'user_id'     => $user->id,
+                'service'     => 'dva_generate',
+                'provider'    => 'payscribe',
+                'reference'   => $ref,
+                'endpoint'    => $endpoint,
+                'method'      => 'POST',
+                'payload'     => array_merge($body, ['identity_number' => '***' . substr($bvn, -4)]),
+                'response'    => $resData ?: ['raw' => $response->body()],
+                'http_status' => $response->status(),
+                'duration_ms' => $durationMs,
+                'success'     => $success ? 1 : 0,
+            ]);
+
+            if (!$success) {
+                $errorMsg = $resData['description'] ?? $resData['message'] ?? 'Failed to create PayScribe virtual account.';
+                throw new \Exception('PayScribe: ' . (is_array($errorMsg) ? implode(', ', $errorMsg) : (string) $errorMsg));
+            }
+
+            $details = $resData['message']['details'] ?? $resData['data']['details'] ?? $resData['data'] ?? [];
+            $accounts = $details['account'] ?? [];
+
+            // If a single account object was returned instead of array of accounts
+            if (empty($accounts) && !empty($details['account_number'])) {
+                $accounts = [$details];
+            }
+
+            return [
+                'success'  => true,
+                'customer' => $details['customer'] ?? ['id' => $customerId],
+                'accounts' => $accounts,
+                'data'     => $details,
+            ];
+        } catch (\Exception $e) {
+            Log::error('PayScribe generateVirtualAccounts exception', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+            throw $e;
+        }
     }
 }

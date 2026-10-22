@@ -31,6 +31,8 @@ class VirtualAccount extends Model
         return match ($this->provider) {
             'paystack'    => 'Paystack',
             'flutterwave' => 'Flutterwave',
+            'monnify'     => 'Monnify',
+            'payscribe'   => 'PayScribe',
             default       => ucfirst($this->provider),
         };
     }

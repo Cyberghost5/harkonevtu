@@ -575,4 +575,382 @@ class PayscribePaymentGatewayTest extends TestCase
         $response->assertSee('PayScribe');
         $response->assertSee('Secured by');
     }
+
+    public function test_payscribe_get_or_create_customer_creates_new_customer(): void
+    {
+        $user = $this->createVerifiedUser(['email' => 'dva_user@example.com', 'name' => 'John Doe']);
+
+        Http::fake([
+            '*api.payscribe.ng/api/v1/customers/create' => Http::response([
+                'status'      => true,
+                'description' => 'Customer created successfully.',
+                'message'     => [
+                    'details' => [
+                        'customer_id' => 'cust_uuid_99999',
+                        'first_name'  => 'John',
+                        'last_name'   => 'Doe',
+                        'email'       => 'dva_user@example.com',
+                    ],
+                ],
+                'status_code' => 200,
+            ], 200),
+        ]);
+
+        $customerId = PayscribePaymentService::getOrCreateCustomer($user);
+        $this->assertEquals('cust_uuid_99999', $customerId);
+    }
+
+    public function test_payscribe_generate_virtual_accounts_returns_bank_accounts(): void
+    {
+        $user = $this->createVerifiedUser(['email' => 'dva_user2@example.com', 'name' => 'Alice Smith']);
+
+        Http::fake([
+            '*api.payscribe.ng/api/v1/customers/create' => Http::response([
+                'status'      => true,
+                'description' => 'Customer created successfully.',
+                'message'     => [
+                    'details' => [
+                        'customer_id' => 'cust_uuid_alice',
+                    ],
+                ],
+                'status_code' => 200,
+            ], 200),
+            '*api.payscribe.ng/api/v1/collections/virtual-accounts/create' => Http::response([
+                'status'      => true,
+                'description' => 'Virtual account created successfully.',
+                'message'     => [
+                    'details' => [
+                        'customer' => [
+                            'id'   => 'cust_uuid_alice',
+                            'name' => 'Alice Smith',
+                        ],
+                        'account' => [
+                            [
+                                'id'             => 'acc_9psb_123',
+                                'account_number' => '5031240100',
+                                'account_name'   => 'PAYSCRIBE/ALICE SMITH',
+                                'bank_name'      => '9PSB',
+                                'bank_code'      => '120001',
+                                'currency'       => 'NGN',
+                                'account_type'   => 'static',
+                            ],
+                            [
+                                'id'             => 'acc_palmpay_456',
+                                'account_number' => '2710467183',
+                                'account_name'   => 'PAYSCRIBE/ALICE SMITH',
+                                'bank_name'      => 'palmpay',
+                                'bank_code'      => '100033',
+                                'currency'       => 'NGN',
+                                'account_type'   => 'static',
+                            ],
+                        ],
+                    ],
+                ],
+                'status_code' => 200,
+            ], 200),
+        ]);
+
+        $result = PayscribePaymentService::generateVirtualAccounts($user, '22222222222');
+
+        $this->assertTrue($result['success']);
+        $this->assertCount(2, $result['accounts']);
+        $this->assertEquals('5031240100', $result['accounts'][0]['account_number']);
+        $this->assertEquals('9PSB', $result['accounts'][0]['bank_name']);
+        $this->assertEquals('2710467183', $result['accounts'][1]['account_number']);
+    }
+
+    public function test_virtual_account_model_provider_label(): void
+    {
+        $va = new \App\Models\VirtualAccount(['provider' => 'payscribe']);
+        $this->assertEquals('PayScribe', $va->providerLabel());
+    }
+
+    public function test_web_funding_auto_generate_creates_payscribe_virtual_accounts(): void
+    {
+        // Disable other providers to isolate Payscribe
+        AppSetting::set('paystack_status', '0');
+        AppSetting::set('flutterwave_status', '0');
+        AppSetting::set('monnify_status', '0');
+        AppSetting::set('payscribe_status', '1');
+
+        $user = $this->createVerifiedUser(['name' => 'Michael Scott', 'email' => 'michael@dunder.com']);
+        $this->actingAs($user);
+
+        Http::fake([
+            '*api.payscribe.ng/api/v1/customers/create' => Http::response([
+                'status'      => true,
+                'description' => 'Customer created successfully.',
+                'message'     => [
+                    'details' => [
+                        'customer_id' => 'cust_michael_uuid',
+                    ],
+                ],
+                'status_code' => 200,
+            ], 200),
+            '*api.payscribe.ng/api/v1/collections/virtual-accounts/create' => Http::response([
+                'status'      => true,
+                'description' => 'Virtual account created successfully.',
+                'message'     => [
+                    'details' => [
+                        'customer' => [
+                            'id'   => 'cust_michael_uuid',
+                            'name' => 'Michael Scott',
+                        ],
+                        'account' => [
+                            [
+                                'id'             => 'acc_9psb_michael',
+                                'account_number' => '9988776655',
+                                'account_name'   => 'PAYSCRIBE/MICHAEL SCOTT',
+                                'bank_name'      => '9PSB',
+                                'bank_code'      => '120001',
+                                'currency'       => 'NGN',
+                                'account_type'   => 'static',
+                            ],
+                        ],
+                    ],
+                ],
+                'status_code' => 200,
+            ], 200),
+        ]);
+
+        $response = $this->postJson(route('wallet.fund.auto.generate'), [
+            'bvn' => '12345678901',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('virtual_accounts', [
+            'user_id'        => $user->id,
+            'provider'       => 'payscribe',
+            'account_number' => '9988776655',
+            'bank_name'      => '9PSB',
+        ]);
+    }
+
+    public function test_api_dva_generate_creates_payscribe_virtual_accounts(): void
+    {
+        AppSetting::set('paystack_status', '0');
+        AppSetting::set('flutterwave_status', '0');
+        AppSetting::set('monnify_status', '0');
+        AppSetting::set('payscribe_status', '1');
+
+        $user = $this->createVerifiedUser(['name' => 'Jim Halpert', 'email' => 'jim@dunder.com']);
+        $token = $user->createToken('test_dva')->plainTextToken;
+
+        Http::fake([
+            '*api.payscribe.ng/api/v1/customers/create' => Http::response([
+                'status'      => true,
+                'description' => 'Customer created successfully.',
+                'message'     => [
+                    'details' => [
+                        'customer_id' => 'cust_jim_uuid',
+                    ],
+                ],
+                'status_code' => 200,
+            ], 200),
+            '*api.payscribe.ng/api/v1/collections/virtual-accounts/create' => Http::response([
+                'status'      => true,
+                'description' => 'Virtual account created successfully.',
+                'message'     => [
+                    'details' => [
+                        'customer' => [
+                            'id'   => 'cust_jim_uuid',
+                            'name' => 'Jim Halpert',
+                        ],
+                        'account' => [
+                            [
+                                'id'             => 'acc_palmpay_jim',
+                                'account_number' => '8877665544',
+                                'account_name'   => 'PAYSCRIBE/JIM HALPERT',
+                                'bank_name'      => 'palmpay',
+                                'bank_code'      => '100033',
+                                'currency'       => 'NGN',
+                                'account_type'   => 'static',
+                            ],
+                        ],
+                    ],
+                ],
+                'status_code' => 200,
+            ], 200),
+        ]);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+            'Accept'        => 'application/json',
+        ])->postJson('/api/v1/user/dva/generate', [
+            'bvn' => '12345678901',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status' => true,
+        ]);
+
+        $this->assertDatabaseHas('virtual_accounts', [
+            'user_id'        => $user->id,
+            'provider'       => 'payscribe',
+            'account_number' => '8877665544',
+            'bank_name'      => 'palmpay',
+        ]);
+    }
+
+    public function test_web_funding_auto_generate_reuses_existing_payscribe_accounts(): void
+    {
+        AppSetting::set('paystack_status', '0');
+        AppSetting::set('flutterwave_status', '0');
+        AppSetting::set('monnify_status', '0');
+        AppSetting::set('payscribe_status', '1');
+
+        $user = $this->createVerifiedUser(['name' => 'Dwight Schrute', 'email' => 'dwight@dunder.com']);
+        $this->actingAs($user);
+
+        // Pre-create account in DB
+        \App\Models\VirtualAccount::create([
+            'user_id'        => $user->id,
+            'provider'       => 'payscribe',
+            'account_number' => '1122334455',
+            'bank_name'      => '9PSB',
+            'bank_code'      => '120001',
+            'account_name'   => 'PAYSCRIBE/DWIGHT SCHRUTE',
+        ]);
+
+        Http::fake(); // No HTTP calls expected
+
+        $response = $this->postJson(route('wallet.fund.auto.generate'), [
+            'bvn' => '12345678901',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonFragment([
+            'account_number' => '1122334455',
+            'provider'       => 'payscribe',
+        ]);
+
+        Http::assertNothingSent();
+    }
+
+    public function test_payscribe_webhook_credits_user_wallet_on_dva_deposit(): void
+    {
+        $user = $this->createVerifiedUser(['name' => 'Stanley Hudson', 'email' => 'stanley@dunder.com']);
+        $user->wallet()->create(['balance' => 500]);
+
+        $accountNumber = '5300286431';
+        \App\Models\VirtualAccount::create([
+            'user_id'        => $user->id,
+            'provider'       => 'payscribe',
+            'account_number' => $accountNumber,
+            'bank_name'      => '9PSB',
+            'bank_code'      => '120001',
+            'account_name'   => 'PAYSCRIBE/STANLEY HUDSON',
+        ]);
+
+        $payloadArray = [
+            'event'      => 'accounts.payments.status',
+            'event_type' => 'accounts.payment.status',
+            'trans_id'   => 'tx_psc_dva_555',
+            'amount'     => 4500,
+            'currency'   => 'NGN',
+            'customer'   => [
+                'id'     => 'cust_stanley_uuid',
+                'name'   => 'PAYSCRIBE/STANLEY HUDSON',
+                'number' => $accountNumber,
+            ],
+            'transaction' => [
+                'session_id' => 'sess_nip_99881122',
+                'amount'     => 4500,
+                'narration'  => 'Transfer to Stanley',
+            ],
+        ];
+
+        $payloadJson = json_encode($payloadArray);
+        $signature = hash_hmac('sha256', $payloadJson, PayscribePaymentService::getSecretKey());
+
+        $response = $this->call(
+            'POST',
+            '/webhook/payscribe',
+            [],
+            [],
+            [],
+            [
+                'HTTP_X_PAYSCRIBE_SIGNATURE' => $signature,
+                'CONTENT_TYPE'               => 'application/json',
+            ],
+            $payloadJson
+        );
+
+        $response->assertStatus(200);
+        $this->assertEquals('ok', $response->getContent());
+
+        $this->assertEquals(5000, (float) $user->wallet()->value('balance'));
+        $this->assertDatabaseHas('wallet_transactions', [
+            'user_id'   => $user->id,
+            'reference' => 'tx_psc_dva_555',
+            'amount'    => 4500,
+            'status'    => 'success',
+        ]);
+    }
+
+    public function test_payscribe_webhook_dva_idempotency_prevents_duplicate_credits(): void
+    {
+        $user = $this->createVerifiedUser(['name' => 'Kevin Malone', 'email' => 'kevin@dunder.com']);
+        $user->wallet()->create(['balance' => 200]);
+
+        $accountNumber = '5300998877';
+        \App\Models\VirtualAccount::create([
+            'user_id'        => $user->id,
+            'provider'       => 'payscribe',
+            'account_number' => $accountNumber,
+            'bank_name'      => 'palmpay',
+            'bank_code'      => '100033',
+            'account_name'   => 'PAYSCRIBE/KEVIN MALONE',
+        ]);
+
+        $payloadArray = [
+            'event'      => 'accounts.payments.status',
+            'event_type' => 'accounts.payment.status',
+            'trans_id'   => 'tx_psc_dva_kevin_777',
+            'amount'     => 3000,
+            'currency'   => 'NGN',
+            'customer'   => [
+                'number' => $accountNumber,
+            ],
+        ];
+
+        $payloadJson = json_encode($payloadArray);
+        $signature = hash_hmac('sha256', $payloadJson, PayscribePaymentService::getSecretKey());
+
+        // First webhook call
+        $res1 = $this->call(
+            'POST',
+            '/webhook/payscribe',
+            [],
+            [],
+            [],
+            [
+                'HTTP_X_PAYSCRIBE_SIGNATURE' => $signature,
+                'CONTENT_TYPE'               => 'application/json',
+            ],
+            $payloadJson
+        );
+        $res1->assertStatus(200);
+        $this->assertEquals(3200, (float) $user->wallet()->value('balance'));
+
+        // Duplicate call
+        $res2 = $this->call(
+            'POST',
+            '/webhook/payscribe',
+            [],
+            [],
+            [],
+            [
+                'HTTP_X_PAYSCRIBE_SIGNATURE' => $signature,
+                'CONTENT_TYPE'               => 'application/json',
+            ],
+            $payloadJson
+        );
+        $res2->assertStatus(200);
+        // Balance remains 3200, not 6200
+        $this->assertEquals(3200, (float) $user->wallet()->value('balance'));
+    }
 }

@@ -468,6 +468,45 @@ class UserController extends Controller
             }
         }
 
+        // ── 4. PayScribe DVA (9PSB & PalmPay) ─────────────────────────────────
+        $payscribeStatus = AppSetting::get('payscribe_status', '1');
+        if ($payscribeStatus === '1' && \App\Services\PayscribePaymentService::isConfigured()) {
+            try {
+                $existing = VirtualAccount::where('user_id', $user->id)
+                    ->where('provider', 'payscribe')
+                    ->get();
+
+                if ($existing->isNotEmpty()) {
+                    foreach ($existing as $acc) {
+                        $results[] = $acc;
+                    }
+                } else {
+                    $data = \App\Services\PayscribePaymentService::generateVirtualAccounts($user, $bvn);
+                    $accountsList = $data['accounts'] ?? [];
+
+                    foreach ($accountsList as $acc) {
+                        $va = VirtualAccount::updateOrCreate(
+                            [
+                                'user_id'        => $user->id,
+                                'provider'       => 'payscribe',
+                                'account_number' => $acc['account_number'],
+                            ],
+                            [
+                                'bank_name'    => $acc['bank_name'] ?? 'PayScribe Bank',
+                                'bank_code'    => $acc['bank_code'] ?? null,
+                                'account_name' => $acc['account_name'] ?? $user->name,
+                                'metadata'     => $acc,
+                            ]
+                        );
+                        $results[] = $va;
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('PayScribe DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                $errors[] = 'PayScribe: ' . $e->getMessage();
+            }
+        }
+
         if (empty($results)) {
             return $this->jsonResponse(false, 'Could not generate virtual accounts. ' . implode(' | ', $errors), null, 400);
         }
