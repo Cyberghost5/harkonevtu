@@ -55,7 +55,7 @@ class PayscribePaymentService
     }
 
     /**
-     * Initialize a checkout collection session with Payscribe.
+     * Initialize a checkout collection session with Payscribe via Payment Links.
      *
      * @param array $payload Must include: amount, reference, email, name
      * @return array ['success' => bool, 'reference' => string, 'token' => ?string, 'checkout_url' => ?string, 'message' => ?string, 'data' => ?array]
@@ -70,28 +70,28 @@ class PayscribePaymentService
             return ['success' => false, 'message' => self::$lastError];
         }
 
-        $endpoint = self::getBaseUrl() . '/collections/initialize';
+        $endpoint = self::getBaseUrl() . '/links';
         $body = [
-            'reference'    => $payload['reference'],
-            'amount'       => (float) $payload['amount'],
-            'currency'     => $payload['currency'] ?? 'NGN',
-            'name'         => $payload['name'] ?? '',
-            'email'        => $payload['email'] ?? '',
-            'phone'        => $payload['phone'] ?? '',
-            'redirect_url' => $payload['redirect_url'] ?? url('/wallet/fund/gateway/verify/payscribe'),
-            'metadata'     => $payload['metadata'] ?? [],
+            'title'           => $payload['title'] ?? ('Wallet Funding - ' . ($payload['reference'] ?? '')),
+            'description'     => $payload['description'] ?? ('Payment for wallet funding - ' . ($payload['name'] ?? $payload['email'] ?? '')),
+            'currency'        => $payload['currency'] ?? 'NGN',
+            'amount'          => (float) $payload['amount'],
+            'success_message' => $payload['success_message'] ?? 'Thank you! Payment received.',
+            'redirect'        => $payload['redirect_url'] ?? $payload['redirect'] ?? url('/wallet/fund/gateway/verify/payscribe'),
+            'custom_link'     => $payload['custom_link'] ?? '',
         ];
 
         $startTime = hrtime(true);
         try {
             $response = Http::withToken($secretKey)
+                ->acceptJson()
                 ->timeout(20)
                 ->post($endpoint, $body);
 
             $durationMs = (int) round((hrtime(true) - $startTime) / 1e6);
             $resData = $response->json() ?? [];
             $status = $resData['status'] ?? false;
-            $success = $response->successful() && ($status === true || $status === 'success' || ($resData['code'] ?? null) == 200);
+            $success = $response->successful() && ($status === true || $status === 'success' || ($resData['status_code'] ?? $resData['code'] ?? null) == 200);
 
             ApiLog::record([
                 'user_id'         => auth()->id(),
@@ -108,7 +108,7 @@ class PayscribePaymentService
             ]);
 
             if (!$success) {
-                $errorMsg = $resData['message'] ?? $resData['error'] ?? 'Could not initialize Payscribe checkout.';
+                $errorMsg = $resData['description'] ?? $resData['message'] ?? $resData['error'] ?? 'Could not initialize Payscribe checkout link.';
                 self::$lastError = is_array($errorMsg) ? implode(', ', $errorMsg) : (string) $errorMsg;
                 return [
                     'success' => false,
@@ -117,14 +117,17 @@ class PayscribePaymentService
                 ];
             }
 
-            $data = $resData['data'] ?? $resData;
+            $details = $resData['message']['details'] ?? $resData['data']['details'] ?? $resData['data'] ?? $resData['details'] ?? $resData;
+            $checkoutUrl = $details['full_url'] ?? $details['url'] ?? $details['link'] ?? $details['checkout_url'] ?? null;
+            $token = $details['slug'] ?? $details['id'] ?? $details['token'] ?? null;
+
             return [
                 'success'      => true,
                 'reference'    => $payload['reference'],
-                'token'        => $data['token'] ?? $data['checkout_token'] ?? $data['access_code'] ?? null,
-                'checkout_url' => $data['checkout_url'] ?? $data['payment_url'] ?? $data['link'] ?? null,
-                'message'      => $resData['message'] ?? 'Checkout session created successfully.',
-                'data'         => $data,
+                'token'        => $token,
+                'checkout_url' => $checkoutUrl,
+                'message'      => $resData['description'] ?? $resData['message'] ?? 'Checkout link created successfully.',
+                'data'         => $details,
             ];
         } catch (\Exception $e) {
             $durationMs = (int) round((hrtime(true) - $startTime) / 1e6);
@@ -150,7 +153,7 @@ class PayscribePaymentService
     }
 
     /**
-     * Verify a transaction status from Payscribe API.
+     * Verify a transaction status from Payscribe API via Requery endpoint.
      *
      * @param string $reference
      * @return array ['success' => bool, 'paid' => bool, 'amount' => float, 'currency' => string, 'reference' => string, 'message' => string, 'data' => array]
@@ -165,24 +168,26 @@ class PayscribePaymentService
             return ['success' => false, 'paid' => false, 'message' => self::$lastError, 'amount' => 0.0, 'currency' => 'NGN', 'reference' => $reference, 'data' => []];
         }
 
-        $endpoint = self::getBaseUrl() . '/collections/transactions/' . urlencode($reference);
+        // Official Payscribe transaction requery endpoint
+        $endpoint = self::getBaseUrl() . '/requery/?trans_id=' . urlencode($reference);
         $startTime = hrtime(true);
 
         try {
             $response = Http::withToken($secretKey)
+                ->acceptJson()
                 ->timeout(20)
                 ->get($endpoint);
 
             $durationMs = (int) round((hrtime(true) - $startTime) / 1e6);
             $resData = $response->json() ?? [];
-            $data = $resData['data'] ?? $resData;
+            $details = $resData['message']['details'] ?? $resData['data']['details'] ?? $resData['data'] ?? $resData['details'] ?? $resData;
 
-            $statusStr = strtolower((string) ($data['status'] ?? $resData['status'] ?? ''));
+            $statusStr = strtolower((string) ($details['status'] ?? $resData['status'] ?? ''));
             $isPaid = in_array($statusStr, ['success', 'successful', 'paid', 'completed'], true);
             $success = $response->successful() && $isPaid;
 
-            $amount = (float) ($data['amount'] ?? $data['paid_amount'] ?? 0);
-            $currency = strtoupper((string) ($data['currency'] ?? 'NGN'));
+            $amount = (float) ($details['amount'] ?? $details['paid_amount'] ?? $details['unit'] ?? 0);
+            $currency = strtoupper((string) ($details['currency'] ?? 'NGN'));
 
             ApiLog::record([
                 'user_id'         => auth()->id(),
@@ -191,7 +196,7 @@ class PayscribePaymentService
                 'reference'       => $reference,
                 'endpoint'        => $endpoint,
                 'method'          => 'GET',
-                'payload'         => ['reference' => $reference],
+                'payload'         => ['trans_id' => $reference],
                 'response'        => $resData ?: ['raw' => $response->body()],
                 'http_status'     => $response->status(),
                 'duration_ms'     => $durationMs,
@@ -199,7 +204,7 @@ class PayscribePaymentService
             ]);
 
             if (!$response->successful()) {
-                $errorMsg = $resData['message'] ?? 'Could not verify transaction with Payscribe.';
+                $errorMsg = $resData['description'] ?? $resData['message'] ?? 'Could not verify transaction with Payscribe.';
                 self::$lastError = is_array($errorMsg) ? implode(', ', $errorMsg) : (string) $errorMsg;
                 return [
                     'success'   => false,
@@ -218,8 +223,8 @@ class PayscribePaymentService
                 'amount'    => $amount,
                 'currency'  => $currency,
                 'reference' => $reference,
-                'message'   => $resData['message'] ?? ($isPaid ? 'Payment verified successfully.' : 'Payment is still pending.'),
-                'data'      => $data,
+                'message'   => $resData['description'] ?? $resData['message'] ?? ($isPaid ? 'Payment verified successfully.' : 'Payment is still pending.'),
+                'data'      => $details,
             ];
         } catch (\Exception $e) {
             $durationMs = (int) round((hrtime(true) - $startTime) / 1e6);
@@ -233,7 +238,7 @@ class PayscribePaymentService
                 'reference'       => $reference,
                 'endpoint'        => $endpoint,
                 'method'          => 'GET',
-                'payload'         => ['reference' => $reference],
+                'payload'         => ['trans_id' => $reference],
                 'response'        => ['error' => $e->getMessage()],
                 'http_status'     => 500,
                 'duration_ms'     => $durationMs,
@@ -262,15 +267,40 @@ class PayscribePaymentService
             return false;
         }
 
+        $rawBody = $request->getContent();
+
         // 1. Check signature header (e.g. x-payscribe-signature, x-signature)
         $signature = $request->header('x-payscribe-signature') 
             ?? $request->header('x-signature') 
             ?? $request->header('payscribe-signature');
 
         if ($signature) {
-            $computedSha512 = hash_hmac('sha512', $request->getContent(), $secretKey);
-            $computedSha256 = hash_hmac('sha256', $request->getContent(), $secretKey);
-            if (hash_equals($computedSha512, $signature) || hash_equals($computedSha256, $signature)) {
+            // Support timestamped versioned signature: v1=<hash>
+            if (str_starts_with($signature, 'v1=')) {
+                $hash = substr($signature, 3);
+                $timestamp = $request->header('x-payscribe-timestamp');
+                $eventId = $request->header('x-payscribe-event-id');
+
+                if ($timestamp && $eventId) {
+                    // Prevent replay attacks (5 minutes tolerance)
+                    if (abs(time() - (int) $timestamp) <= 300) {
+                        $expectedHash = hash_hmac('sha256', "{$timestamp}.{$eventId}.{$rawBody}", $secretKey);
+                        if (hash_equals($expectedHash, $hash)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            // Standard HMAC-SHA256 (Payscribe official documentation)
+            $computedSha256 = hash_hmac('sha256', $rawBody, $secretKey);
+            if (hash_equals($computedSha256, $signature)) {
+                return true;
+            }
+
+            // Fallback HMAC-SHA512
+            $computedSha512 = hash_hmac('sha512', $rawBody, $secretKey);
+            if (hash_equals($computedSha512, $signature)) {
                 return true;
             }
         }

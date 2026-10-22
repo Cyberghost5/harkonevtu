@@ -224,43 +224,6 @@
                 </div>
             </div>
 
-            {{-- ── PayScribe (Payment Gateway & Collections) ─────────────── --}}
-            <div class="px-6 py-6">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        PayScribe (Payment Gateway &amp; Collections)
-                        <span class="text-sm font-normal text-slate-400">from
-                            <a href="https://payscribe.co" target="_blank" class="text-blue-500 hover:underline">PayScribe</a>
-                        </span>
-                    </h4>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="hidden" name="payscribe_status" value="0">
-                        <input type="checkbox" name="payscribe_status" value="1" {{ ($s['payscribe_status'] ?? '1') === '1' ? 'checked' : '' }}
-                               class="sr-only peer provider-toggle" data-target="section-payscribe">
-                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-vtu-primary"></div>
-                        <span class="ml-2.5 text-xs font-bold status-label uppercase tracking-wider {{ ($s['payscribe_status'] ?? '1') === '1' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500' }}">
-                            {{ ($s['payscribe_status'] ?? '1') === '1' ? 'Enabled' : 'Disabled' }}
-                        </span>
-                    </label>
-                </div>
-                <div id="section-payscribe" class="provider-content transition-all duration-300 {{ ($s['payscribe_status'] ?? '1') === '1' ? '' : 'hidden' }}">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1">Public Key</label>
-                            <input type="text" name="payscribe_public_key" value="{{ $s['payscribe_public_key'] ?? '' }}"
-                                   placeholder="Enter Public Key (e.g. ps_pub_...)"
-                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1">Secret Key</label>
-                            <input type="password" name="payscribe_secret_key" value="{{ $s['payscribe_secret_key'] ?? '' }}"
-                                   placeholder="Enter Secret Key (e.g. ps_sec_...)"
-                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             {{-- ── Other Payment Settings ───────────────────────────────── --}}
             <div class="px-6 py-6">
                 <h4 class="text-lg font-bold text-slate-800 mb-4">Other Payment Settings</h4>

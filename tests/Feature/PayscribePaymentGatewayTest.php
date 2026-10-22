@@ -54,13 +54,20 @@ class PayscribePaymentGatewayTest extends TestCase
     public function test_payscribe_service_creates_checkout_session(): void
     {
         Http::fake([
-            '*api.payscribe.ng/api/v1/collections/initialize*' => Http::response([
-                'status'  => 'success',
-                'message' => 'Session initialized',
-                'data'    => [
-                    'token'        => 'chk_token_9999',
-                    'checkout_url' => 'https://checkout.payscribe.ng/pay/chk_token_9999',
+            '*api.payscribe.ng/api/v1/links*' => Http::response([
+                'status'      => true,
+                'description' => 'Create Payment Link — 200',
+                'message'     => [
+                    'details' => [
+                        'id'       => '3f9a8c21-test-id',
+                        'slug'     => 'chk_slug_9999',
+                        'full_url' => 'https://links.payscribe.co/inv/chk_slug_9999',
+                        'amount'   => 2500,
+                        'currency' => 'NGN',
+                        'status'   => 'active',
+                    ],
                 ],
+                'status_code' => 200,
             ], 200),
         ]);
 
@@ -72,22 +79,26 @@ class PayscribePaymentGatewayTest extends TestCase
         ]);
 
         $this->assertTrue($result['success']);
-        $this->assertEquals('chk_token_9999', $result['token']);
-        $this->assertEquals('https://checkout.payscribe.ng/pay/chk_token_9999', $result['checkout_url']);
+        $this->assertEquals('chk_slug_9999', $result['token']);
+        $this->assertEquals('https://links.payscribe.co/inv/chk_slug_9999', $result['checkout_url']);
     }
 
     public function test_payscribe_service_verifies_transaction(): void
     {
         Http::fake([
-            '*api.payscribe.ng/api/v1/collections/transactions/*' => Http::response([
-                'status'  => 'success',
-                'message' => 'Transaction successful',
-                'data'    => [
-                    'status'   => 'successful',
-                    'amount'   => 2500,
-                    'currency' => 'NGN',
-                    'reference'=> 'PSC_TEST_123',
+            '*api.payscribe.ng/api/v1/requery*' => Http::response([
+                'status'      => true,
+                'description' => 'Transaction success',
+                'message'     => [
+                    'details' => [
+                        'trans_id' => 'tx-uuid-123',
+                        'ref'      => 'PSC_TEST_123',
+                        'status'   => 'success',
+                        'amount'   => 2500,
+                        'currency' => 'NGN',
+                    ],
                 ],
+                'status_code' => 200,
             ], 200),
         ]);
 
@@ -101,23 +112,34 @@ class PayscribePaymentGatewayTest extends TestCase
 
     public function test_payscribe_webhook_signature_validation(): void
     {
-        $payload = json_encode(['event' => 'collection.successful', 'reference' => 'PSC_TEST_123']);
+        $payload = json_encode(['event' => 'payment_link.paid', 'ref' => 'PSC_TEST_123']);
         $secretKey = PayscribePaymentService::getSecretKey();
-        $validSignature = hash_hmac('sha512', $payload, $secretKey);
 
-        $request = Request::create('/webhook/payscribe', 'POST', [], [], [], [
-            'HTTP_X_PAYSCRIBE_SIGNATURE' => $validSignature,
+        // 1. Standard HMAC-SHA256 signature
+        $validSha256 = hash_hmac('sha256', $payload, $secretKey);
+        $requestSha256 = Request::create('/webhook/payscribe', 'POST', [], [], [], [
+            'HTTP_X_PAYSCRIBE_SIGNATURE' => $validSha256,
             'CONTENT_TYPE'               => 'application/json',
         ], $payload);
+        $this->assertTrue(PayscribePaymentService::validateWebhookSignature($requestSha256));
 
-        $this->assertTrue(PayscribePaymentService::validateWebhookSignature($request));
+        // 2. Timestamped versioned signature (v1=...)
+        $timestamp = (string) time();
+        $eventId = 'evt_test_uuid_123';
+        $v1Hash = hash_hmac('sha256', "{$timestamp}.{$eventId}.{$payload}", $secretKey);
+        $requestV1 = Request::create('/webhook/payscribe', 'POST', [], [], [], [
+            'HTTP_X_PAYSCRIBE_SIGNATURE' => 'v1=' . $v1Hash,
+            'HTTP_X_PAYSCRIBE_TIMESTAMP' => $timestamp,
+            'HTTP_X_PAYSCRIBE_EVENT_ID'  => $eventId,
+            'CONTENT_TYPE'               => 'application/json',
+        ], $payload);
+        $this->assertTrue(PayscribePaymentService::validateWebhookSignature($requestV1));
 
-        // Invalid signature
+        // 3. Invalid signature
         $invalidRequest = Request::create('/webhook/payscribe', 'POST', [], [], [], [
             'HTTP_X_PAYSCRIBE_SIGNATURE' => 'invalid_signature_hash',
             'CONTENT_TYPE'               => 'application/json',
         ], $payload);
-
         $this->assertFalse(PayscribePaymentService::validateWebhookSignature($invalidRequest));
     }
 
@@ -126,13 +148,20 @@ class PayscribePaymentGatewayTest extends TestCase
         AppSetting::set('active_gateway', 'payscribe');
 
         Http::fake([
-            '*api.payscribe.ng/api/v1/collections/initialize*' => Http::response([
-                'status'  => 'success',
-                'message' => 'Session created',
-                'data'    => [
-                    'token'        => 'chk_token_api_123',
-                    'checkout_url' => 'https://checkout.payscribe.ng/pay/chk_token_api_123',
+            '*api.payscribe.ng/api/v1/links*' => Http::response([
+                'status'      => true,
+                'description' => 'Create Payment Link — 200',
+                'message'     => [
+                    'details' => [
+                        'id'       => '3f9a8c21-api-id',
+                        'slug'     => 'chk_token_api_123',
+                        'full_url' => 'https://links.payscribe.co/inv/chk_token_api_123',
+                        'amount'   => 1500,
+                        'currency' => 'NGN',
+                        'status'   => 'active',
+                    ],
                 ],
+                'status_code' => 200,
             ], 200),
         ]);
 
@@ -173,13 +202,20 @@ class PayscribePaymentGatewayTest extends TestCase
         $this->actingAs($user);
 
         Http::fake([
-            '*api.payscribe.ng/api/v1/collections/initialize*' => Http::response([
-                'status'  => 'success',
-                'message' => 'Checkout ready',
-                'data'    => [
-                    'token'        => 'chk_web_token_777',
-                    'checkout_url' => 'https://checkout.payscribe.ng/pay/chk_web_token_777',
+            '*api.payscribe.ng/api/v1/links*' => Http::response([
+                'status'      => true,
+                'description' => 'Create Payment Link — 200',
+                'message'     => [
+                    'details' => [
+                        'id'       => '3f9a8c21-web-id',
+                        'slug'     => 'chk_web_token_777',
+                        'full_url' => 'https://links.payscribe.co/inv/chk_web_token_777',
+                        'amount'   => 1000,
+                        'currency' => 'NGN',
+                        'status'   => 'active',
+                    ],
                 ],
+                'status_code' => 200,
             ], 200),
         ]);
 
@@ -191,7 +227,7 @@ class PayscribePaymentGatewayTest extends TestCase
         $response->assertJson([
             'gateway'      => 'payscribe',
             'amount'       => 1000,
-            'checkout_url' => 'https://checkout.payscribe.ng/pay/chk_web_token_777',
+            'checkout_url' => 'https://links.payscribe.co/inv/chk_web_token_777',
             'token'        => 'chk_web_token_777',
         ]);
 
@@ -217,15 +253,19 @@ class PayscribePaymentGatewayTest extends TestCase
         ], now()->addHour());
 
         Http::fake([
-            '*api.payscribe.ng/api/v1/collections/transactions/*' => Http::response([
-                'status'  => 'success',
-                'message' => 'Paid',
-                'data'    => [
-                    'status'   => 'successful',
-                    'amount'   => 1000,
-                    'currency' => 'NGN',
-                    'reference'=> $ref,
+            '*api.payscribe.ng/api/v1/requery*' => Http::response([
+                'status'      => true,
+                'description' => 'Transaction success',
+                'message'     => [
+                    'details' => [
+                        'trans_id' => 'tx-uuid-verify',
+                        'ref'      => $ref,
+                        'status'   => 'success',
+                        'amount'   => 1000,
+                        'currency' => 'NGN',
+                    ],
                 ],
+                'status_code' => 200,
             ], 200),
         ]);
 
@@ -262,15 +302,19 @@ class PayscribePaymentGatewayTest extends TestCase
         ], now()->addHour());
 
         Http::fake([
-            '*api.payscribe.ng/api/v1/collections/transactions/*' => Http::response([
-                'status'  => 'success',
-                'message' => 'Paid',
-                'data'    => [
-                    'status'   => 'successful',
-                    'amount'   => 1000, // Less than 5000
-                    'currency' => 'NGN',
-                    'reference'=> $ref,
+            '*api.payscribe.ng/api/v1/requery*' => Http::response([
+                'status'      => true,
+                'description' => 'Transaction success',
+                'message'     => [
+                    'details' => [
+                        'trans_id' => 'tx-uuid-underpaid',
+                        'ref'      => $ref,
+                        'status'   => 'success',
+                        'amount'   => 1000, // Less than 5000
+                        'currency' => 'NGN',
+                    ],
                 ],
+                'status_code' => 200,
             ], 200),
         ]);
 
@@ -300,15 +344,19 @@ class PayscribePaymentGatewayTest extends TestCase
         ], now()->addHour());
 
         Http::fake([
-            '*api.payscribe.ng/api/v1/collections/transactions/*' => Http::response([
-                'status'  => 'success',
-                'message' => 'Paid',
-                'data'    => [
-                    'status'   => 'successful',
-                    'amount'   => 2000,
-                    'currency' => 'NGN',
-                    'reference'=> $ref,
+            '*api.payscribe.ng/api/v1/requery*' => Http::response([
+                'status'      => true,
+                'description' => 'Transaction success',
+                'message'     => [
+                    'details' => [
+                        'trans_id' => 'tx-uuid-callback',
+                        'ref'      => $ref,
+                        'status'   => 'success',
+                        'amount'   => 2000,
+                        'currency' => 'NGN',
+                    ],
                 ],
+                'status_code' => 200,
             ], 200),
         ]);
 
@@ -322,11 +370,9 @@ class PayscribePaymentGatewayTest extends TestCase
     public function test_payscribe_webhook_rejects_invalid_signature(): void
     {
         $payload = json_encode([
-            'event' => 'collection.successful',
-            'data'  => [
-                'reference' => 'PSC_TEST_FAIL_SIG',
-                'amount'    => 1000,
-            ],
+            'event'   => 'payment_link.paid',
+            'ref'     => 'PSC_TEST_FAIL_SIG',
+            'amount'  => 1000,
         ]);
 
         $response = $this->call(
@@ -336,7 +382,7 @@ class PayscribePaymentGatewayTest extends TestCase
             [],
             [],
             [
-                'HTTP_X_PAYSCRIBE_SIGNATURE' => 'invalid_sha512_hash',
+                'HTTP_X_PAYSCRIBE_SIGNATURE' => 'invalid_sha256_hash',
                 'CONTENT_TYPE'               => 'application/json',
             ],
             $payload
@@ -360,17 +406,22 @@ class PayscribePaymentGatewayTest extends TestCase
         ], now()->addHour());
 
         $payloadArray = [
-            'event' => 'collection.successful',
-            'data'  => [
-                'reference' => $ref,
-                'amount'    => 2000,
-                'currency'  => 'NGN',
-                'status'    => 'successful',
-                'customer'  => ['email' => $user->email],
+            'event'          => 'payment_link.paid',
+            'link_id'        => '3f9a8c21-test-id',
+            'slug'           => 'chk_slug_101',
+            'trans_id'       => 'tx-uuid-101',
+            'ref'            => $ref,
+            'amount'         => 2000,
+            'currency'       => 'NGN',
+            'payment_method' => 'bank_transfer',
+            'customer'       => [
+                'name'  => $user->name,
+                'email' => $user->email,
             ],
+            'created_at'     => '2026-04-09T10:00:00Z',
         ];
         $payloadJson = json_encode($payloadArray);
-        $signature = hash_hmac('sha512', $payloadJson, PayscribePaymentService::getSecretKey());
+        $signature = hash_hmac('sha256', $payloadJson, PayscribePaymentService::getSecretKey());
 
         $response = $this->call(
             'POST',
@@ -412,17 +463,21 @@ class PayscribePaymentGatewayTest extends TestCase
         ], now()->addHour());
 
         $payloadArray = [
-            'event' => 'collection.successful',
-            'data'  => [
-                'reference' => $ref,
-                'amount'    => 1500,
-                'currency'  => 'NGN',
-                'status'    => 'successful',
-                'customer'  => ['email' => $user->email],
+            'event'          => 'payment_link.paid',
+            'link_id'        => '3f9a8c21-test-id',
+            'slug'           => 'chk_slug_202',
+            'trans_id'       => 'tx-uuid-202',
+            'ref'            => $ref,
+            'amount'         => 1500,
+            'currency'       => 'NGN',
+            'payment_method' => 'bank_transfer',
+            'customer'       => [
+                'name'  => $user->name,
+                'email' => $user->email,
             ],
         ];
         $payloadJson = json_encode($payloadArray);
-        $signature = hash_hmac('sha512', $payloadJson, PayscribePaymentService::getSecretKey());
+        $signature = hash_hmac('sha256', $payloadJson, PayscribePaymentService::getSecretKey());
 
         // Call 1
         $res1 = $this->call('POST', '/webhook/payscribe', [], [], [], [
@@ -451,29 +506,31 @@ class PayscribePaymentGatewayTest extends TestCase
         // No cache intent
 
         Http::fake([
-            '*api.payscribe.ng/api/v1/collections/transactions/*' => Http::response([
-                'status'  => 'success',
-                'message' => 'Paid',
-                'data'    => [
-                    'status'   => 'successful',
-                    'amount'   => 3000,
-                    'currency' => 'NGN',
-                    'reference'=> $ref,
-                    'customer' => ['email' => $user->email],
+            '*api.payscribe.ng/api/v1/requery*' => Http::response([
+                'status'      => true,
+                'description' => 'Transaction success',
+                'message'     => [
+                    'details' => [
+                        'trans_id' => 'tx-uuid-fallback-303',
+                        'ref'      => $ref,
+                        'status'   => 'success',
+                        'amount'   => 3000,
+                        'currency' => 'NGN',
+                        'customer' => ['email' => $user->email],
+                    ],
                 ],
+                'status_code' => 200,
             ], 200),
         ]);
 
         $payloadArray = [
-            'event' => 'collection.successful',
-            'data'  => [
-                'reference' => $ref,
-                'amount'    => 3000,
-                'status'    => 'successful',
-            ],
+            'event'   => 'payment_link.paid',
+            'ref'     => $ref,
+            'amount'  => 3000,
+            'status'  => 'success',
         ];
         $payloadJson = json_encode($payloadArray);
-        $signature = hash_hmac('sha512', $payloadJson, PayscribePaymentService::getSecretKey());
+        $signature = hash_hmac('sha256', $payloadJson, PayscribePaymentService::getSecretKey());
 
         $response = $this->call('POST', '/webhook/payscribe', [], [], [], [
             'HTTP_X_PAYSCRIBE_SIGNATURE' => $signature,

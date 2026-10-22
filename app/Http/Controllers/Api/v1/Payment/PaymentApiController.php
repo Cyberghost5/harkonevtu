@@ -120,6 +120,8 @@ class PaymentApiController extends Controller
 
         if ($activeGateway === 'payscribe') {
             $session = \App\Services\PayscribePaymentService::createCheckoutSession([
+                'title'        => 'Wallet Funding - ' . $reference,
+                'description'  => 'Payment for wallet funding - ' . ($user->name ?? $user->username),
                 'reference'    => $reference,
                 'amount'       => $totalAmount,
                 'currency'     => 'NGN',

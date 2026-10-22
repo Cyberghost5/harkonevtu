@@ -423,6 +423,8 @@ class WalletFundingController extends Controller implements HasMiddleware
 
         if ($gateway === 'payscribe') {
             $session = \App\Services\PayscribePaymentService::createCheckoutSession([
+                'title'        => 'Wallet Funding - ' . $reference,
+                'description'  => 'Wallet funding payment for ' . $user->name,
                 'reference'    => $reference,
                 'amount'       => $total,
                 'name'         => $user->name,
@@ -1194,10 +1196,13 @@ class WalletFundingController extends Controller implements HasMiddleware
 
         $isValid = \App\Services\PayscribePaymentService::validateWebhookSignature($request);
 
-        $event     = strtolower((string) ($request->json('event') ?? $request->input('event') ?? ''));
+        $event     = strtolower((string) ($request->json('event') ?? $request->header('x-payscribe-event') ?? $request->input('event') ?? ''));
         $data      = $request->json('data') ?? $payload;
-        $reference = (string) ($data['reference'] ?? $request->input('reference') ?? ('PSC_' . time()));
-        $email     = $data['customer']['email'] ?? $data['email'] ?? null;
+        $reference = (string) (
+            $payload['ref'] ?? $data['ref'] ?? $data['reference'] ?? $payload['reference']
+            ?? $data['trans_id'] ?? $payload['trans_id'] ?? $request->input('reference') ?? ('PSC_' . time())
+        );
+        $email     = $payload['customer']['email'] ?? $data['customer']['email'] ?? $data['email'] ?? $payload['email'] ?? null;
         $user      = $email ? \App\Models\User::where('email', $email)->first() : null;
 
         ApiLog::record([
@@ -1218,10 +1223,18 @@ class WalletFundingController extends Controller implements HasMiddleware
             abort(401, 'Invalid signature.');
         }
 
-        // Accept successful event variations: collection.successful, collection.completed, payment.successful, successful, success
-        $statusStr = strtolower((string) ($data['status'] ?? ''));
-        $isSuccessEvent = in_array($event, ['collection.successful', 'collection.completed', 'payment.successful', 'successful', 'success'], true)
-            || in_array($statusStr, ['success', 'successful', 'paid', 'completed'], true);
+        // Accept official Payscribe events: payment_link.paid, accounts.payments.status, etc.
+        $statusStr = strtolower((string) ($payload['status'] ?? $data['status'] ?? ''));
+        $isSuccessEvent = in_array($event, [
+            'payment_link.paid',
+            'accounts.payments.status',
+            'accounts.payment.status',
+            'collection.successful',
+            'collection.completed',
+            'payment.successful',
+            'successful',
+            'success'
+        ], true) || in_array($statusStr, ['success', 'successful', 'paid', 'completed'], true);
 
         if ($isSuccessEvent) {
             if (empty($reference)) {
@@ -1236,8 +1249,8 @@ class WalletFundingController extends Controller implements HasMiddleware
             $intent = Cache::get('funding_intent_' . $reference);
 
             if ($intent) {
-                $paidAmount = (float) ($data['amount'] ?? $data['paid_amount'] ?? 0);
-                $currency   = strtoupper((string) ($data['currency'] ?? 'NGN'));
+                $paidAmount = (float) ($payload['amount'] ?? $data['amount'] ?? $data['paid_amount'] ?? 0);
+                $currency   = strtoupper((string) ($payload['currency'] ?? $data['currency'] ?? 'NGN'));
 
                 if ($paidAmount >= (float) $intent['total'] && ($currency === 'NGN' || empty($currency))) {
                     try {
