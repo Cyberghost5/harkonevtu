@@ -80,7 +80,7 @@ class PayscribePaymentGatewayTest extends TestCase
 
         $this->assertTrue($result['success']);
         $this->assertEquals('chk_slug_9999', $result['token']);
-        $this->assertEquals('https://links.payscribe.co/inv/chk_slug_9999', $result['checkout_url']);
+        $this->assertEquals('https://links.payscribe.co/pay/chk_slug_9999', $result['checkout_url']);
     }
 
     public function test_payscribe_service_verifies_transaction(): void
@@ -227,7 +227,7 @@ class PayscribePaymentGatewayTest extends TestCase
         $response->assertJson([
             'gateway'      => 'payscribe',
             'amount'       => 1000,
-            'checkout_url' => 'https://links.payscribe.co/inv/chk_web_token_777',
+            'checkout_url' => 'https://links.payscribe.co/pay/chk_web_token_777',
             'token'        => 'chk_web_token_777',
         ]);
 

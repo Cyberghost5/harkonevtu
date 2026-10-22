@@ -119,8 +119,19 @@ class PayscribePaymentService
             }
 
             $details = $resData['message']['details'] ?? $resData['data']['details'] ?? $resData['data'] ?? $resData['details'] ?? $resData;
-            $checkoutUrl = $details['full_url'] ?? $details['url'] ?? $details['link'] ?? $details['checkout_url'] ?? null;
-            $token = $details['slug'] ?? $details['id'] ?? $details['token'] ?? null;
+            $slug = $details['slug'] ?? null;
+            $rawUrl = $details['full_url'] ?? $details['url'] ?? $details['link'] ?? $details['checkout_url'] ?? null;
+
+            // Direct customer to the payment checkout page (/pay/) instead of invoice view (/inv/)
+            if (!empty($slug)) {
+                $checkoutUrl = 'https://links.payscribe.co/pay/' . $slug;
+            } elseif (!empty($rawUrl)) {
+                $checkoutUrl = str_replace('/inv/', '/pay/', $rawUrl);
+            } else {
+                $checkoutUrl = null;
+            }
+
+            $token = $slug ?? $details['id'] ?? $details['token'] ?? null;
 
             return [
                 'success'      => true,
