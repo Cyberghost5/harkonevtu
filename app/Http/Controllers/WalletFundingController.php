@@ -423,7 +423,7 @@ class WalletFundingController extends Controller implements HasMiddleware
 
         if ($gateway === 'payscribe') {
             $session = \App\Services\PayscribePaymentService::createCheckoutSession([
-                'title'        => 'Wallet Funding - ' . $reference,
+                'title'        => $reference,
                 'description'  => 'Wallet funding payment for ' . $user->name,
                 'reference'    => $reference,
                 'amount'       => $total,
