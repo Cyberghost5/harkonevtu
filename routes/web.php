@@ -87,6 +87,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/verify-phone/send',    [VerificationController::class, 'sendPhoneOtp'])->name('verification.phone.send');
     Route::post('/verify-phone/confirm', [VerificationController::class, 'verifyPhone'])->name('verification.phone.confirm');
 
+    // Profile Completion (for Google signups or users missing phone / PIN)
+    Route::get('/complete-profile',  [\App\Http\Controllers\Auth\ProfileCompletionController::class, 'show'])->name('profile.complete');
+    Route::post('/complete-profile', [\App\Http\Controllers\Auth\ProfileCompletionController::class, 'store'])->name('profile.complete.store');
+
     // PIN setup (middleware ensures not-yet-set users are here)
     Route::get('/setup-pin',  [PinController::class, 'showSetup'])->name('pin.setup');
     Route::post('/setup-pin', [PinController::class, 'storePin'])->name('pin.store');

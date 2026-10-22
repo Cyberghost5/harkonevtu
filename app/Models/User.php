@@ -17,6 +17,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'username', 'email', 'phone', 'password', 'google_id', 'user_type', 'is_admin', 'is_active', 'referral_code', 'referred_by', 'transaction_pin', 'low_balance_notification', 'kyc_status', 'avatar', 'bank_name', 'bank_account_number', 'bank_account_name', 'fcm_device_token', 'device_type'])]
@@ -29,6 +30,18 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $appends = [
         'has_pin',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (empty($user->referral_code)) {
+                do {
+                    $refCode = strtoupper(Str::random(8));
+                } while (static::where('referral_code', $refCode)->exists());
+                $user->referral_code = $refCode;
+            }
+        });
+    }
 
     // ─── Relationships ────────────────────────────────────────────────────────
 

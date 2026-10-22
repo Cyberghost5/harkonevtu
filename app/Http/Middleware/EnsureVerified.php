@@ -31,6 +31,18 @@ class EnsureVerified
 
         // If phone/OTP verification is enabled, enforce it
         if (AppSetting::get('otp_verification', '0') === '1') {
+            if ($user && empty($user->phone)) {
+                if ($request->expectsJson() || $request->is('api/*')) {
+                    return response()->json([
+                        'status'                      => false,
+                        'message'                     => 'Profile completion required: phone number is missing.',
+                        'requires_profile_completion' => true,
+                    ], 403);
+                }
+                return redirect()->route('profile.complete')
+                    ->with('info', 'Please complete your profile by entering your phone number.');
+            }
+
             if ($user && !$user->hasVerifiedPhone()) {
                 if ($request->expectsJson() || $request->is('api/*')) {
                     return response()->json([

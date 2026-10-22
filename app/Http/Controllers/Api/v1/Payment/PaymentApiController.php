@@ -288,13 +288,16 @@ class PaymentApiController extends Controller
     public function dvaAccounts(Request $request): JsonResponse
     {
         $user     = auth()->user();
-        $accounts = VirtualAccount::where('user_id', $user->id)->get()->map(fn (VirtualAccount $acc) => [
-            'id'             => $acc->id,
-            'bank_name'      => $acc->bank_name,
-            'account_number' => $acc->account_number,
-            'account_name'   => $acc->account_name,
-            'provider'       => $acc->provider ?? 'monnify',
-        ]);
+        $accounts = VirtualAccount::where('user_id', $user->id)
+            ->forEnabledGateways()
+            ->get()
+            ->map(fn (VirtualAccount $acc) => [
+                'id'             => $acc->id,
+                'bank_name'      => $acc->bank_name,
+                'account_number' => $acc->account_number,
+                'account_name'   => $acc->account_name,
+                'provider'       => $acc->provider ?? 'monnify',
+            ]);
 
         return response()->json([
             'status'  => true,

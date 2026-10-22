@@ -27,7 +27,7 @@
                 <li>Generate your unique virtual bank accounts using your BVN.</li>
                 <li>Transfer any amount from any bank to the account number shown.</li>
                 <li>Your wallet is credited automatically - usually within seconds.</li>
-                <li>Your BVN is only sent securely to our payment partners (Paystack &amp; Flutterwave) and is <strong>never</strong> stored on our servers.</li>
+                <li>Your BVN is only sent securely to our licensed payment partners and is <strong>never</strong> stored on our servers.</li>
             </ul>
         </div>
     </div>
@@ -104,20 +104,9 @@
 
         {{-- Option to generate more (if any configured gateway accounts are missing) --}}
         @php
-            $hasPaystack = $accounts->where('provider', 'paystack')->isNotEmpty();
-            $hasFlutterwave = $accounts->where('provider', 'flutterwave')->isNotEmpty();
-            $hasMonnify = $accounts->where('provider', 'monnify')->isNotEmpty();
-            $hasPayscribe = $accounts->where('provider', 'payscribe')->isNotEmpty();
-            
-            $paystackEnabled = !empty(\App\Models\AppSetting::get('paystack_secret_key')) && (\App\Models\AppSetting::get('paystack_status', '1') !== '0');
-            $flutterwaveEnabled = !empty(\App\Models\AppSetting::get('flutterwave_secret_key')) && (\App\Models\AppSetting::get('flutterwave_status', '1') !== '0');
-            $monnifyEnabled = !empty(\App\Models\AppSetting::get('monnify_api_key')) && (\App\Models\AppSetting::get('monnify_status', '1') !== '0');
-            $payscribeEnabled = \App\Services\PayscribePaymentService::isConfigured() && \App\Services\PayscribePaymentService::isEnabled();
-            
-            $canGenerateMore = ($paystackEnabled && !$hasPaystack) ||
-                               ($flutterwaveEnabled && !$hasFlutterwave) ||
-                               ($monnifyEnabled && !$hasMonnify) ||
-                               ($payscribeEnabled && !$hasPayscribe);
+            $activeProviders = \App\Models\VirtualAccount::getActiveProviders();
+            $existingProviders = $accounts->pluck('provider')->unique()->toArray();
+            $canGenerateMore = !empty(array_diff($activeProviders, $existingProviders));
         @endphp
 
         @if($canGenerateMore)
@@ -134,6 +123,9 @@
 
     @else
 
+        @php
+            $activeProviders = \App\Models\VirtualAccount::getActiveProviders();
+        @endphp
         {{-- ── Empty State ──────────────────────────────────────────── --}}
         <div class="rounded-2xl bg-white dark:bg-vtu-darkCard border border-slate-200 dark:border-slate-700 p-10 text-center shadow-sm">
             <div class="mx-auto mb-5 h-16 w-16 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
@@ -142,21 +134,34 @@
                           d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                 </svg>
             </div>
-            <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-2">No virtual accounts yet</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto">
-                Generate your dedicated virtual bank accounts. Funds transferred to these accounts will automatically credit your wallet.
-            </p>
+            @if(empty($activeProviders))
+                <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-2">Automated Funding Temporarily Unavailable</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto">
+                    Virtual bank account funding is currently disabled or undergoing maintenance. Please check back later or use an alternative funding method.
+                </p>
+                <div class="flex justify-center">
+                    <a href="{{ route('wallet.fund.gateway') }}"
+                       class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors">
+                        Fund with Card / ATM
+                    </a>
+                </div>
+            @else
+                <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-2">No virtual accounts yet</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto">
+                    Generate your dedicated virtual bank accounts. Funds transferred to these accounts will automatically credit your wallet.
+                </p>
 
-            <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                <button onclick="openBvnModal()"
-                        class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-vtu-primary hover:bg-indigo-600 text-white transition-colors shadow-md shadow-indigo-500/20">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                    </svg>
-                    Generate Virtual Accounts
-                </button>
-            </div>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button onclick="openBvnModal()"
+                            class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-vtu-primary hover:bg-indigo-600 text-white transition-colors shadow-md shadow-indigo-500/20">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        Generate Virtual Accounts
+                    </button>
+                </div>
+            @endif
         </div>
 
     @endif
@@ -194,7 +199,7 @@
             Enter Your BVN
         </h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">
-            Your BVN is required to generate static Wema, Titan, and Moniepoint/Sterling bank accounts as directed by the Central Bank of Nigeria (CBN).
+            Your BVN is required to generate dedicated bank accounts as directed by the Central Bank of Nigeria (CBN).
             <strong class="text-slate-700 dark:text-slate-300">{{ $siteName }} will never store your BVN</strong> - it is sent directly and securely to our payment partners.
         </p>
 

@@ -134,7 +134,7 @@ class PayscribeDataIntegrationTest extends TestCase
         Http::assertSent(function (Request $request) {
             return $request->url() === 'https://api.payscribe.ng/api/v1/data/vend'
                 && $request['network'] === 'mtn'
-                && $request['plan_code'] === 'PS_MTN_1GB'
+                && ($request['plan'] ?? null) === 'PS_MTN_1GB'
                 && $request['recipient'] === '08031112233';
         });
     }
@@ -183,7 +183,7 @@ class PayscribeDataIntegrationTest extends TestCase
         Http::assertSent(function (Request $request) {
             return $request->url() === 'https://api.payscribe.ng/api/v1/data/vend'
                 && $request['network'] === '9mobile'
-                && $request['plan_code'] === 'PS_9MOB_1_5GB';
+                && ($request['plan'] ?? null) === 'PS_9MOB_1_5GB';
         });
     }
 

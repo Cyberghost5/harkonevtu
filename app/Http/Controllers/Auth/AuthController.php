@@ -29,6 +29,12 @@ class AuthController extends Controller
 
     public function showLogin()
     {
+        if (request()->has('ref')) {
+            session(['ref_code' => strtoupper(trim(request('ref')))]);
+        } elseif (request()->has('referral_code')) {
+            session(['ref_code' => strtoupper(trim(request('referral_code')))]);
+        }
+
         return view('auth.login');
     }
 
@@ -365,10 +371,16 @@ class AuthController extends Controller
 
     // ─── Google OAuth ─────────────────────────────────────────────────────────
 
-    public function redirectToGoogle()
+    public function redirectToGoogle(Request $request)
     {
         if (AppSetting::get('google_auth_status', '1') === '0') {
             return redirect()->route('login')->with('error', 'Google authentication is currently disabled.');
+        }
+
+        if ($request->filled('ref')) {
+            session(['ref_code' => strtoupper(trim($request->ref))]);
+        } elseif ($request->filled('referral_code')) {
+            session(['ref_code' => strtoupper(trim($request->referral_code))]);
         }
 
         $clientId = AppSetting::get('google_client_id') ?: config('services.google.client_id');
@@ -412,8 +424,23 @@ class AuthController extends Controller
             ->first();
 
         if ($user) {
+            $dirty = false;
             if (!$user->google_id) {
                 $user->google_id = $socialiteUser->getId();
+                $dirty = true;
+            }
+            if (empty($user->referral_code)) {
+                do {
+                    $refCode = strtoupper(Str::random(8));
+                } while (User::where('referral_code', $refCode)->exists());
+                $user->referral_code = $refCode;
+                $dirty = true;
+            }
+            if (empty($user->avatar) && $socialiteUser->getAvatar()) {
+                $user->avatar = $socialiteUser->getAvatar();
+                $dirty = true;
+            }
+            if ($dirty) {
                 $user->save();
             }
         } else {
@@ -423,18 +450,39 @@ class AuthController extends Controller
                 $username = $baseUsername . rand(100, 999);
             }
 
+            do {
+                $referralCode = strtoupper(Str::random(8));
+            } while (User::where('referral_code', $referralCode)->exists());
+
+            $referrerCode = session('ref_code');
+            if ($referrerCode) {
+                $validReferrer = User::where('referral_code', $referrerCode)->first();
+                if (!$validReferrer) {
+                    $referrerCode = null;
+                }
+            }
+
             $user = User::create([
                 'name'              => $socialiteUser->getName() ?? $socialiteUser->getNickname() ?? 'Google User',
                 'username'          => $username,
                 'email'             => $socialiteUser->getEmail(),
                 'google_id'         => $socialiteUser->getId(),
+                'avatar'            => $socialiteUser->getAvatar(),
                 'email_verified_at' => now(),
                 'is_active'         => true,
-                'user_type'         => 'user',
+                'user_type'         => 'normal',
+                'referral_code'     => $referralCode,
+                'referred_by'       => $referrerCode,
             ]);
 
-            $user->wallet()->create(['balance' => 0]);
+            $user->wallet()->create([
+                'balance'      => 0.00,
+                'total_funded' => 0.00,
+                'total_spent'  => 0.00,
+            ]);
+
             event(new Registered($user));
+            session()->forget('ref_code');
         }
 
         Auth::login($user, true);
@@ -444,6 +492,11 @@ class AuthController extends Controller
             'channel'           => 'web_google',
             'status'            => 'success',
         ]);
+
+        if (empty($user->phone)) {
+            return redirect()->route('profile.complete')
+                ->with('info', 'Please complete your profile by entering your phone number and setting up your transaction PIN.');
+        }
 
         if (empty($user->transaction_pin)) {
             return redirect()->route('pin.setup')->with('warning', 'Welcome! Please set up your 4-digit transaction PIN to secure your account.');

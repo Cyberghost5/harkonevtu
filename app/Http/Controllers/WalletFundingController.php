@@ -114,7 +114,9 @@ class WalletFundingController extends Controller implements HasMiddleware
     public function autoBankTransfer(): View
     {
         $user     = auth()->user();
-        $accounts = VirtualAccount::where('user_id', $user->id)->get();
+        $accounts = VirtualAccount::where('user_id', $user->id)
+            ->forEnabledGateways()
+            ->get();
 
         return view('wallet.fund-auto', compact('user', 'accounts'));
     }
@@ -132,10 +134,18 @@ class WalletFundingController extends Controller implements HasMiddleware
         $results = [];
         $errors  = [];
 
+        $activeProviders = VirtualAccount::getActiveProviders();
+
+        if (empty($activeProviders)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Virtual account generation is currently disabled or no payment gateway is available.',
+            ], 422);
+        }
+
         // ── Paystack DVA (Wema Bank + Titan) ──────────────────────────────────
-        $paystackStatus = AppSetting::get('paystack_status', '1');
-        $paystackSecret = config('services.paystack.secret_key') ?: AppSetting::get('paystack_secret_key');
-        if ($paystackStatus === '1' && $paystackSecret) {
+        if (in_array('paystack', $activeProviders)) {
+            $paystackSecret = config('services.paystack.secret_key') ?: AppSetting::get('paystack_secret_key');
             try {
                 $customerCode = $this->getOrCreatePaystackCustomer($user, $bvn);
 
@@ -198,9 +208,8 @@ class WalletFundingController extends Controller implements HasMiddleware
         }
 
         // ── Flutterwave DVA ───────────────────────────────────────────────────
-        $flwStatus = AppSetting::get('flutterwave_status', '1');
-        $flwSecret = config('services.flutterwave.secret_key') ?: AppSetting::get('flutterwave_secret_key');
-        if ($flwStatus === '1' && $flwSecret) {
+        if (in_array('flutterwave', $activeProviders)) {
+            $flwSecret = config('services.flutterwave.secret_key') ?: AppSetting::get('flutterwave_secret_key');
             try {
                 $existing = VirtualAccount::where('user_id', $user->id)
                     ->where('provider', 'flutterwave')
@@ -260,9 +269,7 @@ class WalletFundingController extends Controller implements HasMiddleware
         }
 
         // ── Monnify DVA ──────────────────────────────────────────────────────
-        $monnifyStatus = AppSetting::get('monnify_status', '1');
-        $monnifyApiKey = AppSetting::get('monnify_api_key');
-        if ($monnifyStatus === '1' && $monnifyApiKey) {
+        if (in_array('monnify', $activeProviders)) {
             try {
                 // Check if we already have monnify accounts
                 $existing = VirtualAccount::where('user_id', $user->id)
@@ -306,8 +313,7 @@ class WalletFundingController extends Controller implements HasMiddleware
         }
 
         // ── PayScribe DVA (9PSB & PalmPay) ───────────────────────────────────
-        $payscribeStatus = AppSetting::get('payscribe_status', '1');
-        if ($payscribeStatus === '1' && \App\Services\PayscribePaymentService::isConfigured()) {
+        if (in_array('payscribe', $activeProviders)) {
             try {
                 $existing = VirtualAccount::where('user_id', $user->id)
                     ->where('provider', 'payscribe')
@@ -347,7 +353,7 @@ class WalletFundingController extends Controller implements HasMiddleware
         if (empty($results)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Could not generate virtual accounts. ' . implode(' | ', $errors),
+                'message' => 'Could not generate virtual accounts. ' . (!empty($errors) ? implode(' | ', $errors) : 'No payment gateways are currently active.'),
             ], 422);
         }
 
@@ -373,6 +379,9 @@ class WalletFundingController extends Controller implements HasMiddleware
             if ($code) return $code;
         }
 
+        $nameParts = explode(' ', $user->name, 2);
+        $secretKey = config('services.paystack.secret_key') ?: AppSetting::get('paystack_secret_key');
+
         // Create customer on Paystack
         $start = hrtime(true);
         $payload = [
@@ -381,7 +390,7 @@ class WalletFundingController extends Controller implements HasMiddleware
             'last_name'  => $nameParts[1] ?? '',
             'phone'      => $user->phone ?? '',
         ];
-        $resp = Http::withToken(config('services.paystack.secret_key'))
+        $resp = Http::withToken($secretKey)
             ->timeout(20)
             ->post('https://api.paystack.co/customer', $payload);
         $duration = (int) ((hrtime(true) - $start) / 1e6);

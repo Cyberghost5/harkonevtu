@@ -79,7 +79,7 @@ class PayscribeDataSeeder extends Seeder
 
                         $dataType = $this->resolveDataType($categoryName, $alias, $rawName);
                         $validity = $this->extractValidity($rawName, $alias);
-                        $planName = $this->formatPlanName($rawName);
+                        $planName = $this->formatPlanName($rawName, $alias);
 
                         $amountAgent = $baseAmount;
                         $amountUser  = $baseAmount + 20.00;
@@ -87,7 +87,17 @@ class PayscribeDataSeeder extends Seeder
                         // 1. Try to find existing plan with this payscribe_id
                         $plan = DataPlan::where('payscribe_id', $planCode)->first();
 
-                        // 2. If not found, try to match existing plan by (network_key, data_type, plan_name) where payscribe_id is null
+                        // 2. If not found, try to match existing plan by (network_key, data_type, plan_name, validity) where payscribe_id is null
+                        if (!$plan) {
+                            $plan = DataPlan::where('network_key', $networkKey)
+                                ->where('data_type', $dataType)
+                                ->where('plan_name', $planName)
+                                ->where('validity', $validity)
+                                ->whereNull('payscribe_id')
+                                ->first();
+                        }
+
+                        // 3. Fallback match by (network_key, data_type, plan_name)
                         if (!$plan) {
                             $plan = DataPlan::where('network_key', $networkKey)
                                 ->where('data_type', $dataType)
@@ -99,6 +109,7 @@ class PayscribeDataSeeder extends Seeder
                         if ($plan) {
                             $plan->update([
                                 'payscribe_id' => $planCode,
+                                'plan_name'    => $planName,
                                 'validity'     => $validity,
                                 'amount'       => $plan->amount ?: $amountUser,
                                 'amount_agent' => $plan->amount_agent ?: $amountAgent,
@@ -173,16 +184,27 @@ class PayscribeDataSeeder extends Seeder
         if (preg_match('/\b(5\s*days?)\b/i', $combined)) return '5 Days';
         if (preg_match('/\b(3\s*days?)\b/i', $combined)) return '3 Days';
         if (preg_match('/\b(2\s*days?)\b/i', $combined)) return '2 Days';
-        if (preg_match('/\b(1\s*day|daily|24\s*hrs?|24\s*hours?)\b/i', $combined)) return '1 Day';
+        if (preg_match('/\b(1\s*days?|daily|24\s*hrs?|24\s*hours?)\b/i', $combined)) return '1 Day';
 
         return '30 Days';
     }
 
     /**
-     * Format clean plan name.
+     * Format clean plan name extracting just the data plan value (e.g. 110MB, 1.2GB, 1TB).
      */
-    private function formatPlanName(string $name): string
+    private function formatPlanName(string $name, string $alias = ''): string
     {
+        // 1. Match size like 110MB, 1.2GB, 500MB, 1TB, 6.75GB, 150mb, 8gb
+        if (preg_match('/(\d+(?:\.\d+)?)\s*(MB|GB|TB)\b/i', $name, $matches)) {
+            return strtoupper($matches[1] . $matches[2]);
+        }
+
+        // 2. Fallback: check alias if not found in name (e.g. mtn_110mb1_day -> 110MB)
+        if (preg_match('/(\d+(?:_\d+)?)\s*(mb|gb|tb)/i', $alias, $matches)) {
+            $val = str_replace('_', '.', $matches[1]);
+            return strtoupper($val . $matches[2]);
+        }
+
         $clean = trim($name);
         $clean = preg_replace('/\s+/', ' ', $clean);
         return mb_substr($clean, 0, 100);

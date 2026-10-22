@@ -46,7 +46,9 @@ class UserController extends Controller
     public function profile(Request $request): JsonResponse
     {
         $user = $request->user()->load('wallet');
-        $virtualAccounts = VirtualAccount::where('user_id', $user->id)->get();
+        $virtualAccounts = VirtualAccount::where('user_id', $user->id)
+            ->forEnabledGateways()
+            ->get();
 
         return $this->jsonResponse(true, 'User profile retrieved successfully.', [
             'user'             => $user,
@@ -296,10 +298,15 @@ class UserController extends Controller
         $results = [];
         $errors  = [];
 
+        $activeProviders = VirtualAccount::getActiveProviders();
+
+        if (empty($activeProviders)) {
+            return $this->jsonResponse(false, 'Virtual account generation is currently disabled or no payment gateway is available.', null, 400);
+        }
+
         // ── 1. Paystack DVA (Wema Bank + Titan Bank) ──────────────────────────
-        $paystackStatus = AppSetting::get('paystack_status', '1');
-        $paystackSecret = config('services.paystack.secret_key') ?: AppSetting::get('paystack_secret_key');
-        if ($paystackStatus === '1' && $paystackSecret) {
+        if (in_array('paystack', $activeProviders)) {
+            $paystackSecret = config('services.paystack.secret_key') ?: AppSetting::get('paystack_secret_key');
             try {
                 $customerCode = $this->getOrCreatePaystackCustomer($user, $bvn, $paystackSecret);
 
@@ -362,9 +369,8 @@ class UserController extends Controller
         }
 
         // ── 2. Flutterwave DVA ───────────────────────────────────────────────
-        $flwStatus = AppSetting::get('flutterwave_status', '1');
-        $flwSecret = config('services.flutterwave.secret_key') ?: AppSetting::get('flutterwave_secret_key');
-        if ($flwStatus === '1' && $flwSecret) {
+        if (in_array('flutterwave', $activeProviders)) {
+            $flwSecret = config('services.flutterwave.secret_key') ?: AppSetting::get('flutterwave_secret_key');
             try {
                 $existing = VirtualAccount::where('user_id', $user->id)
                     ->where('provider', 'flutterwave')
@@ -424,9 +430,7 @@ class UserController extends Controller
         }
 
         // ── 3. Monnify DVA ───────────────────────────────────────────────────
-        $monnifyStatus = AppSetting::get('monnify_status', '1');
-        $monnifyApiKey = AppSetting::get('monnify_api_key');
-        if ($monnifyStatus === '1' && $monnifyApiKey) {
+        if (in_array('monnify', $activeProviders)) {
             try {
                 $existing = VirtualAccount::where('user_id', $user->id)
                     ->where('provider', 'monnify')
@@ -469,8 +473,7 @@ class UserController extends Controller
         }
 
         // ── 4. PayScribe DVA (9PSB & PalmPay) ─────────────────────────────────
-        $payscribeStatus = AppSetting::get('payscribe_status', '1');
-        if ($payscribeStatus === '1' && \App\Services\PayscribePaymentService::isConfigured()) {
+        if (in_array('payscribe', $activeProviders)) {
             try {
                 $existing = VirtualAccount::where('user_id', $user->id)
                     ->where('provider', 'payscribe')
@@ -508,7 +511,7 @@ class UserController extends Controller
         }
 
         if (empty($results)) {
-            return $this->jsonResponse(false, 'Could not generate virtual accounts. ' . implode(' | ', $errors), null, 400);
+            return $this->jsonResponse(false, 'Could not generate virtual accounts. ' . (!empty($errors) ? implode(' | ', $errors) : 'No payment gateways are currently active.'), null, 400);
         }
 
         if ($user->kyc_status !== 'verified') {

@@ -14,6 +14,10 @@ class PinController extends Controller
     {
         $user = auth()->user();
 
+        if (empty($user->phone)) {
+            return redirect()->route('profile.complete');
+        }
+
         if ($user->hasPinSet()) {
             return redirect()->route('dashboard');
         }
@@ -32,6 +36,10 @@ class PinController extends Controller
         ]);
 
         $user = auth()->user();
+
+        if (empty($user->phone)) {
+            return redirect()->route('profile.complete');
+        }
 
         if ($user->hasPinSet()) {
             return redirect()->route('dashboard');

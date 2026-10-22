@@ -12,11 +12,32 @@ class EnsurePinIsSet
     {
         $user = $request->user();
 
-        if (!$user->hasPinSet()) {
-            if ($request->expectsJson()) {
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        if (empty($user->phone)) {
+            if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
-                    'message'       => 'Transaction PIN not set.',
+                    'status'                      => false,
+                    'message'                     => 'Profile completion required: phone number is missing.',
+                    'requires_profile_completion' => true,
+                    'is_phone_set'                => false,
+                    'is_pin_set'                  => $user->hasPinSet(),
+                ], 403);
+            }
+            return redirect()->route('profile.complete')
+                ->with('info', 'Please complete your profile by providing your phone number and transaction PIN.');
+        }
+
+        if (!$user->hasPinSet()) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'status'             => false,
+                    'message'            => 'Transaction PIN not set.',
                     'requires_pin_setup' => true,
+                    'is_phone_set'       => true,
+                    'is_pin_set'         => false,
                 ], 403);
             }
             return redirect()->route('pin.setup')

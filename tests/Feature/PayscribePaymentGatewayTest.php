@@ -953,4 +953,176 @@ class PayscribePaymentGatewayTest extends TestCase
         // Balance remains 3200, not 6200
         $this->assertEquals(3200, (float) $user->wallet()->value('balance'));
     }
+
+    public function test_disabled_gateway_accounts_do_not_appear_in_web_fund_auto(): void
+    {
+        $user = $this->createVerifiedUser(['name' => 'Dwight Schrute', 'email' => 'dwight@dunder.com']);
+        $this->actingAs($user);
+
+        AppSetting::set('paystack_secret_key', 'pk_mock_test');
+        AppSetting::set('paystack_status', '1');
+        AppSetting::set('payscribe_status', '1');
+
+        \App\Models\VirtualAccount::create([
+            'user_id'        => $user->id,
+            'provider'       => 'paystack',
+            'account_number' => '1111222233',
+            'bank_name'      => 'Wema Bank',
+            'bank_code'      => 'wema-bank',
+            'account_name'   => 'VTU/DWIGHT SCHRUTE',
+        ]);
+
+        \App\Models\VirtualAccount::create([
+            'user_id'        => $user->id,
+            'provider'       => 'payscribe',
+            'account_number' => '4444555566',
+            'bank_name'      => '9PSB',
+            'bank_code'      => '120001',
+            'account_name'   => 'PAYSCRIBE/DWIGHT SCHRUTE',
+        ]);
+
+        // When both are enabled, both appear
+        $res = $this->get(route('wallet.fund.auto'));
+        $res->assertStatus(200);
+        $res->assertSee('1111222233');
+        $res->assertSee('4444555566');
+
+        // Disable PayScribe
+        AppSetting::set('payscribe_status', '0');
+        $res2 = $this->get(route('wallet.fund.auto'));
+        $res2->assertStatus(200);
+        $res2->assertSee('1111222233');
+        $res2->assertDontSee('4444555566');
+
+        // Disable all gateways
+        AppSetting::set('paystack_status', '0');
+        AppSetting::set('flutterwave_status', '0');
+        AppSetting::set('monnify_status', '0');
+        $res3 = $this->get(route('wallet.fund.auto'));
+        $res3->assertStatus(200);
+        $res3->assertDontSee('1111222233');
+        $res3->assertDontSee('4444555566');
+        $res3->assertSee('Automated Funding Temporarily Unavailable');
+
+        // Re-enable PayScribe only
+        AppSetting::set('payscribe_status', '1');
+        $res4 = $this->get(route('wallet.fund.auto'));
+        $res4->assertStatus(200);
+        $res4->assertDontSee('1111222233');
+        $res4->assertSee('4444555566');
+    }
+
+    public function test_disabled_gateway_accounts_do_not_appear_in_api_profile_and_dva_endpoints(): void
+    {
+        $user = $this->createVerifiedUser(['name' => 'Jim Halpert', 'email' => 'jim@dunder.com']);
+        $token = $user->createToken('test-token')->plainTextToken;
+
+        AppSetting::set('payscribe_status', '1');
+
+        \App\Models\VirtualAccount::create([
+            'user_id'        => $user->id,
+            'provider'       => 'payscribe',
+            'account_number' => '9988776655',
+            'bank_name'      => 'PalmPay',
+            'bank_code'      => '100033',
+            'account_name'   => 'PAYSCRIBE/JIM HALPERT',
+        ]);
+
+        // Enabled: accounts returned in profile & dva endpoints
+        $profRes = $this->withHeader('Authorization', 'Bearer ' . $token)->getJson('/api/v1/user/profile');
+        $profRes->assertStatus(200);
+        $this->assertCount(1, $profRes->json('data.virtual_accounts'));
+        $this->assertEquals('9988776655', $profRes->json('data.virtual_accounts.0.account_number'));
+
+        $dvaRes = $this->withHeader('Authorization', 'Bearer ' . $token)->getJson('/api/v1/payments/dva-accounts');
+        $dvaRes->assertStatus(200);
+        $this->assertEquals(1, $dvaRes->json('data.total_accounts'));
+        $this->assertEquals('9988776655', $dvaRes->json('data.accounts.0.account_number'));
+
+        // Disable PayScribe gateway
+        AppSetting::set('payscribe_status', '0');
+
+        $profRes2 = $this->withHeader('Authorization', 'Bearer ' . $token)->getJson('/api/v1/user/profile');
+        $profRes2->assertStatus(200);
+        $this->assertCount(0, $profRes2->json('data.virtual_accounts'));
+
+        $dvaRes2 = $this->withHeader('Authorization', 'Bearer ' . $token)->getJson('/api/v1/payments/dva-accounts');
+        $dvaRes2->assertStatus(200);
+        $this->assertEquals(0, $dvaRes2->json('data.total_accounts'));
+        $this->assertEmpty($dvaRes2->json('data.accounts'));
+    }
+
+    public function test_disabled_gateway_is_not_generated_when_status_is_disabled(): void
+    {
+        $user = $this->createVerifiedUser(['name' => 'Pam Beesly', 'email' => 'pam@dunder.com']);
+        $token = $user->createToken('test-token')->plainTextToken;
+
+        // PayScribe, Flutterwave, Monnify disabled, Paystack configured & enabled
+        AppSetting::set('payscribe_status', '0');
+        AppSetting::set('flutterwave_status', '0');
+        AppSetting::set('monnify_status', '0');
+        AppSetting::set('paystack_secret_key', 'sk_test_mock');
+        AppSetting::set('paystack_status', '1');
+
+        Http::fake([
+            'https://api.paystack.co/customer' => Http::response([
+                'status' => true,
+                'data'   => ['customer_code' => 'CUST_pam_123'],
+            ], 200),
+            'https://api.paystack.co/dedicated_account' => Http::response([
+                'status' => true,
+                'data'   => [
+                    'account_number' => '1234567890',
+                    'account_name'   => 'VTU/PAM BEESLY',
+                    'bank'           => ['name' => 'Wema Bank'],
+                ],
+            ], 200),
+            // PayScribe should NOT be called at all
+            'https://api.payscribe.ng/*' => Http::response([
+                'status' => false,
+                'message' => 'Should not be called',
+            ], 500),
+        ]);
+
+        $res = $this->actingAs($user)->postJson(route('wallet.fund.auto.generate'), [
+            'bvn' => '22222222222',
+        ]);
+
+        $res->assertStatus(200);
+        $res->assertJsonPath('success', true);
+        // Only Paystack generated
+        $this->assertDatabaseHas('virtual_accounts', [
+            'user_id'  => $user->id,
+            'provider' => 'paystack',
+        ]);
+        $this->assertDatabaseMissing('virtual_accounts', [
+            'user_id'  => $user->id,
+            'provider' => 'payscribe',
+        ]);
+    }
+
+    public function test_all_gateways_disabled_rejects_virtual_account_generation(): void
+    {
+        $user = $this->createVerifiedUser(['name' => 'Stanley Hudson', 'email' => 'stanley@dunder.com']);
+        $token = $user->createToken('test-token')->plainTextToken;
+
+        AppSetting::set('payscribe_status', '0');
+        AppSetting::set('paystack_status', '0');
+        AppSetting::set('flutterwave_status', '0');
+        AppSetting::set('monnify_status', '0');
+
+        // Web generation
+        $resWeb = $this->actingAs($user)->postJson(route('wallet.fund.auto.generate'), [
+            'bvn' => '22222222222',
+        ]);
+        $resWeb->assertStatus(422);
+        $resWeb->assertJsonPath('success', false);
+
+        // API generation
+        $resApi = $this->withHeader('Authorization', 'Bearer ' . $token)->postJson('/api/v1/user/dva/generate', [
+            'bvn' => '22222222222',
+        ]);
+        $resApi->assertStatus(400);
+        $resApi->assertJsonPath('status', false);
+    }
 }

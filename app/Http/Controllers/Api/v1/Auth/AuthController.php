@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\UserLoginLog;
 use App\Models\Wallet;
 use App\Services\TermiiService;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -117,11 +118,11 @@ class AuthController extends Controller
             'email'         => $request->email,
             'phone'         => $request->phone,
             'password'      => Hash::make($request->password),
-            'user_type'     => 'user',
+            'user_type'     => 'normal',
             'is_admin'      => false,
             'is_active'     => true,
             'referral_code' => $refCode,
-            'referred_by'   => $referrer ? $referrer->id : null,
+            'referred_by'   => $referrer ? $referrer->referral_code : null,
         ]);
 
         // Create Wallet
@@ -637,8 +638,19 @@ class AuthController extends Controller
             ->first();
 
         if ($user) {
+            $dirty = false;
             if (!$user->google_id) {
                 $user->google_id = $googleId;
+                $dirty = true;
+            }
+            if (empty($user->referral_code)) {
+                do {
+                    $refCode = strtoupper(Str::random(8));
+                } while (User::where('referral_code', $refCode)->exists());
+                $user->referral_code = $refCode;
+                $dirty = true;
+            }
+            if ($dirty) {
                 $user->save();
             }
         } else {
@@ -648,6 +660,18 @@ class AuthController extends Controller
                 $username = $baseUsername . rand(100, 999);
             }
 
+            do {
+                $refCode = strtoupper(Str::random(8));
+            } while (User::where('referral_code', $refCode)->exists());
+
+            $referrerCode = null;
+            if ($request->filled('referral_code')) {
+                $validReferrer = User::where('referral_code', strtoupper(trim($request->referral_code)))->first();
+                if ($validReferrer) {
+                    $referrerCode = $validReferrer->referral_code;
+                }
+            }
+
             $user = User::create([
                 'name'              => $name ?: 'Google User',
                 'username'          => $username,
@@ -655,10 +679,18 @@ class AuthController extends Controller
                 'google_id'         => $googleId,
                 'email_verified_at' => now(),
                 'is_active'         => true,
-                'user_type'         => 'user',
+                'user_type'         => 'normal',
+                'referral_code'     => $refCode,
+                'referred_by'       => $referrerCode,
             ]);
 
-            $user->wallet()->create(['balance' => 0]);
+            $user->wallet()->create([
+                'balance'      => 0.00,
+                'total_funded' => 0.00,
+                'total_spent'  => 0.00,
+            ]);
+
+            event(new Registered($user));
         }
 
         if (!$user->is_active) {
@@ -668,14 +700,89 @@ class AuthController extends Controller
         $tokenName = $request->input('device_name', 'mobile_app');
         $token = $user->createToken($tokenName)->plainTextToken;
 
+        $isPhoneSet = !empty($user->phone);
         $isPinSet = !empty($user->transaction_pin);
+        $requiresProfileCompletion = !$isPhoneSet || !$isPinSet;
 
         return $this->jsonResponse(true, 'Google authentication successful.', [
-            'token'              => $token,
-            'token_type'         => 'Bearer',
-            'is_pin_set'         => $isPinSet,
-            'requires_pin_setup' => !$isPinSet,
-            'user'               => $user->load('wallet'),
+            'token'                       => $token,
+            'token_type'                  => 'Bearer',
+            'is_phone_set'                => $isPhoneSet,
+            'is_pin_set'                  => $isPinSet,
+            'requires_pin_setup'          => !$isPinSet,
+            'requires_profile_completion' => $requiresProfileCompletion,
+            'user'                        => $user->load('wallet'),
+        ]);
+    }
+
+    /**
+     * Complete Profile: Enter phone number and set 4-digit transaction PIN.
+     * POST /api/v1/auth/complete-profile
+     */
+    public function completeProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $rules = [];
+        if (empty($user->phone)) {
+            $rules['phone'] = ['required', 'string', 'regex:/^0[789]\d{9}$/', 'unique:users,phone,' . $user->id];
+        }
+        if (empty($user->transaction_pin)) {
+            $rules['pin'] = ['required', 'numeric', 'digits:4', 'confirmed'];
+        }
+        if (empty($user->referred_by)) {
+            $rules['referral_code'] = ['nullable', 'string', 'max:10', 'exists:users,referral_code'];
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
+            'phone.required'       => 'Phone number is required.',
+            'phone.regex'          => 'Please enter a valid Nigerian phone number (e.g. 08012345678).',
+            'phone.unique'         => 'This phone number is already registered to another account.',
+            'pin.required'         => 'Transaction PIN is required.',
+            'pin.digits'           => 'Transaction PIN must be exactly 4 digits.',
+            'pin.confirmed'        => 'PIN confirmation does not match.',
+            'referral_code.exists' => 'The referral code entered does not exist.',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
+        }
+
+        if (empty($user->phone) && $request->filled('phone')) {
+            $user->phone = $request->phone;
+            if (AppSetting::get('otp_verification', '0') === '0') {
+                $user->phone_verified_at = now();
+            }
+        }
+
+        if (empty($user->transaction_pin) && $request->filled('pin')) {
+            $user->transaction_pin = Hash::make($request->pin);
+        }
+
+        if (empty($user->referred_by) && $request->filled('referral_code')) {
+            $referrer = User::where('referral_code', strtoupper(trim($request->referral_code)))
+                ->where('id', '!=', $user->id)
+                ->first();
+            if ($referrer) {
+                $user->referred_by = $referrer->referral_code;
+            }
+        }
+
+        if (empty($user->referral_code)) {
+            do {
+                $refCode = strtoupper(Str::random(8));
+            } while (User::where('referral_code', $refCode)->exists());
+            $user->referral_code = $refCode;
+        }
+
+        $user->save();
+
+        return $this->jsonResponse(true, 'Profile completed successfully.', [
+            'user'                        => $user->fresh('wallet'),
+            'is_phone_set'                => !empty($user->phone),
+            'is_pin_set'                  => !empty($user->transaction_pin),
+            'requires_profile_completion' => false,
+            'requires_pin_setup'          => false,
         ]);
     }
 }

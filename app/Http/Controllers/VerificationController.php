@@ -55,6 +55,10 @@ class VerificationController extends Controller
     {
         $user = auth()->user();
 
+        if (empty($user->phone)) {
+            return redirect()->route('profile.complete');
+        }
+
         if ($user->hasVerifiedPhone()) {
             return redirect()->route('dashboard');
         }
