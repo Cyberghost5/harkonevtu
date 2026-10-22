@@ -8,7 +8,15 @@
     <h1 class="text-xl sm:text-2xl font-bold font-outfit text-slate-900 dark:text-white">Fund Wallet</h1>
     <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
         Top up your wallet via
-        {{ $activeGateway === 'flutterwave' ? 'Flutterwave' : 'Paystack' }}
+        @if($activeGateway === 'flutterwave')
+            Flutterwave
+        @elseif($activeGateway === 'monnify')
+            Monnify
+        @elseif($activeGateway === 'payscribe')
+            PayScribe
+        @else
+            Paystack
+        @endif
         - card, bank transfer, or USSD.
     </p>
 </div>
@@ -75,6 +83,10 @@
                 <div class="flex flex-col items-center gap-3 pt-2">
                     @if($activeGateway === 'flutterwave')
                     <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">Secured by <span class="font-bold text-orange-500">Flutterwave</span></p>
+                    @elseif($activeGateway === 'monnify')
+                    <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">Secured by <span class="font-bold text-blue-600">Monnify</span></p>
+                    @elseif($activeGateway === 'payscribe')
+                    <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">Secured by <span class="font-bold text-sky-500">PayScribe</span></p>
                     @else
                     <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">Secured by <span class="font-bold text-emerald-600">Paystack</span></p>
                     @endif
@@ -241,9 +253,15 @@
         }
     }
 
-    // ── Open Paystack, Flutterwave, or Monnify popup ─────────────────────────
+    // ── Open Paystack, Flutterwave, Monnify, or PayScribe ────────────────────
     function openGateway(data) {
-        if (GATEWAY === 'monnify') {
+        if (GATEWAY === 'payscribe') {
+            if (data.checkout_url) {
+                window.location.href = data.checkout_url;
+            } else {
+                verifyPayment('payscribe', data.reference, null);
+            }
+        } else if (GATEWAY === 'monnify') {
             MonnifySDK.initialize({
                 amount:             data.total,
                 currency:           'NGN',
@@ -303,7 +321,9 @@
                 ? '/wallet/fund/gateway/verify/monnify'
                 : (gateway === 'flutterwave'
                     ? '/wallet/fund/gateway/verify/flutterwave'
-                    : '/wallet/fund/gateway/verify/paystack');
+                    : (gateway === 'payscribe'
+                        ? '/wallet/fund/gateway/verify/payscribe'
+                        : '/wallet/fund/gateway/verify/paystack'));
 
             const res  = await fetch(endpoint, {
                 method: 'POST',
@@ -344,6 +364,8 @@
     <script src="https://sdk.monnify.com/plugin/monnify.js"></script>
 @elseif(($activeGateway ?? 'paystack') === 'flutterwave')
     <script src="https://checkout.flutterwave.com/v3.js"></script>
+@elseif(($activeGateway ?? 'paystack') === 'payscribe')
+    {{-- PayScribe uses hosted checkout redirect --}}
 @else
     <script src="https://js.paystack.co/v1/inline.js"></script>
 @endif

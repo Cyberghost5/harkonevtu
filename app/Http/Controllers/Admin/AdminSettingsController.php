@@ -147,7 +147,7 @@ class AdminSettingsController extends Controller
 
     public function updateApiKeys(Request $request)
     {
-        $passwordFields = ['vtpass_password','aabaxztech_password','legitdataway_password','merrybills_password', 'mtn_ers_pin', 'glo_ers_password', 'nine_mobile_evc_password', 'nine_mobile_evc_key', 'nine_mobile_evc_token', 'google_client_secret'];
+        $passwordFields = ['vtpass_password','aabaxztech_password','legitdataway_password','merrybills_password', 'mtn_ers_pin', 'glo_ers_password', 'nine_mobile_evc_password', 'nine_mobile_evc_key', 'nine_mobile_evc_token', 'google_client_secret', 'payscribe_secret_key'];
         $data = $request->except(['_token','_method']);
         foreach ($data as $key => $value) {
             if (in_array($key, $passwordFields) && $value === '') {

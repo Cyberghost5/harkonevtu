@@ -106,7 +106,54 @@ class WalletApiController extends Controller
 
         $paginator = $query->latest()->paginate($perPage);
 
-        $items = collect($paginator->items())->map(function (WalletTransaction $tx) {
+        // Fetch corresponding ServiceTransactions for these wallet transactions to extract tokens/units/recipients
+        $references = collect($paginator->items())->pluck('reference')->filter()->all();
+        $txIds      = collect($paginator->items())->pluck('id')->filter()->all();
+
+        $serviceTxs = ServiceTransaction::where('user_id', $user->id)
+            ->where(function ($q) use ($references, $txIds) {
+                if (!empty($references)) {
+                    $q->whereIn('reference', $references);
+                }
+                if (!empty($txIds)) {
+                    $q->orWhereIn('wallet_transaction_id', $txIds);
+                }
+            })
+            ->get();
+
+        $serviceTxsByRef = $serviceTxs->keyBy('reference');
+        $serviceTxsById  = $serviceTxs->filter(fn($st) => !empty($st->wallet_transaction_id))->keyBy('wallet_transaction_id');
+
+        $items = collect($paginator->items())->map(function (WalletTransaction $tx) use ($serviceTxsByRef, $serviceTxsById) {
+            $meta = is_array($tx->metadata) ? $tx->metadata : [];
+            $stx  = $serviceTxsByRef->get($tx->reference) ?? $serviceTxsById->get($tx->id);
+
+            $token = null;
+            if ($stx && $stx->token && strtoupper(trim($stx->token)) !== 'N/A') {
+                $token = $stx->token;
+            } elseif (!empty($meta['token']) && strtoupper(trim((string)$meta['token'])) !== 'N/A') {
+                $token = trim((string)$meta['token']);
+            } elseif (!empty($meta['purchased_code']) && strtoupper(trim((string)$meta['purchased_code'])) !== 'N/A') {
+                $token = preg_replace('/^Token\s*[:\-]\s*/i', '', trim((string)$meta['purchased_code']));
+            }
+            if ($token) {
+                $meta['token'] = $token;
+            }
+
+            $units = null;
+            if ($stx && $stx->units && strtoupper(trim($stx->units)) !== 'N/A') {
+                $units = $stx->units;
+            } elseif (!empty($meta['units']) && strtoupper(trim((string)$meta['units'])) !== 'N/A') {
+                $units = trim((string)$meta['units']);
+            }
+            if ($units) {
+                $meta['units'] = $units;
+            }
+
+            if (!isset($meta['recipient']) && $stx && $stx->recipient) {
+                $meta['recipient'] = $stx->recipient;
+            }
+
             return [
                 'id'             => $tx->id,
                 'reference'      => $tx->reference,
@@ -117,7 +164,9 @@ class WalletApiController extends Controller
                 'description'    => $tx->description,
                 'status'         => $tx->status ?? 'success',
                 'service_type'   => $tx->metadata['service'] ?? $tx->metadata['service_type'] ?? $tx->metadata['source'] ?? ($tx->isCredit() ? 'funding' : 'debit'),
-                'metadata'       => $tx->metadata,
+                'token'          => $token,
+                'units'          => $units,
+                'metadata'       => $meta,
                 'date'           => $tx->created_at ? $tx->created_at->toDateTimeString() : null,
                 'human_date'     => $tx->created_at ? $tx->created_at->diffForHumans() : null,
             ];
@@ -156,8 +205,38 @@ class WalletApiController extends Controller
 
         // Fetch corresponding ServiceTransaction if applicable
         $serviceTx = ServiceTransaction::where('user_id', $user->id)
-            ->where('reference', $reference)
+            ->where(function ($q) use ($tx) {
+                $q->where('reference', $tx->reference)
+                  ->orWhere('wallet_transaction_id', $tx->id);
+            })
             ->first();
+
+        $meta  = is_array($tx->metadata) ? $tx->metadata : [];
+        $token = null;
+        if ($serviceTx && $serviceTx->token && strtoupper(trim($serviceTx->token)) !== 'N/A') {
+            $token = $serviceTx->token;
+        } elseif (!empty($meta['token']) && strtoupper(trim((string)$meta['token'])) !== 'N/A') {
+            $token = trim((string)$meta['token']);
+        } elseif (!empty($meta['purchased_code']) && strtoupper(trim((string)$meta['purchased_code'])) !== 'N/A') {
+            $token = preg_replace('/^Token\s*[:\-]\s*/i', '', trim((string)$meta['purchased_code']));
+        }
+        if ($token) {
+            $meta['token'] = $token;
+        }
+
+        $units = null;
+        if ($serviceTx && $serviceTx->units && strtoupper(trim($serviceTx->units)) !== 'N/A') {
+            $units = $serviceTx->units;
+        } elseif (!empty($meta['units']) && strtoupper(trim((string)$meta['units'])) !== 'N/A') {
+            $units = trim((string)$meta['units']);
+        }
+        if ($units) {
+            $meta['units'] = $units;
+        }
+
+        if (!isset($meta['recipient']) && $serviceTx && $serviceTx->recipient) {
+            $meta['recipient'] = $serviceTx->recipient;
+        }
 
         return response()->json([
             'status'  => true,
@@ -174,7 +253,9 @@ class WalletApiController extends Controller
                 'recipient'      => $serviceTx ? $serviceTx->recipient : ($tx->metadata['phone'] ?? $tx->metadata['meter'] ?? $tx->metadata['smartcard'] ?? null),
                 'provider'       => $serviceTx ? strtoupper($serviceTx->provider) : null,
                 'api_reference'  => $serviceTx ? $serviceTx->api_reference : null,
-                'metadata'       => $tx->metadata,
+                'token'          => $token,
+                'units'          => $units,
+                'metadata'       => $meta,
                 'created_at'     => $tx->created_at ? $tx->created_at->toDateTimeString() : null,
             ],
         ]);

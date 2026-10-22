@@ -241,6 +241,36 @@ class BillsApiController extends Controller
             ], 422);
         }
 
+        $rawToken = $apiRes['token'] 
+            ?? ($apiRes['purchased_code'] ?? null)
+            ?? ($apiRes['response']['purchased_code'] ?? null)
+            ?? ($apiRes['response']['token'] ?? null)
+            ?? ($apiRes['response']['Token'] ?? null)
+            ?? ($apiRes['response']['content']['transactions']['token'] ?? null)
+            ?? ($apiRes['response']['message']['details']['token'] ?? null)
+            ?? null;
+        $token = null;
+        if ($rawToken) {
+            $cleaned = preg_replace('/^Token\s*[:\-]\s*/i', '', trim((string) $rawToken));
+            if ($cleaned !== '' && strtoupper($cleaned) !== 'N/A') {
+                $token = $cleaned;
+            }
+        }
+
+        $rawUnits = $apiRes['units'] 
+            ?? ($apiRes['response']['units'] ?? null)
+            ?? ($apiRes['response']['meter_units'] ?? null)
+            ?? ($apiRes['response']['RefundUnits'] ?? null)
+            ?? ($apiRes['response']['content']['transactions']['units'] ?? null)
+            ?? ($apiRes['response']['message']['details']['unit'] ?? null);
+        $units = null;
+        if ($rawUnits) {
+            $cleanedUnits = trim((string) $rawUnits);
+            if ($cleanedUnits !== '' && strtoupper($cleanedUnits) !== 'N/A') {
+                $units = $cleanedUnits;
+            }
+        }
+
         // Record successful transaction
         ServiceTransaction::create([
             'user_id'               => $user->id,
@@ -252,12 +282,30 @@ class BillsApiController extends Controller
             'status'                => 'success',
             'reference'             => $reference,
             'api_reference'         => $apiRes['reference'] ?? $reference,
-            'api_response'          => array_merge(is_array($apiRes['response']) ? $apiRes['response'] : ['raw' => $apiRes['response']], ['api_provider' => $api]),
+            'api_response'          => array_merge(is_array($apiRes['response']) ? $apiRes['response'] : ['raw' => $apiRes['response']], [
+                'api_provider'  => $api,
+                'token'         => $token,
+                'units'         => $units,
+                'meter_number'  => $meterNumber,
+                'customer_name' => $apiRes['customer_name'] ?? 'CUSTOMER',
+            ]),
         ]);
 
+        if ($walletTx) {
+            $wMeta = $walletTx->metadata ?? [];
+            if ($token) {
+                $wMeta['token'] = $token;
+            }
+            if ($units) {
+                $wMeta['units'] = $units;
+            }
+            $wMeta['meter_number'] = $meterNumber;
+            $wMeta['customer_name'] = $apiRes['customer_name'] ?? 'CUSTOMER';
+            $walletTx->metadata = $wMeta;
+            $walletTx->save();
+        }
+
         $freshWallet = $user->fresh()->wallet;
-        $token = $apiRes['token'] ?? $apiRes['response']['token'] ?? 'N/A';
-        $units = $apiRes['units'] ?? $apiRes['response']['units'] ?? null;
 
         return response()->json([
             'status'  => true,
@@ -1080,10 +1128,23 @@ class BillsApiController extends Controller
             $success = in_array($code, ['000', '099'])
                 && empty($content['error'])
                 && !(isset($content['WrongBillersCode']) && ($content['WrongBillersCode'] === true || $content['WrongBillersCode'] === 'true'));
-            $txn     = $data['content']['transactions'] ?? [];
-            $rawToken= $txn['token'] ?? $data['purchased_code'] ?? $data['Token'] ?? null;
-            $token   = $rawToken ? preg_replace('/^Token\s*:\s*/i', '', trim((string) $rawToken)) : 'N/A';
-            $units   = $txn['units'] ?? $data['RefundUnits'] ?? $data['FreeUnits'] ?? null;
+            $txn      = $data['content']['transactions'] ?? [];
+            $rawToken = $data['token'] ?? $data['purchased_code'] ?? ($txn['token'] ?? ($txn['purchased_code'] ?? ($data['Token'] ?? null)));
+            $token    = null;
+            if ($rawToken) {
+                $cleaned = preg_replace('/^Token\s*[:\-]\s*/i', '', trim((string) $rawToken));
+                if ($cleaned !== '' && strtoupper($cleaned) !== 'N/A') {
+                    $token = $cleaned;
+                }
+            }
+            $rawUnits = $data['units'] ?? ($txn['units'] ?? ($data['RefundUnits'] ?? ($data['FreeUnits'] ?? null)));
+            $units    = null;
+            if ($rawUnits) {
+                $cleanedUnits = trim((string) $rawUnits);
+                if ($cleanedUnits !== '' && strtoupper($cleanedUnits) !== 'N/A') {
+                    $units = $cleanedUnits;
+                }
+            }
             $duration= (int) ((hrtime(true) - $start) / 1e6);
 
             ApiLog::record([

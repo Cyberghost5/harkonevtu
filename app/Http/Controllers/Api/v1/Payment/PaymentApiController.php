@@ -33,7 +33,7 @@ class PaymentApiController extends Controller
 
         $request->validate([
             'amount'  => ['required', 'numeric', 'min:100', 'max:500000'],
-            'gateway' => ['nullable', 'string', 'in:paystack,monnify,flutterwave'],
+            'gateway' => ['nullable', 'string', 'in:paystack,monnify,flutterwave,payscribe'],
         ]);
 
         $user          = auth()->user();
@@ -118,6 +118,32 @@ class PaymentApiController extends Controller
             ]);
         }
 
+        if ($activeGateway === 'payscribe') {
+            $session = \App\Services\PayscribePaymentService::createCheckoutSession([
+                'reference'    => $reference,
+                'amount'       => $totalAmount,
+                'currency'     => 'NGN',
+                'name'         => $user->name ?? $user->username,
+                'email'        => $user->email,
+                'phone'        => $user->phone ?? '',
+                'redirect_url' => url('/api/v1/payments/verify?reference=' . $reference),
+            ]);
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Payscribe payment session initialized successfully.',
+                'data'    => [
+                    'gateway'           => 'payscribe',
+                    'reference'         => $reference,
+                    'amount'            => $amount,
+                    'fee'               => $charge,
+                    'total_amount'      => $totalAmount,
+                    'token'             => $session['token'] ?? null,
+                    'authorization_url' => $session['checkout_url'] ?? null,
+                ],
+            ]);
+        }
+
         // Default response preview for gateways
         return response()->json([
             'status'  => true,
@@ -198,6 +224,38 @@ class PaymentApiController extends Controller
                         'Wallet Funding via Paystack (' . $reference . ')',
                         $reference,
                         ['source' => 'paystack', 'gateway_ref' => $payData['id'] ?? null, 'raw' => $payData]
+                    );
+                });
+
+                $freshWallet = $user->fresh()->wallet;
+
+                return response()->json([
+                    'status'  => true,
+                    'message' => '₦' . number_format($credit, 2) . ' credited to your wallet successfully.',
+                    'data'    => [
+                        'reference'     => $reference,
+                        'amount'        => $credit,
+                        'balance_after' => (float) ($freshWallet ? $freshWallet->balance : 0),
+                        'date'          => now()->toDateTimeString(),
+                    ],
+                ]);
+            }
+        }
+
+        // Verify with Payscribe
+        if (\App\Services\PayscribePaymentService::isConfigured()) {
+            $verifyRes = \App\Services\PayscribePaymentService::verifyTransaction($reference);
+            if ($verifyRes['success'] && $verifyRes['paid']) {
+                $paidAmount = (float) $verifyRes['amount'];
+                $credit = $paidAmount > 0 ? $paidAmount : 0;
+
+                DB::transaction(function () use ($user, $credit, $reference, $verifyRes) {
+                    $wallet = $user->wallet()->lockForUpdate()->firstOrCreate([], ['balance' => 0]);
+                    $wallet->credit(
+                        $credit,
+                        'Wallet Funding via PayScribe',
+                        $reference,
+                        ['source' => 'payscribe', 'raw' => $verifyRes['data']]
                     );
                 });
 

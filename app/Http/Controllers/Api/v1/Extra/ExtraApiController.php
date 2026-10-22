@@ -783,10 +783,11 @@ class ExtraApiController extends Controller
                 ],
 
                 'payment_gateways' => [
-                    'active_gateway'      => $activeGateway,
-                    'paystack_public_key' => config('services.paystack.public_key') ?: AppSetting::get('paystack_public_key', ''),
-                    'monnify_api_key'     => AppSetting::get('monnify_api_key', ''),
-                    'monnify_contract_no' => AppSetting::get('monnify_contract_no', ''),
+                    'active_gateway'       => $activeGateway,
+                    'paystack_public_key'  => config('services.paystack.public_key') ?: AppSetting::get('paystack_public_key', ''),
+                    'monnify_api_key'      => AppSetting::get('monnify_api_key', ''),
+                    'monnify_contract_no'  => AppSetting::get('monnify_contract_no', ''),
+                    'payscribe_public_key' => config('services.payscribe.public_key') ?: AppSetting::get('payscribe_public_key', ''),
                 ],
 
                 'support' => [

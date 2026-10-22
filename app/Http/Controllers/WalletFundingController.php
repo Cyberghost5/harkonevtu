@@ -71,6 +71,7 @@ class WalletFundingController extends Controller implements HasMiddleware
         $publicKey = match ($activeGateway) {
             'flutterwave' => config('services.flutterwave.public_key'),
             'monnify'     => $monnifyApiKey,
+            'payscribe'   => \App\Services\PayscribePaymentService::getPublicKey(),
             default       => config('services.paystack.public_key'),
         };
 
@@ -403,6 +404,7 @@ class WalletFundingController extends Controller implements HasMiddleware
         $prefix   = match($gateway) {
             'flutterwave' => 'FLW',
             'monnify'     => 'MNY',
+            'payscribe'   => 'PSC',
             default       => 'PST',
         };
         $reference = $prefix . strtoupper(Str::random(10)) . time();
@@ -416,12 +418,42 @@ class WalletFundingController extends Controller implements HasMiddleware
             'gateway' => $gateway,
         ], now()->addHour());
 
+        $checkoutUrl   = null;
+        $checkoutToken = null;
+
+        if ($gateway === 'payscribe') {
+            $session = \App\Services\PayscribePaymentService::createCheckoutSession([
+                'reference'    => $reference,
+                'amount'       => $total,
+                'name'         => $user->name,
+                'email'        => $user->email,
+                'phone'        => $user->phone ?? '',
+                'redirect_url' => route('wallet.fund.gateway.verify.payscribe', ['reference' => $reference]),
+                'metadata'     => [
+                    'user_id'   => $user->id,
+                    'reference' => $reference,
+                ],
+            ]);
+
+            if (!$session['success']) {
+                Cache::forget('funding_intent_' . $reference);
+                return response()->json([
+                    'message' => $session['message'] ?: 'Failed to initialize PayScribe checkout session.',
+                ], 422);
+            }
+
+            $checkoutUrl   = $session['checkout_url'] ?? null;
+            $checkoutToken = $session['token'] ?? null;
+        }
+
         return response()->json([
-            'reference' => $reference,
-            'amount'    => $amount,
-            'charge'    => $charge,
-            'total'     => $total,
-            'gateway'   => $gateway,
+            'reference'    => $reference,
+            'amount'       => $amount,
+            'charge'       => $charge,
+            'total'        => $total,
+            'gateway'      => $gateway,
+            'checkout_url' => $checkoutUrl,
+            'token'        => $checkoutToken,
         ]);
     }
 
@@ -584,6 +616,72 @@ class WalletFundingController extends Controller implements HasMiddleware
         }
     }
 
+    public function verifyPayscribe(Request $request): JsonResponse|RedirectResponse
+    {
+        $reference = (string) ($request->input('reference') ?? $request->query('reference') ?? $request->query('ref') ?? $request->query('transaction_id') ?? '');
+
+        $isJson = $request->expectsJson() || $request->isJson() || $request->ajax() || $request->isMethod('POST');
+
+        if (empty($reference)) {
+            if ($isJson) {
+                return response()->json(['success' => false, 'message' => 'Payment reference is required.'], 422);
+            }
+            return redirect()->route('wallet.fund.gateway')->with('error', 'Payment reference is required.');
+        }
+
+        // Already credited by webhook or earlier verify
+        if (WalletTransaction::where('reference', $reference)->exists()) {
+            if ($isJson) {
+                return response()->json([
+                    'success'  => true,
+                    'message'  => 'Payment already processed and credited.',
+                    'redirect' => route('dashboard'),
+                ]);
+            }
+            return redirect()->route('dashboard')->with('success', 'Payment already processed and credited.');
+        }
+
+        $intent = Cache::get('funding_intent_' . $reference);
+
+        if (!$intent || $intent['user_id'] !== auth()->id()) {
+            if ($isJson) {
+                return response()->json(['success' => false, 'message' => 'Invalid or expired payment reference.'], 404);
+            }
+            return redirect()->route('wallet.fund.gateway')->with('error', 'Invalid or expired payment reference.');
+        }
+
+        $result = \App\Services\PayscribePaymentService::verifyTransaction($reference);
+
+        if (!$result['success'] || !$result['paid']) {
+            $msg = $result['message'] ?: 'PayScribe payment verification failed or payment is not completed.';
+            if ($isJson) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return redirect()->route('wallet.fund.gateway')->with('error', $msg);
+        }
+
+        if ((float) $result['amount'] < (float) $intent['total']) {
+            $msg = 'Amount mismatch. Expected ₦' . number_format($intent['total'], 2) . ' but got ₦' . number_format($result['amount'], 2);
+            if ($isJson) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return redirect()->route('wallet.fund.gateway')->with('error', $msg);
+        }
+
+        if ($isJson) {
+            return $this->creditAndRespond($reference, $intent);
+        }
+
+        try {
+            $this->performCredit($reference, $intent);
+        } catch (\RuntimeException) {
+            // Already processed
+        }
+
+        $formatted = '₦' . number_format((float) $intent['amount'], 2);
+        return redirect()->route('dashboard')->with('success', $formatted . ' has been added to your wallet.');
+    }
+
     /**
      * Core credit logic - shared by AJAX verify, redirect callback, and webhooks.
      * Returns the new wallet balance, or throws \RuntimeException('already_processed').
@@ -621,6 +719,19 @@ class WalletFundingController extends Controller implements HasMiddleware
         });
 
         Cache::forget('funding_intent_' . $reference);
+
+        // OneSignal push notification to user
+        try {
+            $formatted = '₦' . number_format((float) $intent['amount'], 2);
+            \App\Services\OneSignalService::sendNotificationToUser(
+                (string) $intent['user_id'],
+                'Wallet Credited',
+                "Your wallet has been credited with {$formatted} via " . ucfirst($intent['gateway']) . '.',
+                ['reference' => $reference, 'amount' => $intent['amount'], 'gateway' => $intent['gateway']]
+            );
+        } catch (\Throwable $e) {
+            Log::warning('OneSignal notification error after wallet funding', ['error' => $e->getMessage()]);
+        }
 
         return (float) Wallet::where('user_id', $intent['user_id'])->value('balance');
     }
@@ -1064,6 +1175,118 @@ class WalletFundingController extends Controller implements HasMiddleware
                             $this->performCredit($paymentRef, $intent);
                         } catch (\RuntimeException $e) {
                             Log::error('Monnify online checkout webhook failed', ['error' => $e->getMessage()]);
+                        }
+                    }
+                }
+            }
+        }
+
+        return response('ok');
+    }
+
+    /**
+     * PayScribe webhook - handle real-time collections payment notifications.
+     */
+    public function payscribeWebhook(Request $request): \Illuminate\Http\Response
+    {
+        $payloadRaw = $request->getContent();
+        $payload    = $request->all();
+
+        $isValid = \App\Services\PayscribePaymentService::validateWebhookSignature($request);
+
+        $event     = strtolower((string) ($request->json('event') ?? $request->input('event') ?? ''));
+        $data      = $request->json('data') ?? $payload;
+        $reference = (string) ($data['reference'] ?? $request->input('reference') ?? ('PSC_' . time()));
+        $email     = $data['customer']['email'] ?? $data['email'] ?? null;
+        $user      = $email ? \App\Models\User::where('email', $email)->first() : null;
+
+        ApiLog::record([
+            'user_id'     => $user?->id,
+            'service'     => 'webhook',
+            'provider'    => 'payscribe',
+            'reference'   => $reference,
+            'endpoint'    => route('webhook.payscribe'),
+            'method'      => 'POST',
+            'payload'     => $payload,
+            'response'    => ['status' => $isValid ? 'PayScribe webhook received and verified' : 'Invalid PayScribe signature', 'event' => $event],
+            'http_status' => $isValid ? 200 : 401,
+            'duration_ms' => 0,
+            'success'     => $isValid,
+        ]);
+
+        if (!$isValid) {
+            abort(401, 'Invalid signature.');
+        }
+
+        // Accept successful event variations: collection.successful, collection.completed, payment.successful, successful, success
+        $statusStr = strtolower((string) ($data['status'] ?? ''));
+        $isSuccessEvent = in_array($event, ['collection.successful', 'collection.completed', 'payment.successful', 'successful', 'success'], true)
+            || in_array($statusStr, ['success', 'successful', 'paid', 'completed'], true);
+
+        if ($isSuccessEvent) {
+            if (empty($reference)) {
+                return response('ok');
+            }
+
+            // Idempotency: Skip if already processed and credited
+            if (WalletTransaction::where('reference', $reference)->exists()) {
+                return response('ok');
+            }
+
+            $intent = Cache::get('funding_intent_' . $reference);
+
+            if ($intent) {
+                $paidAmount = (float) ($data['amount'] ?? $data['paid_amount'] ?? 0);
+                $currency   = strtoupper((string) ($data['currency'] ?? 'NGN'));
+
+                if ($paidAmount >= (float) $intent['total'] && ($currency === 'NGN' || empty($currency))) {
+                    try {
+                        $this->performCredit($reference, $intent);
+                    } catch (\RuntimeException $e) {
+                        Log::info('PayScribe webhook: transaction already processed', ['reference' => $reference]);
+                    }
+                } else {
+                    Log::critical('PayScribe webhook amount mismatch', [
+                        'reference'    => $reference,
+                        'intent_total' => $intent['total'],
+                        'actual_paid'  => $paidAmount,
+                        'currency'     => $currency,
+                        'payload'      => $data,
+                    ]);
+                }
+            } else {
+                // Fallback verification directly from PayScribe API
+                $verification = \App\Services\PayscribePaymentService::verifyTransaction($reference);
+
+                if ($verification['success'] && $verification['paid']) {
+                    $totalPaid = (float) $verification['amount'];
+                    $vData     = $verification['data'] ?? [];
+                    $userEmail = $vData['customer']['email'] ?? $vData['email'] ?? $email;
+                    $matchedUser = $userEmail ? \App\Models\User::where('email', $userEmail)->first() : $user;
+
+                    if ($matchedUser) {
+                        $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
+                        $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
+                        if ($chargeType === 'percentage') {
+                            $amount = round($totalPaid / (1 + ($chargeValue / 100)), 2);
+                            $charge = round($totalPaid - $amount, 2);
+                        } else {
+                            $amount = max(0.0, $totalPaid - $chargeValue);
+                            $charge = $totalPaid - $amount;
+                        }
+
+                        $fallbackIntent = [
+                            'user_id' => $matchedUser->id,
+                            'amount'  => $amount,
+                            'charge'  => $charge,
+                            'total'   => $totalPaid,
+                            'gateway' => 'payscribe',
+                        ];
+
+                        try {
+                            $this->performCredit($reference, $fallbackIntent);
+                        } catch (\RuntimeException $e) {
+                            Log::info('PayScribe webhook fallback: already processed', ['reference' => $reference]);
                         }
                     }
                 }

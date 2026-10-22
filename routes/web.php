@@ -119,6 +119,7 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked']
         Route::post('/gateway/verify/paystack',    [WalletFundingController::class, 'verifyPaystack'])->name('gateway.verify.paystack');
         Route::post('/gateway/verify/flutterwave', [WalletFundingController::class, 'verifyFlutterwave'])->name('gateway.verify.flutterwave');
         Route::post('/gateway/verify/monnify',     [WalletFundingController::class, 'verifyMonnify'])->name('gateway.verify.monnify');
+        Route::match(['get', 'post'], '/gateway/verify/payscribe', [WalletFundingController::class, 'verifyPayscribe'])->name('gateway.verify.payscribe');
         Route::get('/gateway/flutterwave/callback',[WalletFundingController::class, 'flutterwaveRedirectCallback'])->name('gateway.flutterwave.callback');
 
         // Manual proof of payment
@@ -212,6 +213,7 @@ Route::withoutMiddleware(['web'])->group(function () {
     Route::post('/webhook/paystack',    [WalletFundingController::class, 'paystackWebhook'])->name('webhook.paystack');
     Route::post('/webhook/flutterwave', [WalletFundingController::class, 'flutterwaveWebhook'])->name('webhook.flutterwave');
     Route::post('/webhook/monnify',     [WalletFundingController::class, 'monnifyWebhook'])->name('webhook.monnify');
+    Route::post('/webhook/payscribe',   [WalletFundingController::class, 'payscribeWebhook'])->name('webhook.payscribe');
     Route::post('/webhook/vtpass',      [WalletFundingController::class, 'vtpassWebhook'])->name('webhook.vtpass');
 });
 

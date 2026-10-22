@@ -26,6 +26,10 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
+    protected $appends = [
+        'has_pin',
+    ];
+
     // ─── Relationships ────────────────────────────────────────────────────────
 
     public function wallet(): HasOne
@@ -68,6 +72,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasPinSet(): bool
     {
         return !is_null($this->transaction_pin);
+    }
+
+    public function getHasPinAttribute(): bool
+    {
+        return !empty($this->transaction_pin);
     }
 
     public function verifyPin(string $pin): bool
