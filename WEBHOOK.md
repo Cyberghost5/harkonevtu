@@ -21,3 +21,8 @@ Configure these webhook / notification URLs in your payment gateway and service 
 - **URL:** `https://yourdomain.com/webhook/vtpass`
 - **Method:** `POST`
 - **Where to set:** VTpass Partner Dashboard -> Account Settings -> Notification / Callback URL
+
+### 5. Payscribe Webhook
+- **URL:** `https://yourdomain.com/webhook/payscribe`
+- **Method:** `POST`
+- **Where to set:** Payscribe Dashboard -> Developer Portal -> Webhook URL
