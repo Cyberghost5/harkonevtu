@@ -6,6 +6,7 @@ use App\Models\ApiLog;
 use App\Models\AppSetting;
 use App\Models\ExamPinType;
 use App\Models\ServiceTransaction;
+use App\Services\ProviderAlertService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -138,10 +139,21 @@ class ExamPinController extends Controller
                 ]);
             }
 
+            $api = AppSetting::get('epins_api', 'vtpass');
+            $rawMsg = $apiResponse['message'] ?? 'Exam pin purchase failed.';
+            $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
+                'service'   => 'Exam Pin (' . $examType->name . ' x' . $quantity . ')',
+                'provider'  => $api,
+                'amount'    => $totalCost,
+                'user'      => $user,
+                'recipient' => $phone,
+                'reference' => $reference,
+            ], true);
+
             return response()->json([
                 'success'  => false,
                 'refunded' => true,
-                'message'  => $apiResponse['message'] ?? 'Exam pin purchase failed.',
+                'message'  => $friendlyMsg,
             ], 422);
         }
 

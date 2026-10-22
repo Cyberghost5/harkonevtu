@@ -132,4 +132,42 @@ class AdminDashboardAndSearchTest extends TestCase
         $response->assertSee('Aisha Bello');
         $response->assertSee('Global Search');
     }
+
+    public function test_admin_api_logs_page_links_user_to_profile(): void
+    {
+        $admin = User::factory()->create([
+            'is_admin' => true,
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'name' => 'Abubakar Danladi',
+            'email' => 'abubakar@example.com',
+            'phone' => '08022233344',
+            'is_admin' => false,
+        ]);
+
+        $log = \App\Models\ApiLog::create([
+            'user_id'     => $user->id,
+            'service'     => 'data',
+            'provider'    => 'payscribe',
+            'channel'     => 'mobile',
+            'reference'   => 'DAT202610221555050',
+            'endpoint'    => 'https://api.payscribe.ng/api/v1/data/vend',
+            'method'      => 'POST',
+            'payload'     => ['network' => 'airtel'],
+            'response'    => ['status' => false],
+            'http_status' => 403,
+            'duration_ms' => 872,
+            'success'     => false,
+            'created_at'  => now(),
+        ]);
+
+        $this->actingAs($admin);
+
+        $response = $this->get(route('admin.api-logs.index'));
+        $response->assertStatus(200);
+        $response->assertSee('Abubakar Danladi');
+        $response->assertSee(route('admin.users.show', $user));
+    }
 }

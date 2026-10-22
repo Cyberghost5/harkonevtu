@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AppSetting;
 use App\Models\PrintedVoucher;
+use App\Services\ProviderAlertService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
@@ -185,9 +186,19 @@ class VoucherPrintingController extends Controller implements HasMiddleware
                 ]);
             }
         } catch (\Exception $e) {
+            $rawMsg = $e->getMessage();
+            $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
+                'service'   => 'Voucher Printing (' . strtoupper($network ?? '') . ' ' . ucfirst($type ?? '') . ')',
+                'provider'  => $netApi ?? 'ers',
+                'amount'    => $totalCost ?? 0,
+                'user'      => $user,
+                'recipient' => $user->phone ?? 'Vouchers',
+                'reference' => $ref ?? 'VOUCHER',
+            ], true);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => $friendlyMsg,
             ], 422);
         }
 

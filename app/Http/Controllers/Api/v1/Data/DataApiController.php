@@ -11,6 +11,7 @@ use App\Models\ServiceTransaction;
 use App\Models\Wallet;
 use App\Services\GloErsSoapService;
 use App\Services\MtnErsSoapService;
+use App\Services\ProviderAlertService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -303,10 +304,20 @@ class DataApiController extends Controller
                 ]);
             }
 
+            $rawMsg = $apiResponse['message'] ?? 'Data bundle delivery failed.';
+            $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
+                'service'   => 'Data (' . $network->name . ' - ' . $plan->plan_name . ')',
+                'provider'  => $api,
+                'amount'    => $finalPrice,
+                'user'      => $user,
+                'recipient' => $phone,
+                'reference' => $reference,
+            ], true);
+
             return response()->json([
                 'status'   => false,
                 'refunded' => true,
-                'message'  => $apiResponse['message'] ?? 'Data bundle delivery failed. Your wallet balance has been refunded.',
+                'message'  => $friendlyMsg,
             ], 422);
         }
 

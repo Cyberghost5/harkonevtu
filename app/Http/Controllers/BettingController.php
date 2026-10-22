@@ -6,6 +6,7 @@ use App\Models\ApiLog;
 use App\Models\AppSetting;
 use App\Models\BettingPlatform;
 use App\Models\ServiceTransaction;
+use App\Services\ProviderAlertService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -242,10 +243,19 @@ class BettingController extends Controller
                     'reference' => $ref,
                 ]);
             } else {
-                $errMsg = $res['message']['description'] ?? ($res['description'] ?? 'Provider failed to fund betting wallet.');
+                $rawMsg = $res['message'] ?? ($res['description'] ?? 'Provider failed to fund betting wallet.');
+                $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
+                    'service'   => 'Betting (' . $platform->name . ')',
+                    'provider'  => 'payscribe',
+                    'amount'    => $amount,
+                    'user'      => $user,
+                    'recipient' => $request->customer_id,
+                    'reference' => $ref,
+                ], false);
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Service Error: ' . $errMsg
+                    'message' => ProviderAlertService::isLowBalance($rawMsg) ? $friendlyMsg : ('Service Error: ' . (is_array($rawMsg) ? ($rawMsg['description'] ?? ($rawMsg['message'] ?? json_encode($rawMsg))) : $rawMsg)),
                 ], 422);
             }
         } catch (\Exception $e) {

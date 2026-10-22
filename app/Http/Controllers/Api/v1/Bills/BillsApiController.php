@@ -13,6 +13,7 @@ use App\Models\ServiceTransaction;
 use App\Models\Wallet;
 use App\Services\EasyaccessService;
 use App\Services\PayscribeService;
+use App\Services\ProviderAlertService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -234,10 +235,20 @@ class BillsApiController extends Controller
                 'api_response'          => array_merge(is_array($apiRes['response'] ?? null) ? $apiRes['response'] : ['error' => $apiRes['message'] ?? 'Electricity purchase failed.'], ['api_provider' => $api]),
             ]);
 
+            $rawMsg = $apiRes['message'] ?? 'Electricity purchase failed.';
+            $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
+                'service'   => 'Electricity (' . $disco->name . ' - ' . ucfirst($meterType) . ')',
+                'provider'  => $api,
+                'amount'    => $amount,
+                'user'      => $user,
+                'recipient' => $meterNumber,
+                'reference' => $reference,
+            ], true);
+
             return response()->json([
                 'status'   => false,
                 'refunded' => true,
-                'message'  => $apiRes['message'] ?? 'Electricity purchase failed. Wallet balance refunded.',
+                'message'  => $friendlyMsg,
             ], 422);
         }
 
@@ -564,10 +575,20 @@ class BillsApiController extends Controller
                 'api_response'          => array_merge(is_array($apiRes['response'] ?? null) ? $apiRes['response'] : ['error' => $apiRes['message'] ?? 'Cable TV subscription failed.'], ['api_provider' => $api]),
             ]);
 
+            $rawMsg = $apiRes['message'] ?? 'Cable TV subscription failed.';
+            $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
+                'service'   => 'Cable TV (' . $provider->name . ' - ' . $plan->name . ')',
+                'provider'  => $api,
+                'amount'    => $amount,
+                'user'      => $user,
+                'recipient' => $smartcard,
+                'reference' => $reference,
+            ], true);
+
             return response()->json([
                 'status'   => false,
                 'refunded' => true,
-                'message'  => $apiRes['message'] ?? 'Cable TV subscription failed. Wallet balance refunded.',
+                'message'  => $friendlyMsg,
             ], 422);
         }
 
@@ -758,10 +779,20 @@ class BillsApiController extends Controller
                 'api_response'          => array_merge(is_array($apiRes['response'] ?? null) ? $apiRes['response'] : ['error' => $apiRes['message'] ?? 'Exam pin purchase failed.'], ['api_provider' => $api]),
             ]);
 
+            $rawMsg = $apiRes['message'] ?? 'Exam pin purchase failed.';
+            $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
+                'service'   => 'Exam Pin (' . $examType->name . ' x' . $quantity . ')',
+                'provider'  => $api,
+                'amount'    => $amount,
+                'user'      => $user,
+                'recipient' => $phone,
+                'reference' => $reference,
+            ], true);
+
             return response()->json([
                 'status'   => false,
                 'refunded' => true,
-                'message'  => $apiRes['message'] ?? 'Exam pin purchase failed. Wallet balance refunded.',
+                'message'  => $friendlyMsg,
             ], 422);
         }
 

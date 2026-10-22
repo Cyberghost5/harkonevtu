@@ -7,6 +7,7 @@ use App\Models\AppSetting;
 use App\Models\DataPlan;
 use App\Models\NetworkAirtime;
 use App\Models\ServiceTransaction;
+use App\Services\ProviderAlertService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -243,10 +244,20 @@ class DataController extends Controller
                 ]);
             }
 
+            $rawMsg = $apiResponse['message'] ?? 'Data delivery failed.';
+            $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
+                'service'   => 'Data (' . $network->name . ' - ' . $plan->plan_name . ')',
+                'provider'  => $api,
+                'amount'    => $finalAmount,
+                'user'      => $user,
+                'recipient' => $phone,
+                'reference' => $reference,
+            ], true);
+
             return response()->json([
                 'success'  => false,
                 'refunded' => true,
-                'message'  => $apiResponse['message'] ?? 'Data delivery failed.',
+                'message'  => $friendlyMsg,
             ], 422);
         }
 

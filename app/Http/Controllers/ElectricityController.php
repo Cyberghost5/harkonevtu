@@ -6,6 +6,7 @@ use App\Models\ApiLog;
 use App\Models\AppSetting;
 use App\Models\ElectricityDisco;
 use App\Models\ServiceTransaction;
+use App\Services\ProviderAlertService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -180,10 +181,21 @@ class ElectricityController extends Controller
                 ]);
             }
 
+            $api = AppSetting::get('electricity_api', 'vtpass');
+            $rawMsg = $apiResponse['message'] ?? 'Electricity vending failed.';
+            $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
+                'service'   => 'Electricity (' . $disco->name . ' - ' . ucfirst($meterType) . ')',
+                'provider'  => $api,
+                'amount'    => $amount,
+                'user'      => $user,
+                'recipient' => $meterNumber,
+                'reference' => $reference,
+            ], true);
+
             return response()->json([
                 'success'  => false,
                 'refunded' => true,
-                'message'  => $apiResponse['message'] ?? 'Electricity vending failed.',
+                'message'  => $friendlyMsg,
             ], 422);
         }
 

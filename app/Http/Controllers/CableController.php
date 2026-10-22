@@ -7,6 +7,7 @@ use App\Models\AppSetting;
 use App\Models\CablePlan;
 use App\Models\CableProvider;
 use App\Models\ServiceTransaction;
+use App\Services\ProviderAlertService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -190,10 +191,21 @@ class CableController extends Controller
                 ]);
             }
 
+            $api = AppSetting::get('cable_api', 'vtpass');
+            $rawMsg = $apiResponse['message'] ?? 'Cable subscription failed.';
+            $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
+                'service'   => 'Cable TV (' . $provider->name . ' - ' . $plan->name . ')',
+                'provider'  => $api,
+                'amount'    => $amount,
+                'user'      => $user,
+                'recipient' => $smartcard,
+                'reference' => $reference,
+            ], true);
+
             return response()->json([
                 'success'  => false,
                 'refunded' => true,
-                'message'  => $apiResponse['message'] ?? 'Cable subscription failed.',
+                'message'  => $friendlyMsg,
             ], 422);
         }
 

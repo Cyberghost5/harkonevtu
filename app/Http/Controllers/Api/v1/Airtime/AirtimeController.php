@@ -11,6 +11,7 @@ use App\Models\Wallet;
 use App\Services\GloErsSoapService;
 use App\Services\MtnErsSoapService;
 use App\Services\NineMobileEvcSoapService;
+use App\Services\ProviderAlertService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -222,10 +223,21 @@ class AirtimeController extends Controller
                 ]);
             }
 
+            $api = AppSetting::get('airtime_api', 'vtpass');
+            $rawMsg = $apiResponse['message'] ?? 'Airtime delivery failed.';
+            $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
+                'service'   => 'Airtime (' . $network->name . ')',
+                'provider'  => $api,
+                'amount'    => $chargedAmount,
+                'user'      => $user,
+                'recipient' => $phone,
+                'reference' => $reference,
+            ], true);
+
             return response()->json([
                 'status'   => false,
                 'refunded' => true,
-                'message'  => $apiResponse['message'] ?? 'Airtime delivery failed. Your wallet balance has been refunded.',
+                'message'  => $friendlyMsg,
             ], 422);
         }
 

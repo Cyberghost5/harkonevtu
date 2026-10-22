@@ -33,6 +33,10 @@ class AdminApiLogController extends Controller
             $query->where('success', $request->status === 'success');
         }
 
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(function ($q) use ($s) {
@@ -40,7 +44,12 @@ class AdminApiLogController extends Controller
                   ->orWhere('endpoint', 'like', "%$s%")
                   ->orWhere('ip_address', 'like', "%$s%")
                   ->orWhere('device_info', 'like', "%$s%")
-                  ->orWhere('location', 'like', "%$s%");
+                  ->orWhere('location', 'like', "%$s%")
+                  ->orWhereHas('user', function ($uq) use ($s) {
+                      $uq->where('name', 'like', "%$s%")
+                         ->orWhere('email', 'like', "%$s%")
+                         ->orWhere('username', 'like', "%$s%");
+                  });
             });
         }
 
