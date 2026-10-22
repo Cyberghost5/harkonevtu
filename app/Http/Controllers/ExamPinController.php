@@ -144,7 +144,7 @@ class ExamPinController extends Controller
             $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
                 'service'   => 'Exam Pin (' . $examType->name . ' x' . $quantity . ')',
                 'provider'  => $api,
-                'amount'    => $totalCost,
+                'amount'    => $amount,
                 'user'      => $user,
                 'recipient' => $phone,
                 'reference' => $reference,
