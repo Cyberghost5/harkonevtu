@@ -224,34 +224,6 @@
                 </div>
             </div>
 
-            {{-- ── Other Payment Settings ───────────────────────────────── --}}
-            <div class="px-6 py-6">
-                <h4 class="text-lg font-bold text-slate-800 mb-4">Other Payment Settings</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment [VM Funding]</label>
-                        <input type="text" name="tx_charge_m2m" value="{{ $s['tx_charge_m2m'] ?? '0' }}"
-                               placeholder="Enter Transaction Charge"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment [with Bank Transfer]</label>
-                        <input type="text" name="tx_charge_bank" value="{{ $s['tx_charge_bank'] ?? '0' }}"
-                               placeholder="Enter Transaction Charge"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Active Card/ATM Payment Gateway</label>
-                        <select name="active_gateway" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            <option value="paystack" {{ ($s['active_gateway'] ?? 'paystack') === 'paystack' ? 'selected' : '' }}>Paystack</option>
-                            <option value="flutterwave" {{ ($s['active_gateway'] ?? 'paystack') === 'flutterwave' ? 'selected' : '' }}>Flutterwave</option>
-                            <option value="monnify" {{ ($s['active_gateway'] ?? 'paystack') === 'monnify' ? 'selected' : '' }}>Monnify</option>
-                            <option value="payscribe" {{ ($s['active_gateway'] ?? 'paystack') === 'payscribe' ? 'selected' : '' }}>PayScribe</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
             {{-- ── VTU API: VTPass ──────────────────────────────────────── --}}
             <div class="px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -637,9 +609,9 @@
             <div class="px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        MTN ERS (SOAP API Gateway)
+                        MTN ERS
                         <span class="text-sm font-normal text-slate-400">from
-                            <span class="text-indigo-500">Seamless Distribution Systems (SDS)</span>
+                            <span class="text-indigo-500">MTN</span>
                         </span>
                     </h4>
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -692,9 +664,9 @@
             <div class="px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        Glo ERS (SOAP API Gateway)
+                        Glo ERS
                         <span class="text-sm font-normal text-slate-400">from
-                            <span class="text-indigo-500">Seamless Distribution Systems (SDS)</span>
+                            <span class="text-indigo-500">Glo</span>
                         </span>
                     </h4>
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -758,9 +730,9 @@
             <div class="px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        9Mobile EVC (SOAP API Gateway)
+                        9Mobile EVC
                         <span class="text-sm font-normal text-slate-400">from
-                            <span class="text-emerald-600 font-semibold">9Mobile Direct EVC</span>
+                            <span class="text-emerald-600 font-semibold">9Mobile</span>
                         </span>
                     </h4>
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -947,43 +919,11 @@
                 </div>
             </div>
 
-            {{-- ── KYC Verification Provider ────────────────────────────── --}}
-            <div class="px-6 py-6 border-b border-slate-100">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <div>
-                        <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            KYC Verification Provider
-                        </h4>
-                        <p class="text-xs text-slate-500 mt-0.5">Select the active service provider used to verify customer identity (BVN / NIN lookup).</p>
-                    </div>
-                    <div>
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ ($s['kyc_provider'] ?? 'qoreid') === 'payscribe' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700' }}">
-                            Active: {{ ($s['kyc_provider'] ?? 'qoreid') === 'payscribe' ? 'PayScribe (BVN Lookup)' : 'QoreID' }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="max-w-md">
-                    <label class="block text-xs font-medium text-slate-500 mb-1">Active KYC Verification Service</label>
-                    <select name="kyc_provider" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-semibold text-slate-700">
-                        <option value="qoreid" {{ ($s['kyc_provider'] ?? 'qoreid') === 'qoreid' ? 'selected' : '' }}>
-                            QoreID (BVN & NIN Match Verification)
-                        </option>
-                        <option value="payscribe" {{ ($s['kyc_provider'] ?? 'qoreid') === 'payscribe' ? 'selected' : '' }}>
-                            PayScribe (BVN Lookup & Verification)
-                        </option>
-                    </select>
-                    <p class="text-[11px] text-slate-400 mt-1.5">
-                        * When <strong>PayScribe</strong> is selected, customer BVN lookups will automatically use your configured <strong>PayScribe Secret Key</strong> above.
-                    </p>
-                </div>
-            </div>
-
             {{-- ── QoreID (KYC Verification) ────────────────────────────── --}}
             <div class="px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        QoreID (KYC Verification)
+                        QoreID
                         <span class="text-sm font-normal text-slate-400">from
                             <a href="https://qoreid.com" target="_blank" class="text-blue-500 hover:underline">QoreID</a>
                         </span>
@@ -1023,42 +963,11 @@
                 </div>
             </div>
 
-            {{-- ── Airtime2Cash Parameters ──────────────────────────────── --}}
-            <div class="px-6 py-6">
-                <h4 class="text-lg font-bold text-slate-800 mb-4">Airtime2Cash Parameters</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Phone Number to receive airtime</label>
-                        <input type="text" name="airtime2cash_phone" value="{{ $s['airtime2cash_phone'] ?? '' }}"
-                               placeholder="Enter Phone Number"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment</label>
-                        <input type="text" name="airtime2cash_tx_charge" value="{{ $s['airtime2cash_tx_charge'] ?? '' }}"
-                               placeholder="Enter Transaction Charge"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Max. Amount per payment</label>
-                        <input type="text" name="airtime2cash_max_per_payment" value="{{ $s['airtime2cash_max_per_payment'] ?? '' }}"
-                               placeholder="Enter Maximum Amount"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Min. Amount per payment</label>
-                        <input type="text" name="airtime2cash_min_per_payment" value="{{ $s['airtime2cash_min_per_payment'] ?? '' }}"
-                               placeholder="Enter Minimum Amount"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
-                </div>
-            </div>
-
             {{-- ── Google OAuth Sign-In ────────────────────────────────────── --}}
             <div class="px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        Google OAuth (Sign In / Sign Up)
+                        Google OAuth
                         <span class="text-sm font-normal text-slate-400">from
                             <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-500 hover:underline">Google Cloud Console</a>
                         </span>
@@ -1093,6 +1002,94 @@
                                    placeholder="{{ url('/auth/google/callback') }}"
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── KYC Verification Provider ────────────────────────────── --}}
+            <div class="px-6 py-6 border-b border-slate-100">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            KYC Verification Provider
+                        </h4>
+                        <p class="text-xs text-slate-500 mt-0.5">Select the active service provider used to verify customer identity (BVN / NIN lookup).</p>
+                    </div>
+                    <div>
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ ($s['kyc_provider'] ?? 'qoreid') === 'payscribe' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700' }}">
+                            Active: {{ ($s['kyc_provider'] ?? 'qoreid') === 'payscribe' ? 'PayScribe (BVN Lookup)' : 'QoreID' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="max-w-md">
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Active KYC Verification Service</label>
+                    <select name="kyc_provider" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-semibold text-slate-700">
+                        <option value="qoreid" {{ ($s['kyc_provider'] ?? 'qoreid') === 'qoreid' ? 'selected' : '' }}>
+                            QoreID
+                        </option>
+                        <option value="payscribe" {{ ($s['kyc_provider'] ?? 'qoreid') === 'payscribe' ? 'selected' : '' }}>
+                            PayScribe
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            {{-- ── Other Payment Settings ───────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-lg font-bold text-slate-800 mb-4">Other Payment Settings</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment [VM Funding]</label>
+                        <input type="text" name="tx_charge_m2m" value="{{ $s['tx_charge_m2m'] ?? '0' }}"
+                               placeholder="Enter Transaction Charge"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment [with Bank Transfer]</label>
+                        <input type="text" name="tx_charge_bank" value="{{ $s['tx_charge_bank'] ?? '0' }}"
+                               placeholder="Enter Transaction Charge"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Active Card/ATM Payment Gateway</label>
+                        <select name="active_gateway" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <option value="paystack" {{ ($s['active_gateway'] ?? 'paystack') === 'paystack' ? 'selected' : '' }}>Paystack</option>
+                            <option value="flutterwave" {{ ($s['active_gateway'] ?? 'paystack') === 'flutterwave' ? 'selected' : '' }}>Flutterwave</option>
+                            <option value="monnify" {{ ($s['active_gateway'] ?? 'paystack') === 'monnify' ? 'selected' : '' }}>Monnify</option>
+                            <option value="payscribe" {{ ($s['active_gateway'] ?? 'paystack') === 'payscribe' ? 'selected' : '' }}>PayScribe</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── Airtime2Cash Parameters ──────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-lg font-bold text-slate-800 mb-4">Airtime2Cash Parameters</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Phone Number to receive airtime</label>
+                        <input type="text" name="airtime2cash_phone" value="{{ $s['airtime2cash_phone'] ?? '' }}"
+                               placeholder="Enter Phone Number"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment</label>
+                        <input type="text" name="airtime2cash_tx_charge" value="{{ $s['airtime2cash_tx_charge'] ?? '' }}"
+                               placeholder="Enter Transaction Charge"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Max. Amount per payment</label>
+                        <input type="text" name="airtime2cash_max_per_payment" value="{{ $s['airtime2cash_max_per_payment'] ?? '' }}"
+                               placeholder="Enter Maximum Amount"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Min. Amount per payment</label>
+                        <input type="text" name="airtime2cash_min_per_payment" value="{{ $s['airtime2cash_min_per_payment'] ?? '' }}"
+                               placeholder="Enter Minimum Amount"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
                 </div>
             </div>

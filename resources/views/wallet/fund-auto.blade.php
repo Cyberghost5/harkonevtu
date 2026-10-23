@@ -13,7 +13,8 @@
         </p>
     </div>
 
-    {{-- ── Info Banner ───────────────────────────────────────────────── --}}
+    {{-- ── Info Banner (only shown if no virtual accounts have been generated yet) ── --}}
+    @if($accounts->isEmpty())
     <div class="rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 p-4 flex gap-3">
         <div class="flex-shrink-0 mt-0.5">
             <svg class="h-5 w-5 text-vtu-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -31,6 +32,7 @@
             </ul>
         </div>
     </div>
+    @endif
 
     {{-- ── Existing Accounts / Empty State ──────────────────────────── --}}
     @if($accounts->isNotEmpty())

@@ -1012,6 +1012,34 @@ class PayscribePaymentGatewayTest extends TestCase
         $res4->assertSee('4444555566');
     }
 
+    public function test_how_it_works_section_disappears_when_virtual_accounts_exist(): void
+    {
+        $user = $this->createVerifiedUser(['name' => 'Michael Scott', 'email' => 'michael@dunder.com']);
+        $this->actingAs($user);
+
+        // Initially no virtual accounts -> "How it works" should be visible
+        $resBefore = $this->get(route('wallet.fund.auto'));
+        $resBefore->assertStatus(200);
+        $resBefore->assertSee('How it works');
+
+        // Create a virtual account
+        \App\Models\VirtualAccount::create([
+            'user_id'        => $user->id,
+            'provider'       => 'payscribe',
+            'bank_name'      => '9PSB',
+            'bank_code'      => '120001',
+            'account_number' => '5301657649',
+            'account_name'   => 'Admin Dakeventures',
+        ]);
+
+        // Virtual account exists -> "How it works" should disappear
+        $resAfter = $this->get(route('wallet.fund.auto'));
+        $resAfter->assertStatus(200);
+        $resAfter->assertDontSee('How it works');
+        $resAfter->assertSee('Your Virtual Accounts');
+        $resAfter->assertSee('5301657649');
+    }
+
     public function test_disabled_gateway_accounts_do_not_appear_in_api_profile_and_dva_endpoints(): void
     {
         $user = $this->createVerifiedUser(['name' => 'Jim Halpert', 'email' => 'jim@dunder.com']);
