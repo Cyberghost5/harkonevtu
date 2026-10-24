@@ -207,15 +207,10 @@
                     </label>
                 </div>
                 <div id="section-payscribe" class="provider-content transition-all duration-300 {{ ($s['payscribe_status'] ?? '1') === '1' ? '' : 'hidden' }}">
-                    <div class="p-3 mb-3 text-xs bg-blue-50 text-blue-700 rounded-lg border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        <strong>PayScribe Dashboard Keys:</strong>
-                        <span class="ml-1"><code>ps_live_...</code> is your <strong>Secret Key</strong> (Webhook signature verification) and <code>pk_live_...</code> is your <strong>Public Key</strong> (API Token for card payments and transactions). The system automatically routes each key properly regardless of orientation.</span>
-                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">
-                                Secret Key <span class="text-slate-400 font-normal">(starts with ps_live_)</span>
+                                Secret Key
                             </label>
                             <input type="text" name="payscribe_secret_key" value="{{ $s['payscribe_secret_key'] ?? '' }}"
                                    placeholder="ps_live_..."
@@ -223,7 +218,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">
-                                Public Key <span class="text-slate-400 font-normal">(starts with pk_live_)</span>
+                                Public Key                             
                             </label>
                             <input type="text" name="payscribe_public_key" value="{{ $s['payscribe_public_key'] ?? '' }}"
                                    placeholder="pk_live_..."
