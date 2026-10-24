@@ -78,7 +78,7 @@ class ExtraApiController extends Controller
         $payscribeKey = AppSetting::get('payscribe_public_key');
         if ($payscribeKey) {
             $start = hrtime(true);
-            $endpoint = "https://api.payscribe.ng/api/v1/betting/lookup?platform={$platform->slug}&customer_id={$customer}";
+            $endpoint = "https://api.payscribe.ng/api/v1/betting/lookup?bet_id={$platform->slug}&customer_id={$customer}";
             $requestHeaders = ['Authorization' => 'Bearer ' . $payscribeKey];
             $body = [];
             $success = false;
