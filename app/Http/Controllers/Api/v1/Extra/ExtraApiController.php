@@ -874,7 +874,8 @@ class ExtraApiController extends Controller
                     'agent_upgrade_fee'   => (float) AppSetting::get('agent_upgrade_fee', 2500),
                     'kyc_fee'             => (float) AppSetting::get('kyc_fee', 0),
                     'betting_charge'      => (float) AppSetting::get('betting_charge', 50),
-                    'card_funding_charge' => (float) AppSetting::get('transaction_charge_value', 0),
+                    'card_funding_charge' => (float) (\App\Http\Controllers\WalletFundingController::calculateFundingCharge(1000, 'gateway')['value']),
+                    'bank_funding_charge' => (float) (\App\Http\Controllers\WalletFundingController::calculateFundingCharge(1000, 'dva')['value']),
                 ],
 
                 'onboarding_slides' => OnboardingSlide::active()->get()->map(fn (OnboardingSlide $s) => [

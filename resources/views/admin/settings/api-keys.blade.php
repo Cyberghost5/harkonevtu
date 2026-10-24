@@ -1046,16 +1046,28 @@
                 <h4 class="text-lg font-bold text-slate-800 mb-4">Other Payment Settings</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment [VM Funding]</label>
-                        <input type="text" name="tx_charge_m2m" value="{{ $s['tx_charge_m2m'] ?? '0' }}"
-                               placeholder="Enter Transaction Charge"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Transaction Charge [Card / ATM Funding]</label>
+                        <div class="flex gap-2">
+                            <input type="text" name="tx_charge_m2m" value="{{ $s['tx_charge_m2m'] ?? '0' }}"
+                                   placeholder="e.g. 1.5 or 50"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <select name="tx_charge_m2m_type" class="w-36 px-2 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                                <option value="percentage" {{ ($s['tx_charge_m2m_type'] ?? 'percentage') === 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
+                                <option value="flat" {{ ($s['tx_charge_m2m_type'] ?? '') === 'flat' ? 'selected' : '' }}>Flat (₦)</option>
+                            </select>
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment [with Bank Transfer]</label>
-                        <input type="text" name="tx_charge_bank" value="{{ $s['tx_charge_bank'] ?? '0' }}"
-                               placeholder="Enter Transaction Charge"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Transaction Charge [Auto Bank Transfer / DVA]</label>
+                        <div class="flex gap-2">
+                            <input type="text" name="tx_charge_bank" value="{{ $s['tx_charge_bank'] ?? '0' }}"
+                                   placeholder="e.g. 50 or 1.0"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <select name="tx_charge_bank_type" class="w-36 px-2 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                                <option value="flat" {{ ($s['tx_charge_bank_type'] ?? 'flat') === 'flat' ? 'selected' : '' }}>Flat (₦)</option>
+                                <option value="percentage" {{ ($s['tx_charge_bank_type'] ?? '') === 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
+                            </select>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Active Card/ATM Payment Gateway</label>

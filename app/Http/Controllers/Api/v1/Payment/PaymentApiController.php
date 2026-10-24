@@ -41,10 +41,9 @@ class PaymentApiController extends Controller
         $activeGateway = $request->gateway ?? AppSetting::get('active_gateway', 'paystack');
 
         // Calculate transaction charge
-        $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
-        $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
-        $charge      = ($chargeType === 'percentage') ? ($amount * $chargeValue / 100) : $chargeValue;
-        $totalAmount = $amount + $charge;
+        $chargeConfig = \App\Http\Controllers\WalletFundingController::calculateFundingCharge($amount, 'gateway');
+        $charge       = $chargeConfig['charge'];
+        $totalAmount  = $amount + $charge;
 
         $reference = 'PAY' . date('YmdHis') . Str::upper(Str::random(8));
 

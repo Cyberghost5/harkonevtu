@@ -143,7 +143,7 @@
                     @foreach ($previousTx as $tx)
                     <li class="px-5 py-3.5 flex items-center gap-3">
                         <div class="min-w-0 flex-1">
-                            <a href="#"
+                            <a href="{{ route('transactions', ['tab' => 'wallet', 'search' => $tx->reference]) }}"
                                class="text-xs font-mono font-semibold text-vtu-primary truncate block hover:underline"
                                title="{{ $tx->reference }}">
                                 {{ $tx->reference }}

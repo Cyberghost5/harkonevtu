@@ -54,15 +54,67 @@ class WalletFundingController extends Controller implements HasMiddleware
             }
         ];
     }
+    /**
+     * Calculate transaction fee for a given funding method.
+     *
+     * @param float $amount
+     * @param string $method 'gateway' (card/ATM) or 'dva' (bank transfer)
+     * @return array ['charge' => float, 'type' => string, 'value' => float]
+     */
+    public static function calculateFundingCharge(float $amount, string $method = 'gateway'): array
+    {
+        if ($method === 'dva') {
+            $valRaw = AppSetting::get('tx_charge_bank');
+            if ($valRaw === null || $valRaw === '') {
+                $valRaw = AppSetting::get('transaction_charge_value', '0');
+            }
+            $type = AppSetting::get('tx_charge_bank_type') 
+                ?? (str_contains((string) $valRaw, '%') ? 'percentage' : AppSetting::get('transaction_charge_type', 'flat'));
+        } else {
+            $valRaw = AppSetting::get('tx_charge_m2m');
+            if ($valRaw === null || $valRaw === '') {
+                $valRaw = AppSetting::get('transaction_charge_value', '0');
+            }
+            $type = AppSetting::get('tx_charge_m2m_type') 
+                ?? (str_contains((string) $valRaw, '%') ? 'percentage' : AppSetting::get('transaction_charge_type', 'percentage'));
+        }
+
+        $isPercent  = ($type === 'percentage' || str_contains((string) $valRaw, '%'));
+        $numericVal = (float) str_replace(['%', ' '], '', (string) $valRaw);
+
+        if ($numericVal <= 0 || $amount <= 0) {
+            return [
+                'charge' => 0.0,
+                'type'   => $isPercent ? 'percentage' : 'flat',
+                'value'  => max(0.0, $numericVal),
+            ];
+        }
+
+        if ($isPercent) {
+            $charge = round(($amount * $numericVal) / 100, 2);
+            return [
+                'charge' => $charge,
+                'type'   => 'percentage',
+                'value'  => $numericVal,
+            ];
+        }
+
+        return [
+            'charge' => round($numericVal, 2),
+            'type'   => 'flat',
+            'value'  => $numericVal,
+        ];
+    }
+
     // ─── Pages ───────────────────────────────────────────────────────────────
 
     public function gateway(): View
     {
         $user          = auth()->user();
-        $settings      = AppSetting::getMany(['active_gateway', 'transaction_charge_type', 'transaction_charge_value']);
-        $activeGateway = $settings['active_gateway'] ?? 'paystack';
-        $chargeType    = $settings['transaction_charge_type'] ?? 'flat';
-        $chargeValue   = (float) ($settings['transaction_charge_value'] ?? 0);
+        $activeGateway = AppSetting::get('active_gateway', 'paystack');
+        $chargeConfig  = self::calculateFundingCharge(1000, 'gateway');
+        $chargeType    = $chargeConfig['type'];
+        $chargeValue   = $chargeConfig['value'];
 
         $monnifyApiKey     = AppSetting::get('monnify_api_key');
         $monnifyContractNo = AppSetting::get('monnify_contract_no');
@@ -440,15 +492,12 @@ class WalletFundingController extends Controller implements HasMiddleware
             'amount' => ['required', 'numeric', 'min:500', 'max:1000000'],
         ]);
 
-        $user        = auth()->user();
-        $amount      = (float) $request->amount;
-        $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
-        $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
-        $charge      = $chargeType === 'percentage'
-            ? round($amount * $chargeValue / 100, 2)
-            : (float) $chargeValue;
-        $total    = $amount + $charge;
-        $gateway  = AppSetting::get('active_gateway', 'paystack');
+        $user         = auth()->user();
+        $amount       = (float) $request->amount;
+        $chargeConfig = self::calculateFundingCharge($amount, 'gateway');
+        $charge       = $chargeConfig['charge'];
+        $total        = $amount + $charge;
+        $gateway      = AppSetting::get('active_gateway', 'paystack');
         $prefix   = match($gateway) {
             'flutterwave' => 'FLW',
             'monnify'     => 'MNY',
@@ -959,11 +1008,15 @@ class WalletFundingController extends Controller implements HasMiddleware
                 if ($accountNumber) {
                     $va = VirtualAccount::where('account_number', $accountNumber)->first();
                     if ($va) {
-                        $amountNaira = ($data['amount'] ?? 0) / 100; // Paystack uses kobo
+                        $amountNaira  = ($data['amount'] ?? 0) / 100; // Paystack uses kobo
+                        $chargeConfig = self::calculateFundingCharge($amountNaira, 'dva');
+                        $charge       = $chargeConfig['charge'];
+                        $creditAmount = max(0.0, $amountNaira - $charge);
+
                         $dvaIntent   = [
                             'user_id' => $va->user_id,
-                            'amount'  => $amountNaira,
-                            'charge'  => 0,
+                            'amount'  => $creditAmount,
+                            'charge'  => $charge,
                             'total'   => $amountNaira,
                             'gateway' => 'paystack_dva',
                         ];
@@ -1015,16 +1068,14 @@ class WalletFundingController extends Controller implements HasMiddleware
                         if (($vData['status'] ?? '') === 'success' && ($vData['currency'] ?? '') === 'NGN') {
                             $email = $vData['customer']['email'] ?? null;
                             $user = \App\Models\User::where('email', $email)->first();
-                            if ($user) {
-                                $totalPaid = ($vData['amount'] ?? 0) / 100;
-                                $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
-                                $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
-                                if ($chargeType === 'percentage') {
-                                    $amount = round($totalPaid / (1 + ($chargeValue / 100)), 2);
+                                $totalPaid    = ($vData['amount'] ?? 0) / 100;
+                                $chargeConfig = self::calculateFundingCharge($totalPaid, 'gateway');
+                                if ($chargeConfig['type'] === 'percentage' && $chargeConfig['value'] > 0) {
+                                    $amount = round($totalPaid / (1 + ($chargeConfig['value'] / 100)), 2);
                                     $charge = round($totalPaid - $amount, 2);
                                 } else {
-                                    $amount = max(0.0, $totalPaid - $chargeValue);
-                                    $charge = $totalPaid - $amount;
+                                    $charge = min($totalPaid, $chargeConfig['charge']);
+                                    $amount = max(0.0, $totalPaid - $charge);
                                 }
                                 $intent = [
                                     'user_id' => $user->id,
@@ -1085,11 +1136,16 @@ class WalletFundingController extends Controller implements HasMiddleware
                 if ($reference && !WalletTransaction::where('reference', $reference)->exists()) {
                     $va = VirtualAccount::where('account_number', $dvaAccountNumber)->first();
                     if ($va) {
+                        $rawAmount    = (float) ($data['amount'] ?? 0);
+                        $chargeConfig = self::calculateFundingCharge($rawAmount, 'dva');
+                        $charge       = $chargeConfig['charge'];
+                        $creditAmount = max(0.0, $rawAmount - $charge);
+
                         $dvaIntent = [
                             'user_id' => $va->user_id,
-                            'amount'  => (float) ($data['amount'] ?? 0),
-                            'charge'  => 0,
-                            'total'   => (float) ($data['amount'] ?? 0),
+                            'amount'  => $creditAmount,
+                            'charge'  => $charge,
+                            'total'   => $rawAmount,
                             'gateway' => 'flutterwave_dva',
                         ];
                         try { $this->performCredit($reference, $dvaIntent); } catch (\RuntimeException) {}
@@ -1151,14 +1207,15 @@ class WalletFundingController extends Controller implements HasMiddleware
                                 $user = \App\Models\User::where('email', $email)->first();
                                 if ($user) {
                                     $totalPaid = (float) ($vData['amount'] ?? 0);
-                                    $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
-                                    $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
-                                    if ($chargeType === 'percentage') {
+                                    $chargeConfig = self::calculateFundingCharge($totalPaid, 'gateway');
+                                    $chargeType  = $chargeConfig['type'];
+                                    $chargeValue = $chargeConfig['value'];
+                                    if ($chargeType === 'percentage' && $chargeValue > 0) {
                                         $amount = round($totalPaid / (1 + ($chargeValue / 100)), 2);
                                         $charge = round($totalPaid - $amount, 2);
                                     } else {
-                                        $amount = max(0.0, $totalPaid - $chargeValue);
-                                        $charge = $totalPaid - $amount;
+                                        $charge = min($totalPaid, $chargeConfig['charge']);
+                                        $amount = max(0.0, $totalPaid - $charge);
                                     }
                                     $intent = [
                                         'user_id' => $user->id,
@@ -1237,10 +1294,13 @@ class WalletFundingController extends Controller implements HasMiddleware
 
                 if ($va) {
                     $amountPaid = (float) ($eventData['amountPaid'] ?? 0);
+                    $chargeConfig = self::calculateFundingCharge($amountPaid, 'dva');
+                    $charge       = $chargeConfig['charge'];
+                    $creditAmount = max(0.0, $amountPaid - $charge);
                     $dvaIntent = [
                         'user_id' => $va->user_id,
-                        'amount'  => $amountPaid,
-                        'charge'  => 0,
+                        'amount'  => $creditAmount,
+                        'charge'  => $charge,
                         'total'   => $amountPaid,
                         'gateway' => 'monnify_dva',
                     ];
@@ -1383,24 +1443,13 @@ class WalletFundingController extends Controller implements HasMiddleware
                         );
 
                         if ($paidAmount > 0) {
-                            $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
-                            $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
-                            if ($chargeValue > 0) {
-                                if ($chargeType === 'percentage') {
-                                    $amount = round($paidAmount / (1 + ($chargeValue / 100)), 2);
-                                    $charge = round($paidAmount - $amount, 2);
-                                } else {
-                                    $amount = max(0.0, $paidAmount - $chargeValue);
-                                    $charge = round($paidAmount - $amount, 2);
-                                }
-                            } else {
-                                $amount = $paidAmount;
-                                $charge = 0.0;
-                            }
+                            $chargeConfig = self::calculateFundingCharge($paidAmount, 'dva');
+                            $charge       = $chargeConfig['charge'];
+                            $creditAmount = max(0.0, $paidAmount - $charge);
 
                             $dvaIntent = [
                                 'user_id' => $va->user_id,
-                                'amount'  => $amount,
+                                'amount'  => $creditAmount,
                                 'charge'  => $charge,
                                 'total'   => $paidAmount,
                                 'gateway' => 'payscribe_dva',
@@ -1432,20 +1481,15 @@ class WalletFundingController extends Controller implements HasMiddleware
 
             // If intent is not found in cache, match user by customer.email directly
             if (!$intent && $user) {
-                $paidAmount  = (float) ($payload['amount'] ?? $data['amount'] ?? 0);
-                $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
-                $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
-                if ($chargeValue > 0) {
-                    if ($chargeType === 'percentage') {
-                        $amount = round($paidAmount / (1 + ($chargeValue / 100)), 2);
-                        $charge = round($paidAmount - $amount, 2);
-                    } else {
-                        $amount = max(0.0, $paidAmount - $chargeValue);
-                        $charge = round($paidAmount - $amount, 2);
-                    }
+                $paidAmount   = (float) ($payload['amount'] ?? $data['amount'] ?? 0);
+                $chargeConfig = self::calculateFundingCharge($paidAmount, 'gateway');
+
+                if ($chargeConfig['type'] === 'percentage' && $chargeConfig['value'] > 0) {
+                    $amount = round($paidAmount / (1 + ($chargeConfig['value'] / 100)), 2);
+                    $charge = round($paidAmount - $amount, 2);
                 } else {
-                    $amount = $paidAmount;
-                    $charge = 0.0;
+                    $charge = min($paidAmount, $chargeConfig['charge']);
+                    $amount = max(0.0, $paidAmount - $charge);
                 }
 
                 $intent = [
@@ -1488,14 +1532,13 @@ class WalletFundingController extends Controller implements HasMiddleware
                     $matchedUser = $userEmail ? \App\Models\User::where('email', $userEmail)->first() : $user;
 
                     if ($matchedUser) {
-                        $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
-                        $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
-                        if ($chargeType === 'percentage') {
-                            $amount = round($totalPaid / (1 + ($chargeValue / 100)), 2);
+                        $chargeConfig = self::calculateFundingCharge($totalPaid, 'gateway');
+                        if ($chargeConfig['type'] === 'percentage' && $chargeConfig['value'] > 0) {
+                            $amount = round($totalPaid / (1 + ($chargeConfig['value'] / 100)), 2);
                             $charge = round($totalPaid - $amount, 2);
                         } else {
-                            $amount = max(0.0, $totalPaid - $chargeValue);
-                            $charge = $totalPaid - $amount;
+                            $charge = min($totalPaid, $chargeConfig['charge']);
+                            $amount = max(0.0, $totalPaid - $charge);
                         }
 
                         $fallbackIntent = [

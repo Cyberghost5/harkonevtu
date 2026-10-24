@@ -99,9 +99,18 @@
             </div>
 
             {{-- Charges note --}}
-            <p class="text-xs text-slate-400 dark:text-slate-500 text-center">
-                Bank transfer charges apply depending on your sending bank. Wallet is credited for the net amount received.
-            </p>
+            @php
+                $bankChargeCfg = \App\Http\Controllers\WalletFundingController::calculateFundingCharge(1000, 'dva');
+            @endphp
+            @if ($bankChargeCfg['value'] > 0)
+                <p class="text-xs text-slate-500 dark:text-slate-400 text-center">
+                    Note: A service charge of <strong>{{ $bankChargeCfg['type'] === 'percentage' ? $bankChargeCfg['value'] . '%' : '₦' . number_format($bankChargeCfg['value'], 2) }}</strong> applies per transfer. Your wallet is automatically credited with the net amount.
+                </p>
+            @else
+                <p class="text-xs text-slate-400 dark:text-slate-500 text-center">
+                    Bank transfer charges apply depending on your sending bank. Wallet is credited for the net amount received.
+                </p>
+            @endif
         </div>
 
         {{-- Option to generate more (if any configured gateway accounts are missing) --}}

@@ -47,8 +47,9 @@ class PricingController extends Controller
         $examPins = ExamPinType::active()->orderBy('name')->get();
 
         // ── Service charge ────────────────────────────────────────────────────
-        $txChargeType  = AppSetting::get('transaction_charge_type', 'flat');
-        $txChargeValue = (float) AppSetting::get('transaction_charge_value', 0);
+        $txChargeConfig = \App\Http\Controllers\WalletFundingController::calculateFundingCharge(1000, 'gateway');
+        $txChargeType   = $txChargeConfig['type'];
+        $txChargeValue  = $txChargeConfig['value'];
 
         return view('pricing.index', compact(
             'networks',
