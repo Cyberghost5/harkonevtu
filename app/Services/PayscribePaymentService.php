@@ -190,6 +190,17 @@ class PayscribePaymentService
             }
 
             $token = $slug ?? $details['id'] ?? $details['token'] ?? null;
+            $linkId = $details['link_id'] ?? $details['id'] ?? $slug ?? null;
+
+            if (!empty($linkId)) {
+                Cache::put('payscribe_link_' . $linkId, $payload['reference'], now()->addHours(24));
+            }
+            if (!empty($slug)) {
+                Cache::put('payscribe_link_' . $slug, $payload['reference'], now()->addHours(24));
+            }
+            if (!empty($token)) {
+                Cache::put('payscribe_link_' . $token, $payload['reference'], now()->addHours(24));
+            }
 
             return [
                 'success'      => true,

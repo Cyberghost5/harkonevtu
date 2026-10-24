@@ -1278,14 +1278,39 @@ class WalletFundingController extends Controller implements HasMiddleware
 
         $isValid = \App\Services\PayscribePaymentService::validateWebhookSignature($request);
 
-        $event     = strtolower((string) ($request->json('event') ?? $request->header('x-payscribe-event') ?? $request->input('event') ?? ''));
         $data      = $request->json('data') ?? $payload;
+        $event     = strtolower((string) (
+            $payload['event_type'] 
+            ?? $data['event_type'] 
+            ?? $request->json('event_type') 
+            ?? $request->json('event') 
+            ?? $payload['event'] 
+            ?? $data['event'] 
+            ?? $request->header('x-payscribe-event') 
+            ?? $request->input('event') 
+            ?? ''
+        ));
+
+        $linkId  = (string) ($payload['link_id'] ?? $data['link_id'] ?? '');
+        $transId = (string) ($payload['trans_id'] ?? $data['trans_id'] ?? $payload['event_id'] ?? '');
+        $email   = $payload['customer']['email'] ?? $data['customer']['email'] ?? $data['email'] ?? $payload['email'] ?? null;
+        $user    = $email ? \App\Models\User::where('email', $email)->first() : null;
+
         $reference = (string) (
-            $payload['ref'] ?? $data['ref'] ?? $data['reference'] ?? $payload['reference']
-            ?? $data['trans_id'] ?? $payload['trans_id'] ?? $request->input('reference') ?? ('PSC_' . time())
+            $payload['ref'] ?? $data['ref'] ?? $data['reference'] ?? $payload['reference'] ?? ''
         );
-        $email     = $payload['customer']['email'] ?? $data['customer']['email'] ?? $data['email'] ?? $payload['email'] ?? null;
-        $user      = $email ? \App\Models\User::where('email', $email)->first() : null;
+
+        if (empty($reference) && !empty($linkId) && Cache::has('payscribe_link_' . $linkId)) {
+            $reference = (string) Cache::get('payscribe_link_' . $linkId);
+        }
+
+        if (empty($reference) && $user && Cache::has('user_latest_funding_ref_' . $user->id)) {
+            $reference = (string) Cache::get('user_latest_funding_ref_' . $user->id);
+        }
+
+        if (empty($reference)) {
+            $reference = !empty($transId) ? $transId : (!empty($linkId) ? ('PSC_' . $linkId) : ('PSC_' . time()));
+        }
 
         ApiLog::record([
             'user_id'     => $user?->id,
@@ -1319,70 +1344,76 @@ class WalletFundingController extends Controller implements HasMiddleware
         ], true) || in_array($statusStr, ['success', 'successful', 'paid', 'completed'], true);
 
         if ($isSuccessEvent) {
+            $accountType   = strtolower((string) ($payload['customer']['account_type'] ?? $data['customer']['account_type'] ?? ''));
+            $isPaymentLink = ($event === 'payment_link.paid') || !empty($linkId);
+
             // ── 1. Check for PayScribe DVA Payment (virtual account transfer) ──────
-            $dvaAccountNumber = $payload['customer']['number'] 
-                ?? $data['customer']['number'] 
-                ?? $payload['account_number'] 
-                ?? $data['account_number'] 
-                ?? null;
+            // Only process DVA if this is not a payment link and not a dynamic account
+            if (!$isPaymentLink && $accountType !== 'dynamic') {
+                $dvaAccountNumber = $payload['customer']['number'] 
+                    ?? $data['customer']['number'] 
+                    ?? $payload['account_number'] 
+                    ?? $data['account_number'] 
+                    ?? null;
 
-            if ($dvaAccountNumber) {
-                $va = VirtualAccount::where('account_number', $dvaAccountNumber)
-                    ->where('provider', 'payscribe')
-                    ->first();
+                if ($dvaAccountNumber) {
+                    $va = VirtualAccount::where('account_number', $dvaAccountNumber)
+                        ->where('provider', 'payscribe')
+                        ->first();
 
-                if ($va) {
-                    $dvaRef = (string) (
-                        $payload['trans_id'] 
-                        ?? $data['trans_id'] 
-                        ?? ($payload['transaction']['session_id'] ?? null) 
-                        ?? ($data['transaction']['session_id'] ?? null) 
-                        ?? $reference
-                    );
+                    if ($va) {
+                        $dvaRef = (string) (
+                            $payload['trans_id'] 
+                            ?? $data['trans_id'] 
+                            ?? ($payload['transaction']['session_id'] ?? null) 
+                            ?? ($data['transaction']['session_id'] ?? null) 
+                            ?? $reference
+                        );
 
-                    if (WalletTransaction::where('reference', $dvaRef)->exists()) {
-                        return response('ok');
-                    }
+                        if (WalletTransaction::where('reference', $dvaRef)->exists()) {
+                            return response('ok');
+                        }
 
-                    $paidAmount = (float) (
-                        $payload['amount'] 
-                        ?? $data['amount'] 
-                        ?? ($payload['transaction']['amount'] ?? null) 
-                        ?? ($data['transaction']['amount'] ?? null) 
-                        ?? 0
-                    );
+                        $paidAmount = (float) (
+                            $payload['amount'] 
+                            ?? $data['amount'] 
+                            ?? ($payload['transaction']['amount'] ?? null) 
+                            ?? ($data['transaction']['amount'] ?? null) 
+                            ?? 0
+                        );
 
-                    if ($paidAmount > 0) {
-                        $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
-                        $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
-                        if ($chargeValue > 0) {
-                            if ($chargeType === 'percentage') {
-                                $amount = round($paidAmount / (1 + ($chargeValue / 100)), 2);
-                                $charge = round($paidAmount - $amount, 2);
+                        if ($paidAmount > 0) {
+                            $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
+                            $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
+                            if ($chargeValue > 0) {
+                                if ($chargeType === 'percentage') {
+                                    $amount = round($paidAmount / (1 + ($chargeValue / 100)), 2);
+                                    $charge = round($paidAmount - $amount, 2);
+                                } else {
+                                    $amount = max(0.0, $paidAmount - $chargeValue);
+                                    $charge = round($paidAmount - $amount, 2);
+                                }
                             } else {
-                                $amount = max(0.0, $paidAmount - $chargeValue);
-                                $charge = round($paidAmount - $amount, 2);
+                                $amount = $paidAmount;
+                                $charge = 0.0;
                             }
-                        } else {
-                            $amount = $paidAmount;
-                            $charge = 0.0;
+
+                            $dvaIntent = [
+                                'user_id' => $va->user_id,
+                                'amount'  => $amount,
+                                'charge'  => $charge,
+                                'total'   => $paidAmount,
+                                'gateway' => 'payscribe_dva',
+                            ];
+
+                            try {
+                                $this->performCredit($dvaRef, $dvaIntent);
+                            } catch (\RuntimeException $e) {
+                                Log::info('PayScribe DVA webhook: transaction already processed', ['reference' => $dvaRef]);
+                            }
+
+                            return response('ok');
                         }
-
-                        $dvaIntent = [
-                            'user_id' => $va->user_id,
-                            'amount'  => $amount,
-                            'charge'  => $charge,
-                            'total'   => $paidAmount,
-                            'gateway' => 'payscribe_dva',
-                        ];
-
-                        try {
-                            $this->performCredit($dvaRef, $dvaIntent);
-                        } catch (\RuntimeException $e) {
-                            Log::info('PayScribe DVA webhook: transaction already processed', ['reference' => $dvaRef]);
-                        }
-
-                        return response('ok');
                     }
                 }
             }
@@ -1393,14 +1424,41 @@ class WalletFundingController extends Controller implements HasMiddleware
             }
 
             // Idempotency: Skip if already processed and credited
-            if (WalletTransaction::where('reference', $reference)->exists()) {
+            if (WalletTransaction::where('reference', $reference)->exists() || (!empty($transId) && WalletTransaction::where('reference', $transId)->exists())) {
                 return response('ok');
             }
 
             $intent = Cache::get('funding_intent_' . $reference);
 
+            // If intent is not found in cache, match user by customer.email directly
+            if (!$intent && $user) {
+                $paidAmount  = (float) ($payload['amount'] ?? $data['amount'] ?? 0);
+                $chargeType  = AppSetting::get('transaction_charge_type', 'flat');
+                $chargeValue = (float) AppSetting::get('transaction_charge_value', 0);
+                if ($chargeValue > 0) {
+                    if ($chargeType === 'percentage') {
+                        $amount = round($paidAmount / (1 + ($chargeValue / 100)), 2);
+                        $charge = round($paidAmount - $amount, 2);
+                    } else {
+                        $amount = max(0.0, $paidAmount - $chargeValue);
+                        $charge = round($paidAmount - $amount, 2);
+                    }
+                } else {
+                    $amount = $paidAmount;
+                    $charge = 0.0;
+                }
+
+                $intent = [
+                    'user_id' => $user->id,
+                    'amount'  => $amount,
+                    'charge'  => $charge,
+                    'total'   => $paidAmount,
+                    'gateway' => 'payscribe',
+                ];
+            }
+
             if ($intent) {
-                $paidAmount = (float) ($payload['amount'] ?? $data['amount'] ?? $data['paid_amount'] ?? 0);
+                $paidAmount = (float) ($payload['amount'] ?? $data['amount'] ?? $data['paid_amount'] ?? $intent['total'] ?? 0);
                 $currency   = strtoupper((string) ($payload['currency'] ?? $data['currency'] ?? 'NGN'));
 
                 if ($paidAmount >= (float) $intent['total'] && ($currency === 'NGN' || empty($currency))) {
@@ -1419,8 +1477,9 @@ class WalletFundingController extends Controller implements HasMiddleware
                     ]);
                 }
             } else {
-                // Fallback verification directly from PayScribe API
-                $verification = \App\Services\PayscribePaymentService::verifyTransaction($reference);
+                // Final fallback verification directly from PayScribe API
+                $lookup = !empty($transId) ? $transId : $reference;
+                $verification = \App\Services\PayscribePaymentService::verifyTransaction($lookup);
 
                 if ($verification['success'] && $verification['paid']) {
                     $totalPaid = (float) $verification['amount'];
