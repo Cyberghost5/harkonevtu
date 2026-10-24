@@ -28,7 +28,83 @@ class PayscribePaymentGatewayTest extends TestCase
         $this->assertTrue(PayscribePaymentService::isEnabled());
         $this->assertEquals('ps_sec_test_67890', PayscribePaymentService::getSecretKey());
         $this->assertEquals('ps_pub_test_12345', PayscribePaymentService::getPublicKey());
+        $this->assertEquals('ps_pub_test_12345', PayscribePaymentService::getApiKey());
+        $this->assertEquals('ps_sec_test_67890', PayscribePaymentService::getWebhookSecret());
         $this->assertEquals('https://api.payscribe.ng/api/v1', PayscribePaymentService::getBaseUrl());
+    }
+
+    public function test_payscribe_smart_key_resolution_dashboard_orientation(): void
+    {
+        // On PayScribe Dashboard: ps_live_... is Secret Key, pk_live_... is Public Key
+        AppSetting::set('payscribe_secret_key', 'ps_live_053ab4ed700034fd9df71aa6e8dacb202f14b9910e2d3747dab700318c58c0a0');
+        AppSetting::set('payscribe_public_key', 'pk_live_3f17ecc0a898b683485761861b2aaee5');
+
+        $this->assertEquals('pk_live_3f17ecc0a898b683485761861b2aaee5', PayscribePaymentService::getApiKey());
+        $this->assertEquals('ps_live_053ab4ed700034fd9df71aa6e8dacb202f14b9910e2d3747dab700318c58c0a0', PayscribePaymentService::getWebhookSecret());
+
+        // Webhook verification works with ps_live_ key
+        $payload = json_encode(['event' => 'payment_link.paid', 'ref' => 'PSC_DASH_123']);
+        $secret = 'ps_live_053ab4ed700034fd9df71aa6e8dacb202f14b9910e2d3747dab700318c58c0a0';
+        $sig = hash_hmac('sha256', $payload, $secret);
+        $request = Request::create('/webhook/payscribe', 'POST', [], [], [], [
+            'HTTP_X_PAYSCRIBE_SIGNATURE' => $sig,
+            'CONTENT_TYPE'               => 'application/json',
+        ], $payload);
+        $this->assertTrue(PayscribePaymentService::validateWebhookSignature($request));
+
+        // Checkout session uses pk_live_ token in Bearer header
+        Http::fake([
+            '*api.payscribe.ng/api/v1/links*' => function (\Illuminate\Http\Client\Request $req) {
+                $this->assertEquals('Bearer pk_live_3f17ecc0a898b683485761861b2aaee5', $req->header('Authorization')[0]);
+                return Http::response([
+                    'status'      => true,
+                    'description' => 'Link created',
+                    'message'     => ['details' => ['slug' => 'chk_slug_123']],
+                ], 200);
+            },
+        ]);
+        $res = PayscribePaymentService::createCheckoutSession([
+            'reference' => 'PSC_DASH_123',
+            'amount'    => 1000,
+        ]);
+        $this->assertTrue($res['success']);
+    }
+
+    public function test_payscribe_smart_key_resolution_swapped_orientation(): void
+    {
+        // When swapped in settings (Secret Key = pk_live_..., Public Key = ps_live_...)
+        AppSetting::set('payscribe_secret_key', 'pk_live_3f17ecc0a898b683485761861b2aaee5');
+        AppSetting::set('payscribe_public_key', 'ps_live_053ab4ed700034fd9df71aa6e8dacb202f14b9910e2d3747dab700318c58c0a0');
+
+        $this->assertEquals('pk_live_3f17ecc0a898b683485761861b2aaee5', PayscribePaymentService::getApiKey());
+        $this->assertEquals('ps_live_053ab4ed700034fd9df71aa6e8dacb202f14b9910e2d3747dab700318c58c0a0', PayscribePaymentService::getWebhookSecret());
+
+        // Webhook verification STILL works with ps_live_ key!
+        $payload = json_encode(['event' => 'payment_link.paid', 'ref' => 'PSC_SWAP_123']);
+        $secret = 'ps_live_053ab4ed700034fd9df71aa6e8dacb202f14b9910e2d3747dab700318c58c0a0';
+        $sig = hash_hmac('sha256', $payload, $secret);
+        $request = Request::create('/webhook/payscribe', 'POST', [], [], [], [
+            'HTTP_X_PAYSCRIBE_SIGNATURE' => $sig,
+            'CONTENT_TYPE'               => 'application/json',
+        ], $payload);
+        $this->assertTrue(PayscribePaymentService::validateWebhookSignature($request));
+
+        // Checkout session still sends pk_live_ token!
+        Http::fake([
+            '*api.payscribe.ng/api/v1/links*' => function (\Illuminate\Http\Client\Request $req) {
+                $this->assertEquals('Bearer pk_live_3f17ecc0a898b683485761861b2aaee5', $req->header('Authorization')[0]);
+                return Http::response([
+                    'status'      => true,
+                    'description' => 'Link created',
+                    'message'     => ['details' => ['slug' => 'chk_slug_swap']],
+                ], 200);
+            },
+        ]);
+        $res = PayscribePaymentService::createCheckoutSession([
+            'reference' => 'PSC_SWAP_123',
+            'amount'    => 2000,
+        ]);
+        $this->assertTrue($res['success']);
     }
 
     public function test_admin_can_select_payscribe_as_active_gateway(): void
