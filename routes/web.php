@@ -124,7 +124,16 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked']
         Route::post('/gateway/verify/flutterwave', [WalletFundingController::class, 'verifyFlutterwave'])->name('gateway.verify.flutterwave');
         Route::post('/gateway/verify/monnify',     [WalletFundingController::class, 'verifyMonnify'])->name('gateway.verify.monnify');
         Route::match(['get', 'post'], '/gateway/verify/payscribe', [WalletFundingController::class, 'verifyPayscribe'])->name('gateway.verify.payscribe');
+        Route::match(['get', 'post'], '/gateway/ve', [WalletFundingController::class, 'verifyPayscribe']);
         Route::get('/gateway/flutterwave/callback',[WalletFundingController::class, 'flutterwaveRedirectCallback'])->name('gateway.flutterwave.callback');
+    });
+
+    // Short PayScribe callback route (under 50 chars for PayScribe link redirect limits)
+    Route::match(['get', 'post'], '/ps/cb', [WalletFundingController::class, 'verifyPayscribe'])->name('payscribe.callback');
+    // Alias for PayScribe links that were truncated at 50 chars (/wallet/fund/gateway/ve)
+    Route::match(['get', 'post'], '/wallet/fund/gateway/ve', [WalletFundingController::class, 'verifyPayscribe']);
+
+    Route::prefix('wallet/fund')->name('wallet.fund.')->group(function () {
 
         // Manual proof of payment
         Route::post('/manual/submit', [WalletFundingController::class, 'submitManual'])->name('manual.submit');

@@ -128,7 +128,7 @@ class PaymentApiController extends Controller
                 'name'         => $user->name ?? $user->username,
                 'email'        => $user->email,
                 'phone'        => $user->phone ?? '',
-                'redirect_url' => url('/api/v1/payments/verify?reference=' . $reference),
+                'redirect_url' => url('/ps/cb'),
             ]);
 
             return response()->json([

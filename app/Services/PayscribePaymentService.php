@@ -136,7 +136,7 @@ class PayscribePaymentService
             'currency'        => $payload['currency'] ?? 'NGN',
             'amount'          => (float) $payload['amount'],
             'success_message' => $payload['success_message'] ?? 'Thank you! Payment received.',
-            'redirect'        => $payload['redirect_url'] ?? $payload['redirect'] ?? url('/wallet/fund/gateway/verify/payscribe'),
+            'redirect'        => $payload['redirect_url'] ?? $payload['redirect'] ?? url('/ps/cb'),
             'custom_link'     => $payload['custom_link'] ?? '',
         ];
 
@@ -228,7 +228,7 @@ class PayscribePaymentService
      * @param string $reference
      * @return array ['success' => bool, 'paid' => bool, 'amount' => float, 'currency' => string, 'reference' => string, 'message' => string, 'data' => array]
      */
-    public static function verifyTransaction(string $reference): array
+    public static function verifyTransaction(string $reference, ?string $transId = null): array
     {
         self::$lastError = null;
         $secretKey = self::getApiKey() ?: self::getSecretKey();
@@ -238,8 +238,9 @@ class PayscribePaymentService
             return ['success' => false, 'paid' => false, 'message' => self::$lastError, 'amount' => 0.0, 'currency' => 'NGN', 'reference' => $reference, 'data' => []];
         }
 
-        // Official Payscribe transaction requery endpoint
-        $endpoint = self::getBaseUrl() . '/requery/?trans_id=' . urlencode($reference);
+        // Official Payscribe transaction requery endpoint - query trans_id (PayScribe UUID) if provided, otherwise reference
+        $lookupId = (!empty($transId)) ? $transId : $reference;
+        $endpoint = self::getBaseUrl() . '/requery/?trans_id=' . urlencode($lookupId);
         $startTime = hrtime(true);
 
         try {

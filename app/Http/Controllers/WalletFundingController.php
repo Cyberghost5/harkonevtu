@@ -466,6 +466,10 @@ class WalletFundingController extends Controller implements HasMiddleware
             'gateway' => $gateway,
         ], now()->addHour());
 
+        // Cache the latest funding reference for user & session so short redirect (/ps/cb) recovers it seamlessly
+        session(['latest_funding_reference' => $reference]);
+        Cache::put('user_latest_funding_ref_' . $user->id, $reference, now()->addHour());
+
         $checkoutUrl   = null;
         $checkoutToken = null;
 
@@ -478,7 +482,7 @@ class WalletFundingController extends Controller implements HasMiddleware
                 'name'         => $user->name,
                 'email'        => $user->email,
                 'phone'        => $user->phone ?? '',
-                'redirect_url' => route('wallet.fund.gateway.verify.payscribe', ['reference' => $reference]),
+                'redirect_url' => url('/ps/cb'),
                 'metadata'     => [
                     'user_id'   => $user->id,
                     'reference' => $reference,
@@ -668,7 +672,19 @@ class WalletFundingController extends Controller implements HasMiddleware
 
     public function verifyPayscribe(Request $request): JsonResponse|RedirectResponse
     {
-        $reference = (string) ($request->input('reference') ?? $request->query('reference') ?? $request->query('ref') ?? $request->query('transaction_id') ?? '');
+        $reference = (string) (
+            $request->input('reference') 
+            ?? $request->query('reference') 
+            ?? $request->query('ref') 
+            ?? session('latest_funding_reference')
+            ?? (auth()->check() ? Cache::get('user_latest_funding_ref_' . auth()->id()) : null)
+            ?? ''
+        );
+        $transId   = (string) ($request->input('trans_id') ?? $request->query('trans_id') ?? $request->query('transaction_id') ?? '');
+
+        if (empty($reference) && !empty($transId)) {
+            $reference = $transId;
+        }
 
         $isJson = $request->expectsJson() || $request->isJson() || $request->ajax() || $request->isMethod('POST');
 
@@ -680,7 +696,7 @@ class WalletFundingController extends Controller implements HasMiddleware
         }
 
         // Already credited by webhook or earlier verify
-        if (WalletTransaction::where('reference', $reference)->exists()) {
+        if (WalletTransaction::where('reference', $reference)->exists() || (!empty($transId) && WalletTransaction::where('reference', $transId)->exists())) {
             if ($isJson) {
                 return response()->json([
                     'success'  => true,
@@ -700,14 +716,32 @@ class WalletFundingController extends Controller implements HasMiddleware
             return redirect()->route('wallet.fund.gateway')->with('error', 'Invalid or expired payment reference.');
         }
 
-        $result = \App\Services\PayscribePaymentService::verifyTransaction($reference);
+        $result = \App\Services\PayscribePaymentService::verifyTransaction($reference, $transId ?: null);
 
         if (!$result['success'] || !$result['paid']) {
-            $msg = $result['message'] ?: 'PayScribe payment verification failed or payment is not completed.';
+            // Check if webhook already processed in background while verify was running
+            if (WalletTransaction::where('reference', $reference)->exists() || (!empty($transId) && WalletTransaction::where('reference', $transId)->exists())) {
+                if ($isJson) {
+                    return response()->json([
+                        'success'  => true,
+                        'message'  => 'Payment already processed and credited.',
+                        'redirect' => route('dashboard'),
+                    ]);
+                }
+                return redirect()->route('dashboard')->with('success', 'Payment already processed and credited.');
+            }
+
+            $rawMsg = $result['message'] ?? '';
+            if (stripos($rawMsg, 'does not exist') !== false || stripos($rawMsg, 'not found') !== false) {
+                $msg = 'Your payment is being confirmed by PayScribe. Once confirmed, your wallet will be credited automatically via webhook.';
+            } else {
+                $msg = $rawMsg ?: 'PayScribe payment verification failed or payment is not completed.';
+            }
+
             if ($isJson) {
                 return response()->json(['success' => false, 'message' => $msg], 422);
             }
-            return redirect()->route('wallet.fund.gateway')->with('error', $msg);
+            return redirect()->route('wallet.fund.gateway')->with('info', $msg);
         }
 
         if ((float) $result['amount'] < (float) $intent['total']) {
