@@ -627,6 +627,15 @@ class ExtraApiController extends Controller
             return response()->json(['status' => false, 'message' => 'Your identity is already verified.'], 422);
         }
 
+        // Normalize id_type and id_number if passed directly as bvn or nin
+        $idType = strtolower((string) ($request->input('id_type') ?? ($request->filled('bvn') ? 'bvn' : ($request->filled('nin') ? 'nin' : ''))));
+        $idNumber = (string) ($request->input('id_number') ?? ($idType === 'bvn' ? $request->input('bvn') : $request->input('nin')));
+
+        $request->merge([
+            'id_type'   => $idType,
+            'id_number' => $idNumber,
+        ]);
+
         $request->validate([
             'id_type'   => ['required', 'string', 'in:bvn,nin'],
             'id_number' => ['required', 'string', 'numeric', 'digits:11'],
@@ -643,6 +652,39 @@ class ExtraApiController extends Controller
             ], 422);
         }
 
+        // Dedicated KYC Fee check & debit
+        $fee = (float) AppSetting::get('kyc_fee', 0);
+        $wallet = $user->wallet;
+        $reference = 'KYC-' . strtoupper(uniqid());
+
+        if ($fee > 0) {
+            if (!$wallet || $wallet->balance < $fee) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Insufficient wallet balance. You need ₦' . number_format($fee, 2) . ' in your account to verify your KYC.'
+                ], 422);
+            }
+
+            DB::transaction(function () use ($user, $wallet, $fee, $request, $reference) {
+                $before = $wallet->balance;
+                $wallet->decrement('balance', $fee);
+                $wallet->increment('total_spent', $fee);
+
+                WalletTransaction::create([
+                    'user_id'        => $user->id,
+                    'wallet_id'      => $wallet->id,
+                    'type'           => 'debit',
+                    'amount'         => $fee,
+                    'balance_before' => $before,
+                    'balance_after'  => $wallet->balance,
+                    'description'    => 'KYC Verification Fee (' . strtoupper($request->id_type) . ')',
+                    'reference'      => $reference,
+                    'status'         => 'success',
+                    'metadata'       => ['service' => 'kyc_verification', 'id_type' => $request->id_type],
+                ]);
+            });
+        }
+
         // Delegate identity verification to unified KycService (PayScribe or QoreID)
         $result = $kycService->verifyIdentity(
             $request->id_type,
@@ -654,15 +696,30 @@ class ExtraApiController extends Controller
 
         if ($result['status']) {
             $user->update(['kyc_status' => 'verified']);
+
+            // Auto-generate Dedicated Virtual Accounts (DVA) if BVN was submitted
+            $dvaAccounts = [];
+            if ($request->id_type === 'bvn') {
+                try {
+                    $dvaResult = \App\Services\VirtualAccountService::generateDva($user, $request->id_number);
+                    $dvaAccounts = $dvaResult['accounts'] ?? [];
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('DVA auto-generation on KYC error: ' . $e->getMessage());
+                }
+            }
+
             return response()->json([
                 'status'  => true,
                 'message' => $result['message'] ?? 'Identity verified successfully.',
                 'data'    => [
-                    'id_type'    => strtoupper($request->id_type),
-                    'kyc_status' => 'verified',
-                    'tier'       => 'Tier 2 (Verified)',
-                    'provider'   => $result['provider'] ?? $kycService->getActiveProvider(),
-                    'details'    => $result['data'] ?? null,
+                    'id_type'        => strtoupper($request->id_type),
+                    'kyc_status'     => 'verified',
+                    'tier'           => 'Tier 2 (Verified)',
+                    'provider'       => $result['provider'] ?? $kycService->getActiveProvider(),
+                    'fee_charged'    => $fee,
+                    'dva_accounts'   => $dvaAccounts,
+                    'wallet_balance' => (float) $user->fresh()->wallet?->balance,
+                    'details'        => $result['data'] ?? null,
                 ],
             ]);
         }
@@ -730,6 +787,33 @@ class ExtraApiController extends Controller
         $logo1   = AppSetting::get('logo1');
         $logo2   = AppSetting::get('logo2');
 
+        $latestVersion   = AppSetting::get('app_version', '4.0.0');
+        $minVersion      = AppSetting::get('app_min_version', '1.0.0');
+        $forceUpdateFlag = AppSetting::get('app_force_update', '0') === '1';
+
+        // Check client version if sent via header or query
+        $clientVersion = $request->header('X-App-Version')
+            ?? $request->input('app_version')
+            ?? $request->input('version');
+
+        $isForceUpdate = false;
+        $isUpdateAvailable = false;
+
+        if (!empty($clientVersion)) {
+            // Normalize versions (strip 'v' prefix and build metadata +...)
+            $cleanClient = ltrim(explode('+', explode('-', $clientVersion)[0])[0], 'vV');
+            $cleanLatest = ltrim(explode('+', explode('-', $latestVersion)[0])[0], 'vV');
+            $cleanMin    = ltrim(explode('+', explode('-', $minVersion)[0])[0], 'vV');
+
+            $isBelowLatest = version_compare($cleanClient, $cleanLatest, '<');
+            $isBelowMin    = version_compare($cleanClient, $cleanMin, '<');
+
+            $isUpdateAvailable = $isBelowLatest;
+            $isForceUpdate     = ($forceUpdateFlag && $isBelowLatest) || $isBelowMin;
+        } else {
+            $isForceUpdate = $forceUpdateFlag;
+        }
+
         return response()->json([
             'status'  => true,
             'message' => 'App configuration retrieved successfully.',
@@ -742,9 +826,10 @@ class ExtraApiController extends Controller
                 'logo2_url'           => $logo2 && Storage::disk('public')->exists($logo2) ? asset(Storage::url($logo2)) : null,
                 'currency'            => 'NGN',
                 'currency_symbol'     => '₦',
-                'app_version'         => AppSetting::get('app_version', '1.0.0'),
-                'min_version'         => AppSetting::get('app_min_version', '1.0.0'),
-                'force_update'        => AppSetting::get('app_force_update', '0') === '1',
+                'app_version'         => $latestVersion,
+                'min_version'         => $minVersion,
+                'force_update'        => $isForceUpdate,
+                'is_update_available' => $isUpdateAvailable,
                 'maintenance_mode'    => AppSetting::get('app_maintenance_mode', '0') === '1',
                 'maintenance_message' => AppSetting::get('app_maintenance_message', 'Platform is under routine maintenance. Please check back shortly.'),
                 
@@ -769,6 +854,11 @@ class ExtraApiController extends Controller
                     'monnify_api_key'      => AppSetting::get('monnify_api_key', ''),
                     'monnify_contract_no'  => AppSetting::get('monnify_contract_no', ''),
                     'payscribe_public_key' => config('services.payscribe.public_key') ?: AppSetting::get('payscribe_public_key', ''),
+                ],
+
+                'google_auth' => [
+                    'enabled'   => AppSetting::get('google_auth_status', '1') === '1',
+                    'client_id' => AppSetting::get('google_client_id') ?: config('services.google.client_id', ''),
                 ],
 
                 'support' => [

@@ -16,6 +16,10 @@ class EnsurePinIsSet
             return redirect()->route('login');
         }
 
+        if ($request->routeIs('pin.setup', 'pin.store', 'profile.complete', 'profile.complete.store', 'logout')) {
+            return $next($request);
+        }
+
         if (empty($user->phone)) {
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([

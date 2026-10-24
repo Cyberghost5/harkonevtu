@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AppSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -47,6 +48,12 @@ class PinController extends Controller
 
         $user->transaction_pin = Hash::make($request->pin);
         $user->save();
+
+        // If email verification is enabled and user is not verified yet, send to verification notice
+        if (AppSetting::get('email_verification', '1') === '1' && !$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice')
+                ->with('success', 'Transaction PIN created successfully! Please verify your email address to continue.');
+        }
 
         return redirect()->route('dashboard')
             ->with('success', 'Transaction PIN created successfully. Your account is now fully set up!');

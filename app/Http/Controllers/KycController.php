@@ -98,11 +98,25 @@ class KycController extends Controller
 
         if ($result['status']) {
             $user->update(['kyc_status' => 'verified']);
+
+            // Auto-generate Dedicated Virtual Accounts (DVA) if BVN was submitted
+            $dvaAccounts = [];
+            if ($request->id_type === 'bvn') {
+                try {
+                    $dvaResult = \App\Services\VirtualAccountService::generateDva($user, $request->id_number);
+                    $dvaAccounts = $dvaResult['accounts'] ?? [];
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('DVA auto-generation on KYC error: ' . $e->getMessage());
+                }
+            }
+
             return response()->json([
-                'status'   => true,
-                'message'  => $result['message'] ?? 'Identity verified successfully.',
-                'provider' => $result['provider'] ?? 'kyc',
-                'data'     => $result['data'] ?? null,
+                'status'       => true,
+                'message'      => $result['message'] ?? 'Identity verified successfully.',
+                'provider'     => $result['provider'] ?? 'kyc',
+                'fee_charged'  => $fee,
+                'dva_accounts' => $dvaAccounts,
+                'data'         => $result['data'] ?? null,
             ]);
         }
 

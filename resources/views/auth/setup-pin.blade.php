@@ -87,6 +87,15 @@
                 <p>Keep your PIN private. You'll need it to approve every transaction. Do not share it with anyone.</p>
             </div>
         </div>
+
+        <div class="mt-4 text-center">
+            <form method="POST" action="{{ route('logout') }}" class="inline">
+                @csrf
+                <button type="submit" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition">
+                    Sign out and set up later
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

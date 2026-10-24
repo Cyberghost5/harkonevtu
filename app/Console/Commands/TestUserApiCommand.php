@@ -87,7 +87,10 @@ class TestUserApiCommand extends Command
 
         // 7. Test POST /upgrade-agent
         $this->line("\n7. Testing POST /api/v1/user/upgrade-agent...");
-        $res = $this->callApi('POST', '/api/v1/user/upgrade-agent', [], $token);
+        $res = $this->callApi('POST', '/api/v1/user/upgrade-agent', [
+            'pin'             => '1234',
+            'confirm_upgrade' => true,
+        ], $token);
         $this->displayResult($res);
 
         $this->info("\n=================================================");

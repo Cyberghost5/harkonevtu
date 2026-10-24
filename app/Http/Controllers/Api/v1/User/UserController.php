@@ -238,37 +238,68 @@ class UserController extends Controller
         $user = $request->user()->load('wallet');
 
         if ($user->user_type === 'agent') {
-            return $this->jsonResponse(true, 'Your account is already upgraded to Agent tier.');
+            return $this->jsonResponse(false, 'Your account is already upgraded to Agent tier.', [
+                'user' => $user,
+            ], 400);
         }
 
-        $upgradeFee = (float) AppSetting::get('agent_upgrade_fee', 0);
+        // 1. Explicit confirmation guard
+        if (!$request->boolean('confirm_upgrade')) {
+            return $this->jsonResponse(false, 'Explicit confirmation is required to upgrade to Agent tier.', null, 422);
+        }
+
+        // 2. Mandatory Transaction PIN verification
+        $providedPin = $request->pin ?? $request->transaction_pin;
+        if (!$providedPin) {
+            return $this->jsonResponse(false, 'Transaction PIN is required to authorize account upgrade.', null, 422, [
+                'pin' => ['Transaction PIN is required.']
+            ]);
+        }
+
+        if (!$user->verifyPin($providedPin)) {
+            return $this->jsonResponse(false, 'Incorrect transaction PIN. Please try again.', null, 422, [
+                'pin' => ['Incorrect transaction PIN.']
+            ]);
+        }
+
+        $wallet = $user->wallet;
+        if (!$wallet) {
+            return $this->jsonResponse(false, 'Wallet not found for this account.', null, 404);
+        }
+
+        $upgradeFee = (float) AppSetting::get('agent_upgrade_fee', 2500);
 
         if ($upgradeFee > 0) {
-            if ($user->wallet->balance < $upgradeFee) {
-                return $this->jsonResponse(false, 'Insufficient wallet balance. Upgrade fee is ₦' . number_format($upgradeFee, 2), null, 400);
+            if (!$wallet->hasSufficientBalance($upgradeFee)) {
+                return $this->jsonResponse(
+                    false,
+                    'Insufficient wallet balance. Upgrade fee is ₦' . number_format($upgradeFee, 2) . ', your balance is ₦' . number_format($wallet->balance, 2) . '.',
+                    null,
+                    400
+                );
             }
 
-            // Deduct upgrade fee atomically
-            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $upgradeFee) {
-                $wallet = $user->wallet()->lockForUpdate()->first();
-                $balBefore = $wallet->balance;
-                $wallet->decrement('balance', $upgradeFee);
-                $wallet->increment('total_spent', $upgradeFee);
+            // Deduct upgrade fee atomically using wallet debit helper
+            try {
+                \Illuminate\Support\Facades\DB::transaction(function () use ($user, $upgradeFee) {
+                    $w = \App\Models\Wallet::where('user_id', $user->id)->lockForUpdate()->firstOrFail();
+                    if (!$w->hasSufficientBalance($upgradeFee)) {
+                        throw new \Exception('Insufficient wallet balance for agent upgrade.');
+                    }
 
-                \App\Models\WalletTransaction::create([
-                    'user_id'        => $user->id,
-                    'wallet_id'      => $wallet->id,
-                    'type'           => 'debit',
-                    'amount'         => $upgradeFee,
-                    'balance_before' => $balBefore,
-                    'balance_after'  => $wallet->balance,
-                    'reference'      => 'UPG-' . strtoupper(Str::random(10)),
-                    'description'    => 'Account upgrade to Agent tier',
-                    'status'         => 'success',
-                ]);
+                    $reference = 'UPG-' . strtoupper(Str::random(10));
+                    $w->debit(
+                        $upgradeFee,
+                        'Account upgrade to Agent tier',
+                        $reference,
+                        ['service' => 'agent_upgrade', 'fee' => $upgradeFee]
+                    );
 
-                $user->update(['user_type' => 'agent']);
-            });
+                    $user->update(['user_type' => 'agent']);
+                });
+            } catch (\Throwable $e) {
+                return $this->jsonResponse(false, 'Upgrade transaction failed: ' . $e->getMessage(), null, 500);
+            }
         } else {
             $user->update(['user_type' => 'agent']);
         }
@@ -294,224 +325,16 @@ class UserController extends Controller
             return $this->jsonResponse(false, 'Validation failed.', null, 422, $validator->errors());
         }
 
-        $bvn     = $request->bvn;
-        $results = [];
-        $errors  = [];
-
         $activeProviders = VirtualAccount::getActiveProviders();
 
         if (empty($activeProviders)) {
             return $this->jsonResponse(false, 'Virtual account generation is currently disabled or no payment gateway is available.', null, 400);
         }
 
-        // ── 1. Paystack DVA (Wema Bank + Titan Bank) ──────────────────────────
-        if (in_array('paystack', $activeProviders)) {
-            $paystackSecret = config('services.paystack.secret_key') ?: AppSetting::get('paystack_secret_key');
-            try {
-                $customerCode = $this->getOrCreatePaystackCustomer($user, $bvn, $paystackSecret);
+        $res = \App\Services\VirtualAccountService::generateDva($user, $request->bvn);
 
-                foreach (['wema-bank', 'titan-paystack'] as $bankCode) {
-                    $existing = VirtualAccount::where('user_id', $user->id)
-                        ->where('provider', 'paystack')
-                        ->where('bank_code', $bankCode)
-                        ->first();
-
-                    if ($existing) {
-                        $results[] = $existing;
-                        continue;
-                    }
-
-                    $payload = [
-                        'customer'       => $customerCode,
-                        'preferred_bank' => $bankCode,
-                        'phone'          => $user->phone,
-                    ];
-                    $start = hrtime(true);
-                    $resp = Http::withToken($paystackSecret)
-                        ->timeout(20)
-                        ->post('https://api.paystack.co/dedicated_account', $payload);
-                    $duration = (int) ((hrtime(true) - $start) / 1e6);
-
-                    ApiLog::record([
-                        'user_id'     => $user->id,
-                        'service'     => 'dva_generate',
-                        'provider'    => 'paystack',
-                        'reference'   => $bankCode,
-                        'endpoint'    => 'https://api.paystack.co/dedicated_account',
-                        'method'      => 'POST',
-                        'payload'     => $payload,
-                        'response'    => $resp->json(),
-                        'http_status' => $resp->status(),
-                        'duration_ms' => $duration,
-                        'success'     => $resp->successful() && $resp->json('status') === true,
-                    ]);
-
-                    if ($resp->successful() && $resp->json('status') === true) {
-                        $data = $resp->json('data');
-                        $va   = VirtualAccount::create([
-                            'user_id'        => $user->id,
-                            'provider'       => 'paystack',
-                            'bank_name'      => $data['bank']['name'],
-                            'bank_code'      => $bankCode,
-                            'account_number' => $data['account_number'],
-                            'account_name'   => $data['account_name'],
-                            'metadata'       => $data,
-                        ]);
-                        $results[] = $va;
-                    } else {
-                        $errors[] = 'Paystack (' . $bankCode . '): ' . ($resp->json('message') ?? 'Request failed');
-                    }
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Paystack DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
-                $errors[] = 'Paystack: ' . $e->getMessage();
-            }
-        }
-
-        // ── 2. Flutterwave DVA ───────────────────────────────────────────────
-        if (in_array('flutterwave', $activeProviders)) {
-            $flwSecret = config('services.flutterwave.secret_key') ?: AppSetting::get('flutterwave_secret_key');
-            try {
-                $existing = VirtualAccount::where('user_id', $user->id)
-                    ->where('provider', 'flutterwave')
-                    ->first();
-
-                if ($existing) {
-                    $results[] = $existing;
-                } else {
-                    $payload = [
-                        'email'        => $user->email,
-                        'currency'     => 'NGN',
-                        'is_permanent' => true,
-                        'bvn'          => $bvn,
-                        'tx_ref'       => 'DVA_FLW_' . $user->id . '_' . time(),
-                        'narration'    => $user->name,
-                    ];
-                    $start = hrtime(true);
-                    $resp = Http::withToken($flwSecret)
-                        ->timeout(20)
-                        ->post('https://api.flutterwave.com/v3/virtual-account-numbers', $payload);
-                    $duration = (int) ((hrtime(true) - $start) / 1e6);
-
-                    ApiLog::record([
-                        'user_id'     => $user->id,
-                        'service'     => 'dva_generate',
-                        'provider'    => 'flutterwave',
-                        'reference'   => $payload['tx_ref'],
-                        'endpoint'    => 'https://api.flutterwave.com/v3/virtual-account-numbers',
-                        'method'      => 'POST',
-                        'payload'     => $payload,
-                        'response'    => $resp->json(),
-                        'http_status' => $resp->status(),
-                        'duration_ms' => $duration,
-                        'success'     => $resp->successful() && $resp->json('status') === 'success',
-                    ]);
-
-                    if ($resp->successful() && $resp->json('status') === 'success') {
-                        $data = $resp->json('data');
-                        $va   = VirtualAccount::create([
-                            'user_id'        => $user->id,
-                            'provider'       => 'flutterwave',
-                            'bank_name'      => $data['bank_name'],
-                            'bank_code'      => 'flutterwave_dva',
-                            'account_number' => $data['account_number'],
-                            'account_name'   => $data['account_name'] ?? $user->name,
-                            'metadata'       => $data,
-                        ]);
-                        $results[] = $va;
-                    } else {
-                        $errors[] = 'Flutterwave: ' . ($resp->json('message') ?? 'Request failed');
-                    }
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Flutterwave DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
-                $errors[] = 'Flutterwave: ' . $e->getMessage();
-            }
-        }
-
-        // ── 3. Monnify DVA ───────────────────────────────────────────────────
-        if (in_array('monnify', $activeProviders)) {
-            try {
-                $existing = VirtualAccount::where('user_id', $user->id)
-                    ->where('provider', 'monnify')
-                    ->get();
-
-                if ($existing->isNotEmpty()) {
-                    foreach ($existing as $acc) {
-                        $results[] = $acc;
-                    }
-                } else {
-                    $data = \App\Services\MonnifyService::generateReservedAccounts($user, $bvn);
-                    $accountsList = [];
-                    if (!empty($data['accounts']) && is_array($data['accounts'])) {
-                        $accountsList = $data['accounts'];
-                    } elseif (!empty($data['accountNumber'])) {
-                        $accountsList = [$data];
-                    }
-
-                    foreach ($accountsList as $acc) {
-                        $va = VirtualAccount::updateOrCreate(
-                            [
-                                'user_id'        => $user->id,
-                                'provider'       => 'monnify',
-                                'account_number' => $acc['accountNumber'],
-                            ],
-                            [
-                                'bank_name'    => $acc['bankName'] ?? 'Monnify Bank',
-                                'bank_code'    => $acc['bankCode'] ?? null,
-                                'account_name' => $acc['accountName'] ?? $user->name,
-                                'metadata'     => $acc,
-                            ]
-                        );
-                        $results[] = $va;
-                    }
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Monnify DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
-                $errors[] = 'Monnify: ' . $e->getMessage();
-            }
-        }
-
-        // ── 4. PayScribe DVA (9PSB & PalmPay) ─────────────────────────────────
-        if (in_array('payscribe', $activeProviders)) {
-            try {
-                $existing = VirtualAccount::where('user_id', $user->id)
-                    ->where('provider', 'payscribe')
-                    ->get();
-
-                if ($existing->isNotEmpty()) {
-                    foreach ($existing as $acc) {
-                        $results[] = $acc;
-                    }
-                } else {
-                    $data = \App\Services\PayscribePaymentService::generateVirtualAccounts($user, $bvn);
-                    $accountsList = $data['accounts'] ?? [];
-
-                    foreach ($accountsList as $acc) {
-                        $va = VirtualAccount::updateOrCreate(
-                            [
-                                'user_id'        => $user->id,
-                                'provider'       => 'payscribe',
-                                'account_number' => $acc['account_number'],
-                            ],
-                            [
-                                'bank_name'    => $acc['bank_name'] ?? 'PayScribe Bank',
-                                'bank_code'    => $acc['bank_code'] ?? null,
-                                'account_name' => $acc['account_name'] ?? $user->name,
-                                'metadata'     => $acc,
-                            ]
-                        );
-                        $results[] = $va;
-                    }
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('PayScribe DVA error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
-                $errors[] = 'PayScribe: ' . $e->getMessage();
-            }
-        }
-
-        if (empty($results)) {
-            return $this->jsonResponse(false, 'Could not generate virtual accounts. ' . (!empty($errors) ? implode(' | ', $errors) : 'No payment gateways are currently active.'), null, 400);
+        if (empty($res['accounts'])) {
+            return $this->jsonResponse(false, 'Could not generate virtual accounts. ' . (!empty($res['errors']) ? implode(' | ', $res['errors']) : 'No payment gateways are currently active.'), null, 400);
         }
 
         if ($user->kyc_status !== 'verified') {
@@ -519,56 +342,8 @@ class UserController extends Controller
         }
 
         return $this->jsonResponse(true, 'Virtual bank accounts generated successfully.', [
-            'accounts' => $results,
+            'accounts' => $res['accounts'],
         ]);
-    }
-
-    private function getOrCreatePaystackCustomer(User $user, string $bvn, string $secretKey): string
-    {
-        $existing = VirtualAccount::where('user_id', $user->id)
-            ->where('provider', 'paystack')
-            ->whereNotNull('metadata')
-            ->first();
-
-        if ($existing) {
-            $code = $existing->metadata['customer']['customer_code']
-                 ?? $existing->metadata['customer_code']
-                 ?? null;
-            if ($code) return $code;
-        }
-
-        $nameParts = explode(' ', $user->name, 2);
-        $payload = [
-            'email'      => $user->email,
-            'first_name' => $nameParts[0],
-            'last_name'  => $nameParts[1] ?? '',
-            'phone'      => $user->phone ?? '',
-        ];
-        $start = hrtime(true);
-        $resp = Http::withToken($secretKey)
-            ->timeout(20)
-            ->post('https://api.paystack.co/customer', $payload);
-        $duration = (int) ((hrtime(true) - $start) / 1e6);
-
-        ApiLog::record([
-            'user_id'     => $user->id,
-            'service'     => 'dva_customer_create',
-            'provider'    => 'paystack',
-            'reference'   => 'dva_cust_' . $user->id,
-            'endpoint'    => 'https://api.paystack.co/customer',
-            'method'      => 'POST',
-            'payload'     => $payload,
-            'response'    => $resp->json(),
-            'http_status' => $resp->status(),
-            'duration_ms' => $duration,
-            'success'     => $resp->successful() && $resp->json('status') === true,
-        ]);
-
-        if (!$resp->successful() || !$resp->json('status')) {
-            throw new \RuntimeException($resp->json('message') ?? 'Failed to create Paystack customer');
-        }
-
-        return $resp->json('data.customer_code');
     }
 
     /**

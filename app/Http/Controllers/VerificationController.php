@@ -21,6 +21,9 @@ class VerificationController extends Controller
         $user = auth()->user();
 
         if ($user->hasVerifiedEmail()) {
+            if (!$user->hasPinSet()) {
+                return redirect()->route('pin.setup');
+            }
             return redirect()->route('dashboard');
         }
 
@@ -29,11 +32,21 @@ class VerificationController extends Controller
 
     public function verifyEmail(EmailVerificationRequest $request): RedirectResponse
     {
-        if ($request->user()->hasVerifiedEmail()) {
+        $user = $request->user();
+
+        if ($user->hasVerifiedEmail()) {
+            if (!$user->hasPinSet()) {
+                return redirect()->route('pin.setup');
+            }
             return redirect()->route('dashboard');
         }
 
         $request->fulfill(); // marks email as verified + fires Verified event
+
+        if (!$user->hasPinSet()) {
+            return redirect()->route('pin.setup')
+                ->with('success', 'Email verified successfully! Please set up your transaction PIN to continue.');
+        }
 
         return redirect()->route('dashboard')->with('success', 'Email verified successfully. Welcome to ' . \App\Models\AppSetting::get('site_name', config('app.name')) . '!');
     }
@@ -41,6 +54,9 @@ class VerificationController extends Controller
     public function resendEmail(Request $request): RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
+            if (!$request->user()->hasPinSet()) {
+                return redirect()->route('pin.setup');
+            }
             return redirect()->route('dashboard');
         }
 

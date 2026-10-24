@@ -186,15 +186,17 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Latest App Version</label>
-                        <input type="text" name="app_version" value="{{ $s['app_version'] ?? '1.0.0' }}"
-                               placeholder="1.0.0"
+                        <input type="text" name="app_version" value="{{ $s['app_version'] ?? '4.0.0' }}"
+                               placeholder="4.0.0"
                                class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                        <p class="text-xs text-slate-500 mt-1">e.g. 4.0.0 or 4.0.1. Users with lower version numbers will be prompted to update.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Minimum Supported Version</label>
                         <input type="text" name="app_min_version" value="{{ $s['app_min_version'] ?? '1.0.0' }}"
                                placeholder="1.0.0"
                                class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                        <p class="text-xs text-slate-500 mt-1">Users below this version are strictly forced to update.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Force Update Mobile App</label>
@@ -202,6 +204,7 @@
                             <option value="0" {{ ($s['app_force_update'] ?? '0') == '0' ? 'selected' : '' }}>No (Optional Update)</option>
                             <option value="1" {{ ($s['app_force_update'] ?? '0') == '1' ? 'selected' : '' }}>Yes (Enforce Update)</option>
                         </select>
+                        <p class="text-xs text-slate-500 mt-1">When set to Yes, only devices running a version lower than Latest App Version are locked to the update screen.</p>
                     </div>
                 </div>
 

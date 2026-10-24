@@ -593,6 +593,16 @@ class AuthController extends Controller
         $googleId = $request->input('google_id');
         $name = $request->input('name');
 
+        // Dynamically set Socialite config from AppSetting if present
+        $clientId     = AppSetting::get('google_client_id') ?: config('services.google.client_id');
+        $clientSecret = AppSetting::get('google_client_secret') ?: config('services.google.client_secret');
+        if ($clientId) {
+            config(['services.google.client_id' => $clientId]);
+        }
+        if ($clientSecret) {
+            config(['services.google.client_secret' => $clientSecret]);
+        }
+
         if ($request->filled('id_token')) {
             try {
                 $verifyResponse = \Illuminate\Support\Facades\Http::get('https://oauth2.googleapis.com/tokeninfo', [
@@ -615,11 +625,23 @@ class AuthController extends Controller
             }
         } elseif ($request->filled('access_token')) {
             try {
-                $socialiteUser = \Laravel\Socialite\Facades\Socialite::driver('google')->userFromToken($request->input('access_token'));
-                if ($socialiteUser) {
-                    $email = $socialiteUser->getEmail();
-                    $googleId = $socialiteUser->getId();
-                    $name = $socialiteUser->getName() ?? $name;
+                // Verify directly with Google userinfo endpoint (reliable for OAuth access tokens)
+                $userInfoResponse = \Illuminate\Support\Facades\Http::withToken($request->input('access_token'))
+                    ->get('https://www.googleapis.com/oauth2/v3/userinfo');
+
+                if ($userInfoResponse->successful()) {
+                    $userInfo = $userInfoResponse->json();
+                    $email    = $userInfo['email'] ?? $email;
+                    $googleId = $userInfo['sub'] ?? $googleId;
+                    $name     = $userInfo['name'] ?? $name;
+                } else {
+                    // Fallback to Socialite if configured
+                    $socialiteUser = \Laravel\Socialite\Facades\Socialite::driver('google')->userFromToken($request->input('access_token'));
+                    if ($socialiteUser) {
+                        $email = $socialiteUser->getEmail();
+                        $googleId = $socialiteUser->getId();
+                        $name = $socialiteUser->getName() ?? $name;
+                    }
                 }
             } catch (\Exception $e) {
                 Log::error('Google Access Token verification exception: ' . $e->getMessage());
@@ -652,6 +674,13 @@ class AuthController extends Controller
             }
             if ($dirty) {
                 $user->save();
+            }
+            if (!$user->wallet) {
+                $user->wallet()->create([
+                    'balance'      => 0.00,
+                    'total_funded' => 0.00,
+                    'total_spent'  => 0.00,
+                ]);
             }
         } else {
             $baseUsername = Str::slug(explode('@', $email)[0], '');

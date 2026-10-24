@@ -205,13 +205,9 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        // Redirect based on email verification setting
-        if (AppSetting::get('email_verification', '1') === '1') {
-            return redirect()->route('verification.notice');
-        }
-
-        // Verification disabled - go directly to PIN setup
-        return redirect()->route('pin.setup');
+        // Direct user immediately to PIN setup so they must set it before doing anything else
+        return redirect()->route('pin.setup')
+            ->with('success', 'Registration successful! Please set your 4-digit transaction PIN before doing anything else.');
     }
 
     // ─── Login OTP ────────────────────────────────────────────────────────────
