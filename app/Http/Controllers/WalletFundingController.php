@@ -1068,6 +1068,7 @@ class WalletFundingController extends Controller implements HasMiddleware
                         if (($vData['status'] ?? '') === 'success' && ($vData['currency'] ?? '') === 'NGN') {
                             $email = $vData['customer']['email'] ?? null;
                             $user = \App\Models\User::where('email', $email)->first();
+                            if ($user) {
                                 $totalPaid    = ($vData['amount'] ?? 0) / 100;
                                 $chargeConfig = self::calculateFundingCharge($totalPaid, 'gateway');
                                 if ($chargeConfig['type'] === 'percentage' && $chargeConfig['value'] > 0) {
