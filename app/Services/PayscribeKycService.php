@@ -25,7 +25,7 @@ class PayscribeKycService
                 : 'https://api.payscribe.ng/api/v1';
         }
 
-        $this->secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
+        $this->secretKey = \App\Services\PayscribePaymentService::getApiKey();
     }
 
     /**

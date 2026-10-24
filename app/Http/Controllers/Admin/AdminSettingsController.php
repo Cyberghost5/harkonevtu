@@ -242,6 +242,7 @@ class AdminSettingsController extends Controller
             $hasCred  = !empty($credValues[$cfg['cred']])
                 || !empty(config("services.{$name}.secret_key"))
                 || !empty(config("services.{$name}.api_key"))
+                || !empty(config("services.{$name}.public_key"))
                 || !empty(config("services.{$name}.token"));
             $isEnabled = ($credValues[$cfg['status']] ?? '1') !== '0';
             if ($hasCred && $isEnabled) {

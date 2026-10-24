@@ -882,9 +882,9 @@ class BillsApiController extends Controller
 
     private function validateMeterPayscribe($disco, $meterType, $meterNumber): array
     {
-        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
-        if (!$secretKey) {
-            return ['success' => false, 'message' => 'Payscribe secret key is not configured.'];
+        $apiKey = \App\Services\PayscribePaymentService::getApiKey();
+        if (!$apiKey) {
+            return ['success' => false, 'message' => 'Payscribe API key is not configured. Please enter your Public Key / API Token in Admin Settings -> API Keys.'];
         }
 
         $start    = hrtime(true);
@@ -897,7 +897,7 @@ class BillsApiController extends Controller
         ];
         $rawBody        = json_encode($payload);
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . $secretKey,
+            'Authorization' => 'Bearer ' . $apiKey,
             'Content-Type'  => 'text/plain',
         ];
         $data       = [];
@@ -1046,15 +1046,15 @@ class BillsApiController extends Controller
             }
 
             if ($api === 'payscribe') {
-                $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
-                if (!$secretKey) {
+                $apiKey = \App\Services\PayscribePaymentService::getApiKey();
+                if (!$apiKey) {
                     return [
                         'success'   => false,
                         'reference' => $reference,
                         'token'     => 'N/A',
                         'units'     => null,
-                        'message'   => 'Payscribe secret key is not configured.',
-                        'response'  => ['message' => 'Payscribe secret key is not configured.'],
+                        'message'   => 'Payscribe API key is not configured. Please enter your Public Key / API Token in Admin Settings -> API Keys.',
+                        'response'  => ['message' => 'Payscribe API key is not configured.'],
                     ];
                 }
 
@@ -1069,7 +1069,7 @@ class BillsApiController extends Controller
                     'ref'           => $reference,
                 ];
                 $requestHeaders = [
-                    'Authorization' => 'Bearer ' . $secretKey,
+                    'Authorization' => 'Bearer ' . $apiKey,
                     'Accept'        => 'application/json',
                     'Content-Type'  => 'application/json',
                 ];
@@ -1266,9 +1266,9 @@ class BillsApiController extends Controller
 
     private function validateCardPayscribe($provider, $smartcard): array
     {
-        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
-        if (!$secretKey) {
-            return ['success' => false, 'message' => 'Payscribe secret key is not configured.'];
+        $apiKey = \App\Services\PayscribePaymentService::getApiKey();
+        if (!$apiKey) {
+            return ['success' => false, 'message' => 'Payscribe API key is not configured. Please enter your Public Key / API Token in Admin Settings -> API Keys.'];
         }
 
         $start    = hrtime(true);
@@ -1279,7 +1279,7 @@ class BillsApiController extends Controller
         ];
         $rawBody        = json_encode($payload);
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . $secretKey,
+            'Authorization' => 'Bearer ' . $apiKey,
             'Accept'        => 'application/json',
             'Content-Type'  => 'application/json',
         ];
@@ -1424,13 +1424,13 @@ class BillsApiController extends Controller
             }
 
             if ($api === 'payscribe') {
-                $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
-                if (!$secretKey) {
+                $apiKey = \App\Services\PayscribePaymentService::getApiKey();
+                if (!$apiKey) {
                     return [
                         'success'   => false,
                         'reference' => $reference,
-                        'message'   => 'Payscribe secret key is not configured.',
-                        'response'  => ['message' => 'Payscribe secret key is not configured.'],
+                        'message'   => 'Payscribe API key is not configured. Please enter your Public Key / API Token in Admin Settings -> API Keys.',
+                        'response'  => ['message' => 'Payscribe API key is not configured.'],
                     ];
                 }
 
@@ -1443,7 +1443,7 @@ class BillsApiController extends Controller
                     'ref'           => $reference,
                 ];
                 $requestHeaders = [
-                    'Authorization' => 'Bearer ' . $secretKey,
+                    'Authorization' => 'Bearer ' . $apiKey,
                     'Accept'        => 'application/json',
                     'Content-Type'  => 'application/json',
                 ];
@@ -1600,14 +1600,14 @@ class BillsApiController extends Controller
             }
 
             if ($api === 'payscribe') {
-                $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
-                if (!$secretKey) {
+                $apiKey = \App\Services\PayscribePaymentService::getApiKey();
+                if (!$apiKey) {
                     return [
                         'success'   => false,
                         'reference' => $reference,
                         'tokens'    => [],
                         'pins'      => [],
-                        'message'   => 'Payscribe secret key is not configured.',
+                        'message'   => 'Payscribe API key is not configured. Please enter your Public Key / API Token in Admin Settings -> API Keys.',
                     ];
                 }
 
@@ -1622,7 +1622,7 @@ class BillsApiController extends Controller
                 ];
 
                 $requestHeaders = [
-                    'Authorization' => 'Bearer ' . $secretKey,
+                    'Authorization' => 'Bearer ' . $apiKey,
                     'Accept'        => 'application/json',
                     'Content-Type'  => 'application/json',
                 ];

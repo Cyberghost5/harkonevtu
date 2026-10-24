@@ -43,17 +43,22 @@ class PayscribePaymentService
         $pub = self::getPublicKey();
         $sec = self::getSecretKey();
 
-        // 1. If public key starts with pk_ or contains pub, it's the API key
-        if ($pub && (str_starts_with($pub, 'pk_') || str_contains($pub, 'pub'))) {
-            return $pub;
-        }
-
-        // 2. If secret key was set to the pk_ key
-        if ($sec && str_starts_with($sec, 'pk_')) {
+        // 1. If secret key was accidentally populated with the pk_ key, swap and use it
+        if ($sec && (str_starts_with($sec, 'pk_') || str_contains($sec, 'pub'))) {
             return $sec;
         }
 
-        return $pub ?: $sec;
+        // 2. If public key is provided, it is the designated API token for API requests
+        if (!empty($pub)) {
+            // If public key looks like a secret key (ps_... or >= 60 hex chars) while secret key looks like an API token
+            if ((str_starts_with($pub, 'ps_') || strlen($pub) >= 60) && $sec && !str_starts_with($sec, 'ps_')) {
+                return $sec;
+            }
+            return $pub;
+        }
+
+        // 3. Fallback to secret key if public key was left empty
+        return $sec;
     }
 
     /**

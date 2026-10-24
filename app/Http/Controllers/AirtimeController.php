@@ -479,12 +479,12 @@ class AirtimeController extends Controller
 
     private function callPayscribe(NetworkAirtime $network, float $amount, string $phone, string $reference): array
     {
-        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
-        if (!$secretKey) {
+        $apiKey = \App\Services\PayscribePaymentService::getApiKey();
+        if (!$apiKey) {
             return [
                 'success'   => false,
                 'reference' => $reference,
-                'response'  => ['message' => 'Payscribe secret key is not configured.'],
+                'response'  => ['message' => 'Payscribe API key is not configured. Please enter your Public Key / API Token in Admin Settings -> API Keys.'],
             ];
         }
 
@@ -501,7 +501,7 @@ class AirtimeController extends Controller
         $apiRef     = $reference;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . $secretKey,
+            'Authorization' => 'Bearer ' . $apiKey,
             'Accept'        => 'application/json',
             'Content-Type'  => 'application/json',
         ];

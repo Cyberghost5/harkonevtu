@@ -75,7 +75,7 @@ class ExtraApiController extends Controller
         $platform = BettingPlatform::where('slug', $request->platform)->active()->firstOrFail();
         $customer = trim($request->customer_id);
 
-        $payscribeKey = AppSetting::get('payscribe_public_key');
+        $payscribeKey = \App\Services\PayscribePaymentService::getApiKey();
         if ($payscribeKey) {
             $start = hrtime(true);
             $endpoint = "https://api.payscribe.ng/api/v1/betting/lookup?bet_id={$platform->slug}&customer_id={$customer}";

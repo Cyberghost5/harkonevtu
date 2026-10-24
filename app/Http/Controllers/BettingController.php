@@ -51,7 +51,7 @@ class BettingController extends Controller
             'customer_id' => ['required', 'string'],
         ]);
 
-        $payscribeKey = AppSetting::get('payscribe_public_key');
+        $payscribeKey = \App\Services\PayscribePaymentService::getApiKey();
         if (!$payscribeKey) {
             return response()->json(['error' => 'Payscribe API credentials not configured.'], 422);
         }
@@ -173,9 +173,9 @@ class BettingController extends Controller
             ], 422);
         }
 
-        $payscribeKey = AppSetting::get('payscribe_secret_key');
+        $payscribeKey = \App\Services\PayscribePaymentService::getApiKey();
         if (!$payscribeKey) {
-            return response()->json(['success' => false, 'message' => 'API integration keys are not set by the Administrator.'], 422);
+            return response()->json(['success' => false, 'message' => 'API integration keys are not set by the Administrator. Please configure your Payscribe Public Key / API Token in Admin Settings -> API Keys.'], 422);
         }
 
         $ref = 'BET-' . strtoupper(Str::random(12));

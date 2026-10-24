@@ -455,14 +455,14 @@ class ExamPinController extends Controller
         string $phone,
         string $reference
     ): array {
-        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
-        if (!$secretKey) {
+        $apiKey = \App\Services\PayscribePaymentService::getApiKey();
+        if (!$apiKey) {
             return [
                 'success'   => false,
                 'apiRef'    => $reference,
                 'pins'      => [],
                 'tokens'    => [],
-                'response'  => ['message' => 'Payscribe secret key is not configured.'],
+                'response'  => ['message' => 'Payscribe API key is not configured. Please enter your Public Key / API Token in Admin Settings -> API Keys.'],
             ];
         }
 
@@ -484,7 +484,7 @@ class ExamPinController extends Controller
         $responseHeaders = null;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . $secretKey,
+            'Authorization' => 'Bearer ' . $apiKey,
             'Accept'        => 'application/json',
             'Content-Type'  => 'application/json',
         ];

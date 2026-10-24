@@ -404,9 +404,9 @@ class CableController extends Controller
 
     private function validateCardPayscribe(CableProvider $provider, CablePlan $plan, string $smartcard): JsonResponse
     {
-        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
-        if (!$secretKey) {
-            return response()->json(['success' => false, 'message' => 'Payscribe secret key is not configured.'], 422);
+        $apiKey = \App\Services\PayscribePaymentService::getApiKey();
+        if (!$apiKey) {
+            return response()->json(['success' => false, 'message' => 'Payscribe API key is not configured. Please enter your Public Key / API Token in Admin Settings -> API Keys.'], 422);
         }
 
         // Payscribe cable validate requires the plan_id too
@@ -430,7 +430,7 @@ class CableController extends Controller
         $result     = null;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . $secretKey,
+            'Authorization' => 'Bearer ' . $apiKey,
             'Accept'        => 'application/json',
             'Content-Type'  => 'application/json',
         ];
@@ -645,13 +645,13 @@ class CableController extends Controller
         string $smartcard,
         string $reference
     ): array {
-        $secretKey = config('services.payscribe.secret_key') ?: AppSetting::get('payscribe_secret_key');
-        if (!$secretKey) {
+        $apiKey = \App\Services\PayscribePaymentService::getApiKey();
+        if (!$apiKey) {
             return [
                 'success'       => false,
                 'reference'     => $reference,
                 'customer_name' => null,
-                'response'      => ['message' => 'Payscribe secret key is not configured.'],
+                'response'      => ['message' => 'Payscribe API key is not configured. Please enter your Public Key / API Token in Admin Settings -> API Keys.'],
             ];
         }
 
@@ -670,7 +670,7 @@ class CableController extends Controller
         $customerName = null;
 
         $requestHeaders = [
-            'Authorization' => 'Bearer ' . $secretKey,
+            'Authorization' => 'Bearer ' . $apiKey,
             'Accept'        => 'application/json',
             'Content-Type'  => 'application/json',
         ];
