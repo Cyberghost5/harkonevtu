@@ -35,34 +35,26 @@ class PayscribePaymentService
 
     /**
      * Get the PayScribe API Token used for Bearer authentication in API requests.
-     * PayScribe API requires the Secret Key (ps_live_... / ps_sk_...) for API transactions (Airtime, Data, Bills, Betting, KYC).
-     * Automatically resolves the ps_ key whether saved in secret_key or public_key.
+     * Uses the Public Key (pk_live_... / pk_...) for API authentication.
+     * Automatically resolves the pk_ key whether saved in public_key or secret_key.
      */
     public static function getApiKey(): ?string
     {
-        $sec = self::getSecretKey();
         $pub = self::getPublicKey();
+        $sec = self::getSecretKey();
 
-        // 1. If secret key is provided and looks like a PayScribe secret key (ps_live, ps_sk, ps_, sk_, or >= 40 chars)
-        if ($sec && (
-            str_starts_with($sec, 'ps_') ||
-            str_starts_with($sec, 'sk_') ||
-            strlen($sec) >= 40
-        )) {
-            return $sec;
-        }
-
-        // 2. If the user accidentally placed the secret key (ps_...) in the public key field
-        if ($pub && (
-            str_starts_with($pub, 'ps_') ||
-            str_starts_with($pub, 'sk_') ||
-            strlen($pub) >= 40
-        )) {
+        // 1. Prioritize the public key if configured (pk_live_... or pk_test_...)
+        if ($pub && (str_starts_with($pub, 'pk_') || str_contains($pub, 'pub'))) {
             return $pub;
         }
 
-        // 3. Fallback to secret key if present, otherwise public key
-        return $sec ?: $pub;
+        // 2. If the user accidentally placed the public key in the secret_key field
+        if ($sec && (str_starts_with($sec, 'pk_') || str_contains($sec, 'pub'))) {
+            return $sec;
+        }
+
+        // 3. Fallback: prioritize public key, otherwise fallback to secret key
+        return $pub ?: $sec;
     }
 
     /**

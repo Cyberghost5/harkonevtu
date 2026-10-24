@@ -210,21 +210,21 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">
-                                Secret Key (API / Bearer Token)
+                                Secret Key (Webhook Secret)
                             </label>
                             <input type="text" name="payscribe_secret_key" value="{{ $s['payscribe_secret_key'] ?? '' }}"
                                    placeholder="ps_live_..."
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            <p class="text-[11px] text-slate-400 mt-1">Bearer token for API transactions (Airtime, Data, Bills, Betting, KYC) &amp; webhook signature verification (starts with <code class="text-xs">ps_live_</code>).</p>
+                            <p class="text-[11px] text-slate-400 mt-1">Used for PayScribe webhook signature verification (starts with <code class="text-xs">ps_live_</code>).</p>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">
-                                Public Key
+                                Public Key (API / Bearer Token)
                             </label>
                             <input type="text" name="payscribe_public_key" value="{{ $s['payscribe_public_key'] ?? '' }}"
                                    placeholder="pk_live_..."
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            <p class="text-[11px] text-slate-400 mt-1">Public token for client-side/frontend integrations (starts with <code class="text-xs">pk_live_</code>).</p>
+                            <p class="text-[11px] text-slate-400 mt-1">Bearer token for PayScribe API transactions &amp; validation (starts with <code class="text-xs">pk_live_</code>).</p>
                         </div>
                     </div>
                 </div>

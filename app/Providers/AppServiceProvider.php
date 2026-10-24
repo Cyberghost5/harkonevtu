@@ -49,13 +49,15 @@ class AppServiceProvider extends ServiceProvider
                 $rawPsSec = !empty($s['payscribe_secret_key']) ? $s['payscribe_secret_key'] : config('services.payscribe.secret_key');
                 $rawPsPub = !empty($s['payscribe_public_key']) ? $s['payscribe_public_key'] : config('services.payscribe.public_key');
 
-                // Determine the API Key (ps_live_... / ps_sk_...) for HTTP Bearer authentication
-                $psApiKey = ($rawPsSec && (str_starts_with($rawPsSec, 'ps_') || str_starts_with($rawPsSec, 'sk_') || strlen($rawPsSec) >= 40))
-                    ? $rawPsSec
-                    : (($rawPsPub && (str_starts_with($rawPsPub, 'ps_') || str_starts_with($rawPsPub, 'sk_') || strlen($rawPsPub) >= 40)) ? $rawPsPub : ($rawPsSec ?: $rawPsPub));
+                // Determine the API Key (using Public Key for Bearer auth as requested)
+                $psApiKey = ($rawPsPub && (str_starts_with($rawPsPub, 'pk_') || str_contains($rawPsPub, 'pub')))
+                    ? $rawPsPub
+                    : (($rawPsSec && (str_starts_with($rawPsSec, 'pk_') || str_contains($rawPsSec, 'pub'))) ? $rawPsSec : ($rawPsPub ?: $rawPsSec));
 
                 // Determine the Webhook Secret Key (ps_live_... / ps_sk_...)
-                $psWebhookSec = $psApiKey;
+                $psWebhookSec = ($rawPsSec && (str_starts_with($rawPsSec, 'ps_') || str_starts_with($rawPsSec, 'sk_') || strlen($rawPsSec) >= 40))
+                    ? $rawPsSec
+                    : ($rawPsPub && (str_starts_with($rawPsPub, 'ps_') || str_starts_with($rawPsPub, 'sk_') || strlen($rawPsPub) >= 40) ? $rawPsPub : $rawPsSec);
 
                 // Map database settings to dynamic configuration overrides
                 config([
@@ -75,9 +77,9 @@ class AppServiceProvider extends ServiceProvider
                     'services.globacom.email' => !empty($s['globacom_email']) ? $s['globacom_email'] : config('services.globacom.email'),
                     'services.globacom.sponsor_id' => !empty($s['globacom_sponsor_id']) ? $s['globacom_sponsor_id'] : config('services.globacom.sponsor_id'),
                     'services.globacom.bucket_id' => !empty($s['globacom_bucket_id']) ? $s['globacom_bucket_id'] : config('services.globacom.bucket_id'),
-                    'services.payscribe.secret_key' => $psApiKey,
+                    'services.payscribe.secret_key' => $psWebhookSec,
                     'services.payscribe.api_key' => $psApiKey,
-                    'services.payscribe.public_key' => $rawPsPub ?: $psApiKey,
+                    'services.payscribe.public_key' => $psApiKey,
                     'services.payscribe.webhook_secret' => $psWebhookSec,
                     'services.primebiller.token' => !empty($s['primebiller_api_key']) ? $s['primebiller_api_key'] : config('services.primebiller.token'),
                     'services.paystack.secret_key' => !empty($s['paystack_secret_key']) ? $s['paystack_secret_key'] : config('services.paystack.secret_key'),
