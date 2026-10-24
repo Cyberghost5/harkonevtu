@@ -180,16 +180,17 @@
                             default    => 'background:#f1f5f9;color:#475569',
                         };
                     @endphp
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                    <tr onclick="window.location='{{ route('admin.transactions.show', ['type' => 'service', 'id' => $tx->id]) }}'"
+                        class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                         <td class="px-5 py-3.5">
-                            <a href="{{ route('admin.transactions.index', ['search' => $tx->reference]) }}" class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                            <a href="{{ route('admin.transactions.show', ['type' => 'service', 'id' => $tx->id]) }}" class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:underline">
                                 {{ $tx->reference }}
                             </a>
                         </td>
                         <td class="px-3 py-3.5 text-xs font-medium text-slate-700 dark:text-slate-300 capitalize">
                             {{ str_replace('_', ' ', $tx->service_type) }}
                         </td>
-                        <td class="px-3 py-3.5 text-xs text-slate-600 dark:text-slate-400">
+                        <td class="px-3 py-3.5 text-xs text-slate-600 dark:text-slate-400" onclick="event.stopPropagation()">
                             @if($tx->user)
                                 <a href="{{ route('admin.users.show', $tx->user->id) }}" class="font-medium hover:underline text-slate-800 dark:text-slate-200">
                                     {{ $tx->user->name }}
@@ -255,9 +256,10 @@
                             default    => 'background:#f1f5f9;color:#475569',
                         };
                     @endphp
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                    <tr onclick="window.location='{{ route('admin.transactions.show', ['type' => 'wallet', 'id' => $wtx->id]) }}'"
+                        class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                         <td class="px-5 py-3.5">
-                            <a href="{{ route('admin.transactions.index', ['tab' => 'wallet', 'search' => $wtx->reference]) }}" class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                            <a href="{{ route('admin.transactions.show', ['type' => 'wallet', 'id' => $wtx->id]) }}" class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:underline">
                                 {{ $wtx->reference }}
                             </a>
                         </td>
@@ -268,7 +270,7 @@
                                 <span class="text-rose-600 dark:text-rose-400">- Debit</span>
                             @endif
                         </td>
-                        <td class="px-3 py-3.5 text-xs text-slate-600 dark:text-slate-400">
+                        <td class="px-3 py-3.5 text-xs text-slate-600 dark:text-slate-400" onclick="event.stopPropagation()">
                             @if($wtx->user)
                                 <a href="{{ route('admin.users.show', $wtx->user->id) }}" class="font-medium hover:underline text-slate-800 dark:text-slate-200">
                                     {{ $wtx->user->name }}

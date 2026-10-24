@@ -204,4 +204,169 @@ class ApiLog extends Model
 
         return $data;
     }
+
+    /**
+     * Extract candidate transaction references from this log (reference, payload, and response).
+     *
+     * @return array<string>
+     */
+    public function candidateReferences(): array
+    {
+        $refs = [];
+        if (!empty($this->reference)) {
+            $refs[] = trim((string) $this->reference);
+        }
+
+        $checkArray = function ($arr) use (&$refs, &$checkArray) {
+            if (!is_array($arr)) {
+                return;
+            }
+            $targetKeys = [
+                'reference', 'ref', 'trans_id', 'transaction_id', 'session_id',
+                'request_id', 'requestId', 'order_id', 'orderId', 'api_reference',
+                'transactionReference', 'paymentReference', 'tx_ref', 'flw_ref'
+            ];
+            foreach ($targetKeys as $k) {
+                if (isset($arr[$k]) && is_scalar($arr[$k])) {
+                    $val = trim((string) $arr[$k]);
+                    if ($val !== '' && strlen($val) >= 4) {
+                        $refs[] = $val;
+                    }
+                }
+            }
+            foreach (['data', 'transaction', 'customer', 'content'] as $nested) {
+                if (!empty($arr[$nested]) && is_array($arr[$nested])) {
+                    $checkArray($arr[$nested]);
+                }
+            }
+        };
+
+        if (is_array($this->payload)) {
+            $checkArray($this->payload);
+        }
+        if (is_array($this->response)) {
+            $checkArray($this->response);
+        }
+
+        return array_values(array_unique(array_filter($refs)));
+    }
+
+    /**
+     * Resolve the associated transaction for this single log.
+     *
+     * @return array{type: string, id: int, reference: string, url: string}|null
+     */
+    public function resolveTransaction(): ?array
+    {
+        if (isset($this->associated_transaction)) {
+            return $this->associated_transaction;
+        }
+
+        static::attachAssociatedTransactions([$this]);
+        return $this->associated_transaction ?? null;
+    }
+
+    /**
+     * Batch resolve and attach associated transactions to an iterable/collection of ApiLogs.
+     * Prevents N+1 queries by executing batched lookup across wallet and service tables.
+     *
+     * @param iterable<ApiLog> $logs
+     * @return void
+     */
+    public static function attachAssociatedTransactions(iterable $logs): void
+    {
+        $candidatesByLog = [];
+        $allCandidates   = [];
+
+        foreach ($logs as $index => $log) {
+            $cands = $log->candidateReferences();
+            $candidatesByLog[$index] = $cands;
+            foreach ($cands as $cand) {
+                $allCandidates[$cand] = true;
+            }
+        }
+
+        $candidateList = array_keys($allCandidates);
+        if (empty($candidateList)) {
+            foreach ($logs as $log) {
+                $log->associated_transaction = null;
+            }
+            return;
+        }
+
+        // 1. Direct match on WalletTransaction reference
+        $walletTxs = WalletTransaction::whereIn('reference', $candidateList)->get();
+
+        // 2. Direct match on ServiceTransaction reference or api_reference
+        $serviceTxs = ServiceTransaction::whereIn('reference', $candidateList)
+            ->orWhereIn('api_reference', $candidateList)
+            ->get();
+
+        // 3. Fallback: Check WalletTransaction metadata for any candidate not yet matched
+        $matchedDirectRefs = $walletTxs->pluck('reference')->merge($serviceTxs->pluck('reference'))->all();
+        $unmatched = array_diff($candidateList, $matchedDirectRefs);
+
+        if (!empty($unmatched)) {
+            $metaQueryChunks = array_chunk($unmatched, 20);
+            foreach ($metaQueryChunks as $chunk) {
+                $extraWallet = WalletTransaction::where(function ($q) use ($chunk) {
+                    foreach ($chunk as $cand) {
+                        $q->orWhere('metadata', 'like', '%' . $cand . '%');
+                    }
+                })->get();
+                $walletTxs = $walletTxs->merge($extraWallet);
+            }
+        }
+
+        // Build quick lookup dictionary
+        $txMap = [];
+
+        foreach ($walletTxs as $wtx) {
+            $info = [
+                'type'      => 'wallet',
+                'id'        => $wtx->id,
+                'reference' => $wtx->reference,
+                'amount'    => $wtx->amount,
+                'status'    => $wtx->status,
+                'url'       => route('admin.transactions.show', ['type' => 'wallet', 'id' => $wtx->id]),
+            ];
+            $txMap[$wtx->reference] = $info;
+
+            if (is_array($wtx->metadata)) {
+                foreach (['trans_id', 'session_id', 'reference', 'ref'] as $mk) {
+                    if (!empty($wtx->metadata[$mk]) && is_scalar($wtx->metadata[$mk])) {
+                        $txMap[(string) $wtx->metadata[$mk]] = $info;
+                    }
+                }
+            }
+        }
+
+        foreach ($serviceTxs as $stx) {
+            $info = [
+                'type'      => 'service',
+                'id'        => $stx->id,
+                'reference' => $stx->reference,
+                'amount'    => $stx->amount,
+                'status'    => $stx->status,
+                'url'       => route('admin.transactions.show', ['type' => 'service', 'id' => $stx->id]),
+            ];
+            $txMap[$stx->reference] = $info;
+            if (!empty($stx->api_reference)) {
+                $txMap[$stx->api_reference] = $info;
+            }
+        }
+
+        // Attach resolved transaction to each log
+        foreach ($logs as $index => $log) {
+            $matched = null;
+            $cands = $candidatesByLog[$index] ?? [];
+            foreach ($cands as $cand) {
+                if (isset($txMap[$cand])) {
+                    $matched = $txMap[$cand];
+                    break;
+                }
+            }
+            $log->associated_transaction = $matched;
+        }
+    }
 }

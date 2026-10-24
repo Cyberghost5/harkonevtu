@@ -85,13 +85,20 @@
                     <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Amount</th>
                     <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
                     <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Date</th>
+                    <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Action</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-50 dark:divide-slate-800">
                 @forelse($transactions as $tx)
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                    <td class="px-5 py-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">{{ $tx->reference }}</td>
-                    <td class="px-5 py-3">
+                <tr onclick="window.location='{{ route('admin.transactions.show', ['type' => $tab, 'id' => $tx->id]) }}'"
+                    class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
+                    <td class="px-5 py-3 font-mono text-xs">
+                        <a href="{{ route('admin.transactions.show', ['type' => $tab, 'id' => $tx->id]) }}"
+                           class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-vtu-primary transition-colors hover:underline">
+                            {{ $tx->reference }}
+                        </a>
+                    </td>
+                    <td class="px-5 py-3" onclick="event.stopPropagation()">
                         @if($tx->user)
                         <a href="{{ route('admin.users.show', $tx->user) }}" class="text-xs font-medium text-vtu-primary hover:underline">{{ $tx->user->name }}</a>
                         @else <span class="text-xs text-slate-400">N/A</span>
@@ -104,7 +111,7 @@
                         </span>
                     </td>
                     <td class="px-5 py-3 text-xs text-slate-500">{{ $tx->description }}</td>
-                    <td class="px-5 py-3 text-xs font-semibold {{ $tx->type === 'credit' ? 'text-emerald-600' : 'text-slate-900 dark:text-white' }}">
+                    <td class="px-5 py-3 text-xs font-semibold {{ $tx->type === 'credit' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white' }}">
                         {{ $tx->type === 'credit' ? '+' : '-' }}₦{{ number_format($tx->amount,2) }}
                     </td>
                     @else
@@ -119,9 +126,18 @@
                         @endif
                     </td>
                     <td class="px-5 py-3 text-[11px] text-slate-400">{{ $tx->created_at->format('d M y, H:i') }}</td>
+                    <td class="px-5 py-3 text-right" onclick="event.stopPropagation()">
+                        <a href="{{ route('admin.transactions.show', ['type' => $tab, 'id' => $tx->id]) }}"
+                           class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg text-vtu-primary bg-indigo-50 hover:bg-vtu-primary hover:text-white dark:bg-slate-800 dark:text-indigo-400 dark:hover:bg-vtu-primary dark:hover:text-white transition-colors shadow-sm">
+                            <span>Details</span>
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="px-5 py-8 text-center text-sm text-slate-400">No transactions found.</td></tr>
+                <tr><td colspan="8" class="px-5 py-8 text-center text-sm text-slate-400">No transactions found.</td></tr>
                 @endforelse
             </tbody>
         </table>

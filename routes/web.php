@@ -241,7 +241,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::post('/users/{user}/impersonate',   [AdminUserController::class, 'impersonate'])->name('users.impersonate');
 
     // Transactions
-    Route::get('/transactions',        [AdminTransactionController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions',                 [AdminTransactionController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/ref/{reference}', [AdminTransactionController::class, 'viewByReference'])->name('transactions.by-reference');
+    Route::get('/transactions/{type}/{id}',     [AdminTransactionController::class, 'show'])->name('transactions.show');
 
     // Funding Requests
     Route::get('/funding',             [AdminFundingController::class, 'index'])->name('funding.index');

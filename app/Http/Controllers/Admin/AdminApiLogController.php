@@ -63,6 +63,9 @@ class AdminApiLogController extends Controller
 
         $logs = $query->paginate(30)->withQueryString();
 
+        // Batch resolve associated transactions for all logs on the current page
+        ApiLog::attachAssociatedTransactions($logs);
+
         $services  = ApiLog::select('service')->distinct()->pluck('service');
         $providers = ApiLog::select('provider')->distinct()->pluck('provider');
 

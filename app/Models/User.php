@@ -80,6 +80,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(UserLoginLog::class);
     }
 
+    public function virtualAccounts(): HasMany
+    {
+        return $this->hasMany(VirtualAccount::class);
+    }
+
     // ─── PIN Helpers ──────────────────────────────────────────────────────────
 
     public function hasPinSet(): bool

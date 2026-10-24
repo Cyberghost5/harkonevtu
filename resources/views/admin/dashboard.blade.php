@@ -200,10 +200,21 @@
                             default    => 'background:#f1f5f9;color:#475569',
                         };
                     @endphp
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                        <td class="px-5 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">{{ substr($tx->reference ?? (string)$tx->id, 0, 12) }}...</td>
+                    <tr onclick="window.location='{{ route('admin.transactions.show', ['type' => 'service', 'id' => $tx->id]) }}'"
+                        class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                        <td class="px-5 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">
+                            <a href="{{ route('admin.transactions.show', ['type' => 'service', 'id' => $tx->id]) }}" class="font-bold text-slate-700 dark:text-slate-300 group-hover:text-vtu-primary transition-colors hover:underline">
+                                {{ substr($tx->reference ?? (string)$tx->id, 0, 14) }}...
+                            </a>
+                        </td>
                         <td class="px-3 py-3 text-xs font-medium text-slate-700 dark:text-slate-350 capitalize">{{ str_replace('_',' ',$tx->service_type ?? $tx->service ?? '-') }}</td>
-                        <td class="px-3 py-3 text-xs text-slate-600 dark:text-slate-400">{{ optional($tx->user)->displayName() ?? '-' }}</td>
+                        <td class="px-3 py-3 text-xs text-slate-600 dark:text-slate-400" onclick="event.stopPropagation()">
+                            @if($tx->user)
+                                <a href="{{ route('admin.users.show', $tx->user) }}" class="hover:text-vtu-primary hover:underline font-medium">{{ $tx->user->displayName() }}</a>
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td class="px-3 py-3 text-xs font-semibold text-slate-800 dark:text-slate-200 text-right">&#8358;{{ number_format($tx->amount, 2) }}</td>
                         <td class="px-3 py-3 text-xs text-slate-500 dark:text-slate-400">{{ $tx->created_at->format('d M, H:i') }}</td>
                         <td class="px-3 py-3 text-center">

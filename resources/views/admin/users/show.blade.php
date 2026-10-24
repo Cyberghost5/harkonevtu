@@ -187,17 +187,25 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-slate-50 dark:border-slate-800">
+                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reference</th>
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Description</th>
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Type</th>
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Amount</th>
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Balance After</th>
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Date</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50 dark:divide-slate-800">
                         @forelse($transactions as $wt)
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                            <td class="px-4 py-2.5 text-xs text-slate-600 dark:text-slate-400">{{ $wt->description }}</td>
+                        <tr onclick="window.location='{{ route('admin.transactions.show', ['type' => 'wallet', 'id' => $wt->id]) }}'"
+                            class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                            <td class="px-4 py-2.5 font-mono text-xs">
+                                <a href="{{ route('admin.transactions.show', ['type' => 'wallet', 'id' => $wt->id]) }}" class="font-bold text-slate-700 dark:text-slate-300 group-hover:text-vtu-primary hover:underline">
+                                    {{ substr($wt->reference ?? (string)$wt->id, 0, 14) }}...
+                                </a>
+                            </td>
+                            <td class="px-4 py-2.5 text-xs text-slate-600 dark:text-slate-400 max-w-xs truncate">{{ $wt->description }}</td>
                             <td class="px-4 py-2.5">
                                 <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full
                                     {{ $wt->type==='credit' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' }}">
@@ -209,9 +217,15 @@
                             </td>
                             <td class="px-4 py-2.5 text-xs font-medium text-slate-900 dark:text-white">₦{{ number_format($wt->balance_after,2) }}</td>
                             <td class="px-4 py-2.5 text-[11px] text-slate-400">{{ $wt->created_at->format('d M y, H:i') }}</td>
+                            <td class="px-4 py-2.5 text-right" onclick="event.stopPropagation()">
+                                <a href="{{ route('admin.transactions.show', ['type' => 'wallet', 'id' => $wt->id]) }}"
+                                   class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-lg text-vtu-primary bg-indigo-50 hover:bg-vtu-primary hover:text-white dark:bg-slate-800 dark:text-indigo-400 dark:hover:bg-vtu-primary dark:hover:text-white transition-colors">
+                                    <span>Details &rarr;</span>
+                                </a>
+                            </td>
                         </tr>
                         @empty
-                        <tr><td colspan="5" class="px-4 py-6 text-center text-sm text-slate-400">No wallet transactions.</td></tr>
+                        <tr><td colspan="7" class="px-4 py-6 text-center text-sm text-slate-400">No wallet transactions.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
