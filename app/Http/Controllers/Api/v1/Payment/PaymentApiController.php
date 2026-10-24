@@ -119,6 +119,16 @@ class PaymentApiController extends Controller
         }
 
         if ($activeGateway === 'payscribe') {
+            Cache::put('funding_intent_' . $reference, [
+                'user_id' => $user->id,
+                'amount'  => $amount,
+                'charge'  => $charge,
+                'total'   => $totalAmount,
+                'gateway' => 'payscribe',
+            ], now()->addHour());
+
+            Cache::put('user_latest_funding_ref_' . $user->id, $reference, now()->addHour());
+
             $session = \App\Services\PayscribePaymentService::createCheckoutSession([
                 'title'        => $reference,
                 'description'  => 'Payment for wallet funding - ' . ($user->name ?? $user->username),
