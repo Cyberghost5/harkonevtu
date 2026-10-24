@@ -35,30 +35,34 @@ class PayscribePaymentService
 
     /**
      * Get the PayScribe API Token used for Bearer authentication in API requests.
-     * PayScribe API requires the pk_... key (Public Key / API Token) for Bearer authentication.
-     * Automatically resolves the pk_ key whether saved in public_key or secret_key.
+     * PayScribe API requires the Secret Key (ps_live_... / ps_sk_...) for API transactions (Airtime, Data, Bills, Betting, KYC).
+     * Automatically resolves the ps_ key whether saved in secret_key or public_key.
      */
     public static function getApiKey(): ?string
     {
-        $pub = self::getPublicKey();
         $sec = self::getSecretKey();
+        $pub = self::getPublicKey();
 
-        // 1. If secret key was accidentally populated with the pk_ key, swap and use it
-        if ($sec && (str_starts_with($sec, 'pk_') || str_contains($sec, 'pub'))) {
+        // 1. If secret key is provided and looks like a PayScribe secret key (ps_live, ps_sk, ps_, sk_, or >= 40 chars)
+        if ($sec && (
+            str_starts_with($sec, 'ps_') ||
+            str_starts_with($sec, 'sk_') ||
+            strlen($sec) >= 40
+        )) {
             return $sec;
         }
 
-        // 2. If public key is provided, it is the designated API token for API requests
-        if (!empty($pub)) {
-            // If public key looks like a secret key (ps_... or >= 60 hex chars) while secret key looks like an API token
-            if ((str_starts_with($pub, 'ps_') || strlen($pub) >= 60) && $sec && !str_starts_with($sec, 'ps_')) {
-                return $sec;
-            }
+        // 2. If the user accidentally placed the secret key (ps_...) in the public key field
+        if ($pub && (
+            str_starts_with($pub, 'ps_') ||
+            str_starts_with($pub, 'sk_') ||
+            strlen($pub) >= 40
+        )) {
             return $pub;
         }
 
-        // 3. Fallback to secret key if public key was left empty
-        return $sec;
+        // 3. Fallback to secret key if present, otherwise public key
+        return $sec ?: $pub;
     }
 
     /**
@@ -71,26 +75,20 @@ class PayscribePaymentService
         $sec = self::getSecretKey();
         $pub = self::getPublicKey();
 
-        // 1. If secret key starts with ps_live, ps_test, ps_sk, sk_, contains sec, or is >= 60 chars
+        // 1. If secret key starts with ps_live, ps_test, ps_sk, sk_, contains sec, or is >= 40 chars
         if ($sec && (
-            str_starts_with($sec, 'ps_live') ||
-            str_starts_with($sec, 'ps_test') ||
-            str_starts_with($sec, 'ps_sk') ||
+            str_starts_with($sec, 'ps_') ||
             str_starts_with($sec, 'sk_') ||
-            str_contains($sec, 'sec') ||
-            strlen($sec) >= 60
+            strlen($sec) >= 40
         )) {
             return $sec;
         }
 
         // 2. If public key field was populated with the secret key
         if ($pub && (
-            str_starts_with($pub, 'ps_live') ||
-            str_starts_with($pub, 'ps_test') ||
-            str_starts_with($pub, 'ps_sk') ||
+            str_starts_with($pub, 'ps_') ||
             str_starts_with($pub, 'sk_') ||
-            str_contains($pub, 'sec') ||
-            strlen($pub) >= 60
+            strlen($pub) >= 40
         )) {
             return $pub;
         }
