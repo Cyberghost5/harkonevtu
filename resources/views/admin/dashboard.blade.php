@@ -240,22 +240,23 @@
         </div>
         <div class="divide-y divide-slate-100 dark:divide-slate-800">
             @forelse($recentUsers as $user)
-            <div class="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+            <a href="{{ route('admin.users.show', $user) }}"
+               class="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group cursor-pointer">
                 @if ($user->avatar)
-                    <img src="{{ $user->avatar }}" alt="Avatar" class="h-8 w-8 rounded-2xl object-cover">
+                    <img src="{{ $user->avatar }}" alt="Avatar" class="h-9 w-9 rounded-2xl object-cover shadow-sm">
                 @else
-                <div class="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:{{ $themeColor }}">
+                <div class="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm" style="background:{{ $themeColor }}">
                     {{ $user->initials() }}
                 </div>
                 @endif
                 <div class="min-w-0 flex-1">
-                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{{ $user->displayName() }}</p>
+                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-vtu-primary transition-colors truncate">{{ $user->displayName() }}</p>
                     <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Joined {{ $user->created_at->format('d M Y') }}</p>
                 </div>
                 <span class="flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full" style="{{ $user->is_active ? 'background:#f0fdf4;color:#166534' : 'background:#fef2f2;color:#991b1b' }}">
                     {{ $user->is_active ? 'Active' : 'Inactive' }}
                 </span>
-            </div>
+            </a>
             @empty
             <div class="px-5 py-8 text-center text-sm text-slate-400 dark:text-slate-500">No users yet</div>
             @endforelse

@@ -172,4 +172,56 @@ class AdminUserManagementTest extends TestCase
             'id' => $user->id,
         ]);
     }
+
+    public function test_admin_can_view_user_show_with_transaction_tables(): void
+    {
+        $admin = User::factory()->create([
+            'is_admin' => true,
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create();
+        $wallet = \App\Models\Wallet::create([
+            'user_id' => $user->id,
+            'balance' => 3809.00,
+            'total_funded' => 4500.00,
+            'total_spent' => 691.00,
+        ]);
+
+        $walletTx = \App\Models\WalletTransaction::create([
+            'user_id' => $user->id,
+            'wallet_id' => $wallet->id,
+            'reference' => 'df2210b7-c49d-463f-b7b3-794170650960',
+            'type' => 'credit',
+            'amount' => 2000.00,
+            'balance_before' => 1809.00,
+            'balance_after' => 3809.00,
+            'description' => 'Wallet funding via Payscribe_dva',
+            'status' => 'success',
+        ]);
+
+        $serviceTx = \App\Models\ServiceTransaction::create([
+            'user_id' => $user->id,
+            'reference' => 'AIR20261022204312345678',
+            'service_type' => 'airtime',
+            'recipient' => '09023000058',
+            'amount' => 495.00,
+            'status' => 'success',
+            'provider' => 'vtpass',
+        ]);
+
+        $this->actingAs($admin);
+
+        $response = $this->get(route('admin.users.show', $user));
+        $response->assertStatus(200);
+
+        // Verify wallet transaction row and link
+        $response->assertSee('df2210b7-c49d-');
+        $response->assertSee('Wallet funding via Payscribe_dva');
+        $response->assertSee(route('admin.transactions.show', ['type' => 'wallet', 'id' => $walletTx->id]));
+
+        // Verify service transaction row and link
+        $response->assertSee('09023000058');
+        $response->assertSee(route('admin.transactions.show', ['type' => 'service', 'id' => $serviceTx->id]));
+    }
 }

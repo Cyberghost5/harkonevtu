@@ -141,37 +141,60 @@
     <div class="lg:col-span-2 space-y-5">
 
         {{-- Service Transactions --}}
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-                <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 font-outfit">Recent Service Transactions</h3>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 font-outfit">Recent Service Transactions</h3>
+                    @if(count($serviceTransactions) > 0)
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                        {{ count($serviceTransactions) }}
+                    </span>
+                    @endif
+                </div>
+                <a href="{{ route('admin.transactions.index', ['tab' => 'services', 'search' => $user->email]) }}" class="text-xs font-semibold text-vtu-primary hover:underline flex items-center gap-1">
+                    <span>View in Purchases</span>
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+            <div class="overflow-x-auto custom-scrollbar-light dark:custom-scrollbar">
+                <table class="w-full text-sm min-w-[620px]">
                     <thead>
-                        <tr class="border-b border-slate-50 dark:border-slate-800">
+                        <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Service</th>
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Recipient</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Amount</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Date</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Amount</th>
+                            <th class="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Date</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50 dark:divide-slate-800">
                         @forelse($serviceTransactions as $tx)
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                            <td class="px-4 py-2.5 text-xs capitalize font-medium text-slate-700 dark:text-slate-300">{{ $tx->service_type }}</td>
-                            <td class="px-4 py-2.5 text-xs text-slate-500">{{ $tx->recipient }}</td>
-                            <td class="px-4 py-2.5 text-xs font-semibold text-slate-900 dark:text-white">₦{{ number_format($tx->amount,2) }}</td>
-                            <td class="px-4 py-2.5">
-                                @if($tx->status==='success') <span class="text-[11px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 font-semibold">Success</span>
-                                @elseif($tx->status==='pending') <span class="text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 font-semibold">Pending</span>
-                                @else <span class="text-[11px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 font-semibold">{{ ucfirst($tx->status) }}</span>
+                        <tr onclick="window.location='{{ route('admin.transactions.show', ['type' => 'service', 'id' => $tx->id]) }}'"
+                            class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer group">
+                            <td class="px-4 py-3 text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-vtu-primary transition-colors whitespace-nowrap capitalize">
+                                {{ str_replace('_', ' ', $tx->service_type) }}
+                            </td>
+                            <td class="px-4 py-3 text-xs text-slate-500 font-mono whitespace-nowrap">{{ $tx->recipient ?? '—' }}</td>
+                            <td class="px-4 py-3 text-xs font-bold text-slate-900 dark:text-white text-right whitespace-nowrap">₦{{ number_format($tx->amount, 2) }}</td>
+                            <td class="px-4 py-3 text-center whitespace-nowrap">
+                                @if($tx->status==='success') <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 font-semibold">Success</span>
+                                @elseif($tx->status==='pending') <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 font-semibold">Pending</span>
+                                @else <span class="text-[11px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 font-semibold">{{ ucfirst($tx->status) }}</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-2.5 text-[11px] text-slate-400">{{ $tx->created_at->format('d M y, H:i') }}</td>
+                            <td class="px-4 py-3 text-[11px] text-slate-400 whitespace-nowrap text-right">{{ $tx->created_at->format('d M y, H:i') }}</td>
+                            <td class="px-4 py-3 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+                                <a href="{{ route('admin.transactions.show', ['type' => 'service', 'id' => $tx->id]) }}"
+                                   class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg text-vtu-primary bg-indigo-50 hover:bg-vtu-primary hover:text-white dark:bg-slate-800 dark:text-indigo-400 dark:hover:bg-vtu-primary dark:hover:text-white transition-colors">
+                                    <span>Details &rarr;</span>
+                                </a>
+                            </td>
                         </tr>
                         @empty
-                        <tr><td colspan="5" class="px-4 py-6 text-center text-sm text-slate-400">No service transactions.</td></tr>
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-sm text-slate-400">No service transactions found for this user.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -179,20 +202,33 @@
         </div>
 
         {{-- Wallet Transactions --}}
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-                <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 font-outfit">Wallet Transactions</h3>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 font-outfit">Wallet Transactions</h3>
+                    @if($transactions && $transactions->total() > 0)
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                        {{ $transactions->total() }}
+                    </span>
+                    @endif
+                </div>
+                <a href="{{ route('admin.transactions.index', ['tab' => 'wallet', 'search' => $user->email]) }}" class="text-xs font-semibold text-vtu-primary hover:underline flex items-center gap-1">
+                    <span>View Full Ledger</span>
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+            <div class="overflow-x-auto custom-scrollbar-light dark:custom-scrollbar">
+                <table class="w-full text-sm min-w-[700px]">
                     <thead>
-                        <tr class="border-b border-slate-50 dark:border-slate-800">
+                        <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reference</th>
                             <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Description</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Type</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Amount</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Balance After</th>
-                            <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Date</th>
+                            <th class="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Type</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Amount</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Balance After</th>
+                            <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Date</th>
                             <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Action</th>
                         </tr>
                     </thead>
@@ -200,36 +236,47 @@
                         @forelse($transactions as $wt)
                         <tr onclick="window.location='{{ route('admin.transactions.show', ['type' => 'wallet', 'id' => $wt->id]) }}'"
                             class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                            <td class="px-4 py-2.5 font-mono text-xs">
-                                <a href="{{ route('admin.transactions.show', ['type' => 'wallet', 'id' => $wt->id]) }}" class="font-bold text-slate-700 dark:text-slate-300 group-hover:text-vtu-primary hover:underline">
-                                    {{ substr($wt->reference ?? (string)$wt->id, 0, 14) }}...
+                            <td class="px-4 py-3 font-mono text-xs whitespace-nowrap">
+                                <a href="{{ route('admin.transactions.show', ['type' => 'wallet', 'id' => $wt->id]) }}" class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-vtu-primary hover:underline">
+                                    {{ substr($wt->reference ?? (string)$wt->id, 0, 16) }}...
                                 </a>
                             </td>
-                            <td class="px-4 py-2.5 text-xs text-slate-600 dark:text-slate-400 max-w-xs truncate">{{ $wt->description }}</td>
-                            <td class="px-4 py-2.5">
-                                <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full
-                                    {{ $wt->type==='credit' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' }}">
+                            <td class="px-4 py-3 text-xs text-slate-600 dark:text-slate-400 max-w-[200px] xl:max-w-xs truncate" title="{{ $wt->description }}">
+                                {{ $wt->description }}
+                            </td>
+                            <td class="px-4 py-3 text-center whitespace-nowrap">
+                                <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full
+                                    {{ $wt->type==='credit' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400' }}">
                                     {{ ucfirst($wt->type) }}
                                 </span>
                             </td>
-                            <td class="px-4 py-2.5 text-xs font-semibold {{ $wt->type==='credit' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
-                                {{ $wt->type==='credit' ? '+' : '-' }}₦{{ number_format($wt->amount,2) }}
+                            <td class="px-4 py-3 text-xs font-bold whitespace-nowrap text-right {{ $wt->type==='credit' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white' }}">
+                                {{ $wt->type==='credit' ? '+' : '-' }}₦{{ number_format($wt->amount, 2) }}
                             </td>
-                            <td class="px-4 py-2.5 text-xs font-medium text-slate-900 dark:text-white">₦{{ number_format($wt->balance_after,2) }}</td>
-                            <td class="px-4 py-2.5 text-[11px] text-slate-400">{{ $wt->created_at->format('d M y, H:i') }}</td>
-                            <td class="px-4 py-2.5 text-right" onclick="event.stopPropagation()">
+                            <td class="px-4 py-3 text-xs font-semibold text-slate-900 dark:text-white whitespace-nowrap text-right font-mono">
+                                ₦{{ number_format($wt->balance_after, 2) }}
+                            </td>
+                            <td class="px-4 py-3 text-[11px] text-slate-400 whitespace-nowrap text-right">
+                                {{ $wt->created_at->format('d M y, H:i') }}
+                            </td>
+                            <td class="px-4 py-3 text-right whitespace-nowrap" onclick="event.stopPropagation()">
                                 <a href="{{ route('admin.transactions.show', ['type' => 'wallet', 'id' => $wt->id]) }}"
-                                   class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-lg text-vtu-primary bg-indigo-50 hover:bg-vtu-primary hover:text-white dark:bg-slate-800 dark:text-indigo-400 dark:hover:bg-vtu-primary dark:hover:text-white transition-colors">
+                                   class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg text-vtu-primary bg-indigo-50 hover:bg-vtu-primary hover:text-white dark:bg-slate-800 dark:text-indigo-400 dark:hover:bg-vtu-primary dark:hover:text-white transition-colors">
                                     <span>Details &rarr;</span>
                                 </a>
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="7" class="px-4 py-6 text-center text-sm text-slate-400">No wallet transactions.</td></tr>
+                        <tr><td colspan="7" class="px-4 py-8 text-center text-sm text-slate-400">No wallet transactions found for this user.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+            @if($transactions?->hasPages())
+            <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800">
+                {{ $transactions->links() }}
+            </div>
+            @endif
         </div>
 
         {{-- User Login History --}}

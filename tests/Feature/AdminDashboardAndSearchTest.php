@@ -170,4 +170,33 @@ class AdminDashboardAndSearchTest extends TestCase
         $response->assertSee('Abubakar Danladi');
         $response->assertSee(route('admin.users.show', $user));
     }
+
+    public function test_admin_dashboard_shows_latest_8_members_with_profile_links(): void
+    {
+        $admin = User::factory()->create([
+            'is_admin' => true,
+            'is_active' => true,
+        ]);
+
+        // Create 10 regular users
+        $users = User::factory()->count(10)->create([
+            'is_admin' => false,
+        ]);
+
+        $this->actingAs($admin);
+
+        $response = $this->get(route('admin.dashboard'));
+        $response->assertStatus(200);
+
+        // Verify recentUsers view variable has exactly 8 records
+        $response->assertViewHas('recentUsers', function ($recentUsers) {
+            return $recentUsers->count() === 8;
+        });
+
+        // The 8 latest users should have active links to their profiles
+        $latest8 = User::where('is_admin', false)->latest()->take(8)->get();
+        foreach ($latest8 as $u) {
+            $response->assertSee(route('admin.users.show', $u));
+        }
+    }
 }

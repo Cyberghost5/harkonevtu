@@ -42,9 +42,9 @@ class AdminDashboardController extends Controller
         $recentTransactions = ServiceTransaction::with('user')
             ->latest()->take(8)->get();
 
-        // Recent users
+        // Recent users (latest 8)
         $recentUsers = User::where('is_admin', false)
-            ->latest()->take(5)->get();
+            ->latest()->take(8)->get();
 
         // Daily revenue for last 7 days
         $dailyRevenue = ServiceTransaction::where('status', 'success')
