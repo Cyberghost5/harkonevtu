@@ -34,6 +34,66 @@ class PayscribePaymentService
     }
 
     /**
+     * Get the PayScribe API Token used for Bearer authentication in API requests.
+     * PayScribe API requires the pk_... key (Public Key / API Token) for Bearer authentication.
+     * Automatically resolves the pk_ key whether saved in public_key or secret_key.
+     */
+    public static function getApiKey(): ?string
+    {
+        $pub = self::getPublicKey();
+        $sec = self::getSecretKey();
+
+        // 1. If public key starts with pk_ or contains pub, it's the API key
+        if ($pub && (str_starts_with($pub, 'pk_') || str_contains($pub, 'pub'))) {
+            return $pub;
+        }
+
+        // 2. If secret key was set to the pk_ key
+        if ($sec && str_starts_with($sec, 'pk_')) {
+            return $sec;
+        }
+
+        return $pub ?: $sec;
+    }
+
+    /**
+     * Get the PayScribe Webhook Secret Key used for HMAC signature verification.
+     * PayScribe signs webhooks using the ps_... key (Secret Key, 64-hex chars).
+     * Automatically resolves the ps_ key whether saved in secret_key or public_key.
+     */
+    public static function getWebhookSecret(): ?string
+    {
+        $sec = self::getSecretKey();
+        $pub = self::getPublicKey();
+
+        // 1. If secret key starts with ps_live, ps_test, ps_sk, sk_, contains sec, or is >= 60 chars
+        if ($sec && (
+            str_starts_with($sec, 'ps_live') ||
+            str_starts_with($sec, 'ps_test') ||
+            str_starts_with($sec, 'ps_sk') ||
+            str_starts_with($sec, 'sk_') ||
+            str_contains($sec, 'sec') ||
+            strlen($sec) >= 60
+        )) {
+            return $sec;
+        }
+
+        // 2. If public key field was populated with the secret key
+        if ($pub && (
+            str_starts_with($pub, 'ps_live') ||
+            str_starts_with($pub, 'ps_test') ||
+            str_starts_with($pub, 'ps_sk') ||
+            str_starts_with($pub, 'sk_') ||
+            str_contains($pub, 'sec') ||
+            strlen($pub) >= 60
+        )) {
+            return $pub;
+        }
+
+        return $sec ?: $pub;
+    }
+
+    /**
      * Get the configured Payscribe Base URL.
      */
     public static function getBaseUrl(): string
@@ -46,7 +106,7 @@ class PayscribePaymentService
      */
     public static function isConfigured(): bool
     {
-        return !empty(self::getSecretKey()) && !empty(self::getPublicKey());
+        return !empty(self::getApiKey()) || (!empty(self::getSecretKey()) && !empty(self::getPublicKey()));
     }
 
     /**
@@ -66,10 +126,10 @@ class PayscribePaymentService
     public static function createCheckoutSession(array $payload): array
     {
         self::$lastError = null;
-        $secretKey = self::getSecretKey();
+        $secretKey = self::getApiKey() ?: self::getSecretKey();
 
         if (!$secretKey) {
-            self::$lastError = 'Payscribe secret key is not configured.';
+            self::$lastError = 'Payscribe API credentials are not configured.';
             return ['success' => false, 'message' => self::$lastError];
         }
 
