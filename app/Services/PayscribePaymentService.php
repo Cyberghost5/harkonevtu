@@ -236,10 +236,10 @@ class PayscribePaymentService
     public static function verifyTransaction(string $reference): array
     {
         self::$lastError = null;
-        $secretKey = self::getSecretKey();
+        $secretKey = self::getApiKey() ?: self::getSecretKey();
 
         if (!$secretKey) {
-            self::$lastError = 'Payscribe secret key is not configured.';
+            self::$lastError = 'Payscribe API credentials are not configured.';
             return ['success' => false, 'paid' => false, 'message' => self::$lastError, 'amount' => 0.0, 'currency' => 'NGN', 'reference' => $reference, 'data' => []];
         }
 
@@ -337,11 +337,6 @@ class PayscribePaymentService
      */
     public static function validateWebhookSignature(Request $request): bool
     {
-        $secretKey = self::getSecretKey();
-        if (!$secretKey) {
-            return false;
-        }
-
         $rawBody = $request->getContent();
 
         // 1. Check signature header (e.g. x-payscribe-signature, x-signature)
@@ -349,41 +344,59 @@ class PayscribePaymentService
             ?? $request->header('x-signature') 
             ?? $request->header('payscribe-signature');
 
-        if ($signature) {
-            // Support timestamped versioned signature: v1=<hash>
-            if (str_starts_with($signature, 'v1=')) {
-                $hash = substr($signature, 3);
-                $timestamp = $request->header('x-payscribe-timestamp');
-                $eventId = $request->header('x-payscribe-event-id');
+        // Secret key candidates: try Webhook Secret first (ps_...), then all configured keys
+        $candidates = array_filter(array_unique([
+            self::getWebhookSecret(),
+            self::getSecretKey(),
+            self::getPublicKey(),
+            config('services.payscribe.webhook_secret'),
+        ]));
 
-                if ($timestamp && $eventId) {
-                    // Prevent replay attacks (5 minutes tolerance)
-                    if (abs(time() - (int) $timestamp) <= 300) {
-                        $expectedHash = hash_hmac('sha256', "{$timestamp}.{$eventId}.{$rawBody}", $secretKey);
-                        if (hash_equals($expectedHash, $hash)) {
-                            return true;
+        if (empty($candidates)) {
+            return false;
+        }
+
+        if ($signature) {
+            foreach ($candidates as $secretKey) {
+                // Support timestamped versioned signature: v1=<hash>
+                if (str_starts_with($signature, 'v1=')) {
+                    $hash = substr($signature, 3);
+                    $timestamp = $request->header('x-payscribe-timestamp');
+                    $eventId = $request->header('x-payscribe-event-id');
+
+                    if ($timestamp && $eventId) {
+                        // Prevent replay attacks (5 minutes tolerance)
+                        if (abs(time() - (int) $timestamp) <= 300) {
+                            $expectedHash = hash_hmac('sha256', "{$timestamp}.{$eventId}.{$rawBody}", $secretKey);
+                            if (hash_equals($expectedHash, $hash)) {
+                                return true;
+                            }
                         }
                     }
                 }
-            }
 
-            // Standard HMAC-SHA256 (Payscribe official documentation)
-            $computedSha256 = hash_hmac('sha256', $rawBody, $secretKey);
-            if (hash_equals($computedSha256, $signature)) {
-                return true;
-            }
+                // Standard HMAC-SHA256 (Payscribe official documentation)
+                $computedSha256 = hash_hmac('sha256', $rawBody, $secretKey);
+                if (hash_equals($computedSha256, $signature)) {
+                    return true;
+                }
 
-            // Fallback HMAC-SHA512
-            $computedSha512 = hash_hmac('sha512', $rawBody, $secretKey);
-            if (hash_equals($computedSha512, $signature)) {
-                return true;
+                // Fallback HMAC-SHA512
+                $computedSha512 = hash_hmac('sha512', $rawBody, $secretKey);
+                if (hash_equals($computedSha512, $signature)) {
+                    return true;
+                }
             }
         }
 
         // 2. Check secret token authentication header (e.g. x-payscribe-token, authorization bearer)
         $tokenHeader = $request->header('x-payscribe-token') ?? $request->bearerToken();
-        if ($tokenHeader && hash_equals($secretKey, $tokenHeader)) {
-            return true;
+        if ($tokenHeader) {
+            foreach ($candidates as $secretKey) {
+                if (hash_equals($secretKey, $tokenHeader)) {
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -410,9 +423,9 @@ class PayscribePaymentService
             return $cId;
         }
 
-        $secretKey = self::getSecretKey();
+        $secretKey = self::getApiKey() ?: self::getSecretKey();
         if (!$secretKey) {
-            throw new \Exception('PayScribe secret key is not configured.');
+            throw new \Exception('PayScribe API credentials are not configured.');
         }
 
         $nameParts = preg_split('/\s+/', trim($user->name ?: 'Customer User'), 2);
@@ -505,9 +518,9 @@ class PayscribePaymentService
      */
     public static function generateVirtualAccounts(User $user, string $bvn, array $banks = ['9psb', 'palmpay']): array
     {
-        $secretKey = self::getSecretKey();
+        $secretKey = self::getApiKey() ?: self::getSecretKey();
         if (!$secretKey) {
-            throw new \Exception('PayScribe secret key is not configured.');
+            throw new \Exception('PayScribe API credentials are not configured.');
         }
 
         $customerId = self::getOrCreateCustomer($user);
