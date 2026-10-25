@@ -103,6 +103,31 @@
                     Impersonate User
                 </button>
             </form>
+
+            {{-- Revoke All Sessions --}}
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                    <span>Active Sessions</span>
+                    <span class="flex items-center gap-1.5 font-medium">
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 font-semibold" title="Active mobile app login tokens">
+                            📱 {{ $activeTokensCount }} Mobile
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-semibold" title="Active web browser sessions">
+                            💻 {{ $activeSessionsCount }} Web
+                        </span>
+                    </span>
+                </div>
+                <form method="POST" action="{{ route('admin.users.revoke-sessions', $user) }}"
+                      onsubmit="return confirm('Are you sure you want to log {{ addslashes($user->name) }} out from all devices? All active mobile tokens and web sessions will be terminated immediately.');">
+                    @csrf
+                    <button type="submit" class="w-full inline-flex justify-center items-center gap-1.5 py-2 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20 rounded-xl transition-colors">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Log Out From All Devices
+                    </button>
+                </form>
+            </div>
         </div>
 
         {{-- Wallet Adjustment --}}
@@ -281,11 +306,29 @@
 
         {{-- User Login History --}}
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mt-5">
-            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 font-outfit">Login History</h3>
-                <a href="{{ route('admin.user-logs.index', ['search' => $user->email]) }}" class="text-xs font-medium text-vtu-primary hover:underline">
-                    View All User Logs →
-                </a>
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap justify-between items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 font-outfit">Login History</h3>
+                    <span class="text-xs text-slate-400">({{ $activeTokensCount + $activeSessionsCount }} active)</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    @if(($activeTokensCount + $activeSessionsCount) > 0)
+                    <form method="POST" action="{{ route('admin.users.revoke-sessions', $user) }}"
+                          onsubmit="return confirm('Log out {{ addslashes($user->name) }} from all active devices?');" class="inline">
+                        @csrf
+                        <button type="submit" class="text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 inline-flex items-center gap-1 hover:underline">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            <span>Revoke Active Sessions</span>
+                        </button>
+                    </form>
+                    <span class="text-slate-300 dark:text-slate-700">|</span>
+                    @endif
+                    <a href="{{ route('admin.user-logs.index', ['search' => $user->email]) }}" class="text-xs font-medium text-vtu-primary hover:underline">
+                        View All User Logs →
+                    </a>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

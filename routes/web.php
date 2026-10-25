@@ -246,8 +246,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::get('/users/{user}/edit',           [AdminUserController::class, 'edit'])->name('users.edit');
     Route::patch('/users/{user}',              [AdminUserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}',             [AdminUserController::class, 'destroy'])->name('users.destroy');
-    Route::post('/users/{user}/adjust-wallet', [AdminUserController::class, 'adjustWallet'])->name('users.adjust-wallet');
-    Route::post('/users/{user}/impersonate',   [AdminUserController::class, 'impersonate'])->name('users.impersonate');
+    Route::post('/users/{user}/adjust-wallet',   [AdminUserController::class, 'adjustWallet'])->name('users.adjust-wallet');
+    Route::post('/users/{user}/impersonate',     [AdminUserController::class, 'impersonate'])->name('users.impersonate');
+    Route::post('/users/{user}/revoke-sessions', [AdminUserController::class, 'revokeSessions'])->name('users.revoke-sessions');
 
     // Transactions
     Route::get('/transactions',                 [AdminTransactionController::class, 'index'])->name('transactions.index');

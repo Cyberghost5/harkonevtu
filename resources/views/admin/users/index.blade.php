@@ -111,6 +111,14 @@
                                class="text-xs font-medium text-vtu-primary hover:underline">
                                 Edit
                             </a>
+                            <form method="POST" action="{{ route('admin.users.revoke-sessions', $user) }}"
+                                  onsubmit="return confirm('Log out {{ addslashes($user->name) }} from all active devices?');"
+                                  class="inline">
+                                @csrf
+                                <button type="submit" title="Force logout from all devices" class="text-xs font-medium text-amber-600 hover:text-amber-700 dark:hover:text-amber-400">
+                                    Log Out
+                                </button>
+                            </form>
                             <form method="POST" action="{{ route('admin.users.impersonate', $user) }}" class="inline">
                                 @csrf
                                 <button type="submit" class="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:hover:text-emerald-400">

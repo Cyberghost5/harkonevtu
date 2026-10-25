@@ -8,6 +8,7 @@ use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
@@ -48,7 +49,12 @@ class AdminUserController extends Controller
         $serviceTransactions = $user->serviceTransactions()->latest()->take(10)->get();
         $loginLogs = $user->loginLogs()->latest()->paginate(10, ['*'], 'log_page');
 
-        return view('admin.users.show', compact('user', 'transactions', 'serviceTransactions', 'loginLogs'));
+        $activeTokensCount = $user->tokens()->count();
+        $activeSessionsCount = Schema::hasTable('sessions')
+            ? DB::table('sessions')->where('user_id', $user->id)->count()
+            : 0;
+
+        return view('admin.users.show', compact('user', 'transactions', 'serviceTransactions', 'loginLogs', 'activeTokensCount', 'activeSessionsCount'));
     }
 
     public function create()
@@ -121,6 +127,17 @@ class AdminUserController extends Controller
         }
 
         $user->update($validated);
+
+        // If user was deactivated, revoke all active sessions immediately
+        if (array_key_exists('is_active', $validated) && !$validated['is_active']) {
+            $user->tokens()->delete();
+            if (Schema::hasTable('sessions')) {
+                DB::table('sessions')->where('user_id', $user->id)->delete();
+            }
+            $user->setRememberToken(null);
+            $user->fcm_device_token = null;
+            $user->save();
+        }
 
         if ($request->has('_redirect_to_index')) {
             return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
@@ -223,5 +240,25 @@ class AdminUserController extends Controller
         session()->forget('impersonator_id');
 
         return redirect()->route('admin.users.index')->with('success', 'Returned to Admin Panel.');
+    }
+
+    /**
+     * Revoke all active sessions and API tokens for a user (log them out from all devices).
+     */
+    public function revokeSessions(User $user)
+    {
+        $tokenCount = $user->tokens()->count();
+        $user->tokens()->delete();
+
+        $sessionCount = 0;
+        if (Schema::hasTable('sessions')) {
+            $sessionCount = DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
+
+        $user->setRememberToken(null);
+        $user->fcm_device_token = null;
+        $user->save();
+
+        return back()->with('success', "{$user->name} has been logged out from all devices ({$tokenCount} mobile token(s) revoked, {$sessionCount} web session(s) cleared).");
     }
 }
