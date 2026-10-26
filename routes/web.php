@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\AdminApiLogController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminCouponController;
 use App\Http\Controllers\Admin\AdminSearchController;
+use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\TransactionController;
@@ -254,6 +255,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::get('/transactions',                 [AdminTransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/ref/{reference}', [AdminTransactionController::class, 'viewByReference'])->name('transactions.by-reference');
     Route::get('/transactions/{type}/{id}',     [AdminTransactionController::class, 'show'])->name('transactions.show');
+
+    // Reports & Analytics
+    Route::get('/reports',                       [AdminReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/pdf',                   [AdminReportController::class, 'exportPdf'])->name('reports.pdf');
+    Route::get('/reports/print',                 [AdminReportController::class, 'printView'])->name('reports.print');
+    Route::post('/reports/send-email',           [AdminReportController::class, 'sendEmailReport'])->name('reports.send-email');
+    Route::post('/reports/settings',             [AdminReportController::class, 'updateSchedule'])->name('reports.settings');
 
     // Funding Requests
     Route::get('/funding',             [AdminFundingController::class, 'index'])->name('funding.index');

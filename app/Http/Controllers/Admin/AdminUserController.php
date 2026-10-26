@@ -16,8 +16,7 @@ class AdminUserController extends Controller
     public function index(Request $request)
     {
         $query = User::with('wallet')
-            ->where('is_admin', false)
-            ->latest();
+            ->where('is_admin', false);
 
         if ($request->filled('search')) {
             $s = $request->search;
@@ -37,9 +36,37 @@ class AdminUserController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
+        // Sorting
+        $sortBy    = $request->input('sort', 'joined');
+        $direction = strtolower($request->input('direction', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        switch ($sortBy) {
+            case 'type':
+                $query->orderBy('user_type', $direction)->orderBy('id', 'desc');
+                break;
+            case 'balance':
+                $query->select('users.*')
+                      ->leftJoin('wallets', 'wallets.user_id', '=', 'users.id')
+                      ->orderBy('wallets.balance', $direction)
+                      ->orderBy('users.id', 'desc');
+                break;
+            case 'status':
+                $query->orderBy('is_active', $direction)->orderBy('id', 'desc');
+                break;
+            case 'user':
+            case 'name':
+                $query->orderBy('name', $direction)->orderBy('id', 'desc');
+                break;
+            case 'joined':
+            case 'created_at':
+            default:
+                $query->orderBy('created_at', $direction)->orderBy('id', 'desc');
+                break;
+        }
+
         $users = $query->paginate(20)->withQueryString();
 
-        return view('admin.users.index', compact('users'));
+        return view('admin.users.index', compact('users', 'sortBy', 'direction'));
     }
 
     public function show(User $user)

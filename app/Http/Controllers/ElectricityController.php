@@ -256,7 +256,7 @@ class ElectricityController extends Controller
 
         return match ($api) {
             'easyaccess' => $this->callEasyaccessElectricity($disco, $meterType, $meterNumber, $amount, $reference),
-            'payscribe'  => $this->callPayscribeElectricity($disco, $meterType, $meterNumber, $amount, $reference),
+            'payscribe'  => $this->callPayscribeElectricity($disco, $meterType, $meterNumber, $amount, $reference, $phone),
             'vtpass'      => $this->callVtpassElectricity($disco, $meterType, $meterNumber, $amount, $phone, $reference),
         };
     }
@@ -596,7 +596,8 @@ class ElectricityController extends Controller
         string $meterType,
         string $meterNumber,
         float $amount,
-        string $reference
+        string $reference,
+        string $phone,
     ): array {
         $apiKey = \App\Services\PayscribePaymentService::getApiKey();
         if (!$apiKey) {
@@ -617,6 +618,7 @@ class ElectricityController extends Controller
             'meter_type'    => $meterType,
             'amount'        => (string) (int) $amount,
             'customer_name' => auth()->user()?->name ?? 'Customer',
+            'phone'         => $phone,
             'ref'           => $reference,
         ];
         $data         = [];
