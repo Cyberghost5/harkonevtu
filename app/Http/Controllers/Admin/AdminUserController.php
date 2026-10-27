@@ -4,10 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\VirtualAccount;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Services\PayscribePaymentService;
+use App\Services\VirtualAccountService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
@@ -71,7 +75,7 @@ class AdminUserController extends Controller
 
     public function show(User $user)
     {
-        $user->load('wallet');
+        $user->load(['wallet', 'virtualAccounts']);
         $transactions = $user->wallet?->transactions()->latest()->paginate(15);
         $serviceTransactions = $user->serviceTransactions()->latest()->take(10)->get();
         $loginLogs = $user->loginLogs()->latest()->paginate(10, ['*'], 'log_page');
@@ -81,7 +85,17 @@ class AdminUserController extends Controller
             ? DB::table('sessions')->where('user_id', $user->id)->count()
             : 0;
 
-        return view('admin.users.show', compact('user', 'transactions', 'serviceTransactions', 'loginLogs', 'activeTokensCount', 'activeSessionsCount'));
+        $activeProviders = VirtualAccount::getActiveProviders();
+
+        return view('admin.users.show', compact(
+            'user',
+            'transactions',
+            'serviceTransactions',
+            'loginLogs',
+            'activeTokensCount',
+            'activeSessionsCount',
+            'activeProviders'
+        ));
     }
 
     public function create()
@@ -287,5 +301,117 @@ class AdminUserController extends Controller
         $user->save();
 
         return back()->with('success', "{$user->name} has been logged out from all devices ({$tokenCount} mobile token(s) revoked, {$sessionCount} web session(s) cleared).");
+    }
+
+    /**
+     * Generate Dedicated Virtual Accounts for the user using their BVN.
+     */
+    public function generateDva(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'bvn'      => ['required', 'string', 'numeric', 'digits:11'],
+            'provider' => ['nullable', 'string', 'in:all,payscribe,paystack,monnify,flutterwave'],
+        ]);
+
+        $bvn = $validated['bvn'];
+        $provider = $validated['provider'] ?? 'all';
+
+        try {
+            if ($provider === 'payscribe') {
+                $data = PayscribePaymentService::generateVirtualAccounts($user, $bvn);
+                $accountsList = $data['accounts'] ?? [];
+                $created = [];
+
+                foreach ($accountsList as $acc) {
+                    $va = VirtualAccount::updateOrCreate(
+                        [
+                            'user_id'        => $user->id,
+                            'provider'       => 'payscribe',
+                            'account_number' => $acc['account_number'],
+                        ],
+                        [
+                            'bank_name'    => $acc['bank_name'] ?? 'PayScribe Bank',
+                            'bank_code'    => $acc['bank_code'] ?? null,
+                            'account_name' => $acc['account_name'] ?? $user->name,
+                            'metadata'     => $acc,
+                        ]
+                    );
+                    $created[] = $va;
+                }
+
+                $result = [
+                    'success'  => !empty($created),
+                    'accounts' => $created,
+                    'errors'   => empty($created) ? ['No accounts returned by PayScribe.'] : [],
+                ];
+            } else {
+                $result = VirtualAccountService::generateDva($user, $bvn);
+            }
+
+            if (!empty($result['accounts'])) {
+                if ($user->kyc_status !== 'verified') {
+                    $user->update(['kyc_status' => 'verified']);
+                }
+
+                $summaryList = collect($result['accounts'])->map(function ($acc) {
+                    $accObj = is_array($acc) ? (object) $acc : $acc;
+                    return ($accObj->bank_name ?? 'Bank') . ' (' . ($accObj->account_number ?? '') . ')';
+                })->implode(', ');
+
+                return back()->with('success', "Dedicated Virtual Account(s) successfully generated: {$summaryList}");
+            }
+
+            $errMsg = !empty($result['errors']) ? implode(' | ', $result['errors']) : 'No virtual accounts could be generated. Check gateway settings.';
+            return back()->with('error', $errMsg);
+
+        } catch (\Throwable $e) {
+            Log::error('Admin DVA generation error', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to generate DVA: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Manually assign or link a Dedicated Virtual Account for the user.
+     */
+    public function assignVirtualAccount(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'provider'       => ['required', 'string', 'max:50'],
+            'bank_name'      => ['required', 'string', 'max:100'],
+            'bank_code'      => ['nullable', 'string', 'max:50'],
+            'account_number' => ['required', 'string', 'digits_between:9,12'],
+            'account_name'   => ['required', 'string', 'max:150'],
+        ]);
+
+        $va = VirtualAccount::updateOrCreate(
+            [
+                'user_id'        => $user->id,
+                'account_number' => $validated['account_number'],
+            ],
+            [
+                'provider'     => strtolower($validated['provider']),
+                'bank_name'    => $validated['bank_name'],
+                'bank_code'    => $validated['bank_code'] ?? null,
+                'account_name' => $validated['account_name'],
+            ]
+        );
+
+        return back()->with('success', "Virtual Account ({$va->bank_name} - {$va->account_number}) saved successfully.");
+    }
+
+    /**
+     * Delete / unlink a Virtual Account.
+     */
+    public function destroyVirtualAccount(User $user, VirtualAccount $virtualAccount)
+    {
+        if ($virtualAccount->user_id !== $user->id) {
+            return back()->with('error', 'Unauthorized action.');
+        }
+
+        $acctNum = $virtualAccount->account_number;
+        $bank = $virtualAccount->bank_name;
+        $virtualAccount->delete();
+
+        return back()->with('success', "Virtual account {$bank} ({$acctNum}) unlinked successfully.");
     }
 }

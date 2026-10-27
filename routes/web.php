@@ -250,6 +250,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::post('/users/{user}/adjust-wallet',   [AdminUserController::class, 'adjustWallet'])->name('users.adjust-wallet');
     Route::post('/users/{user}/impersonate',     [AdminUserController::class, 'impersonate'])->name('users.impersonate');
     Route::post('/users/{user}/revoke-sessions', [AdminUserController::class, 'revokeSessions'])->name('users.revoke-sessions');
+    Route::post('/users/{user}/generate-dva',                     [AdminUserController::class, 'generateDva'])->name('users.generate-dva');
+    Route::post('/users/{user}/assign-dva',                       [AdminUserController::class, 'assignVirtualAccount'])->name('users.assign-dva');
+    Route::delete('/users/{user}/virtual-accounts/{virtualAccount}', [AdminUserController::class, 'destroyVirtualAccount'])->name('users.virtual-accounts.destroy');
 
     // Transactions
     Route::get('/transactions',                 [AdminTransactionController::class, 'index'])->name('transactions.index');

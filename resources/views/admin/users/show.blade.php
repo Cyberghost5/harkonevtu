@@ -70,6 +70,91 @@
             @endif
         </div>
 
+        {{-- Dedicated Virtual Accounts (DVA) --}}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Virtual Accounts (DVA)</p>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold {{ $user->virtualAccounts->isNotEmpty() ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' }}">
+                        {{ $user->virtualAccounts->count() }}
+                    </span>
+                </div>
+                <button type="button" onclick="openDvaModal()"
+                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-vtu-primary bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    {{ $user->virtualAccounts->isEmpty() ? 'Generate DVA' : 'Add / Generate' }}
+                </button>
+            </div>
+
+            @if($user->virtualAccounts->isNotEmpty())
+                <div class="space-y-3">
+                    @foreach($user->virtualAccounts as $va)
+                    <div class="relative rounded-xl border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/70 dark:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
+                                @if($va->provider === 'paystack')
+                                    bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400
+                                @elseif($va->provider === 'payscribe')
+                                    bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-400
+                                @elseif($va->provider === 'monnify')
+                                    bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400
+                                @else
+                                    bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400
+                                @endif">
+                                {{ $va->providerLabel() }}
+                            </span>
+                            
+                            {{-- Delete action --}}
+                            <form method="POST" action="{{ route('admin.users.virtual-accounts.destroy', [$user, $va]) }}"
+                                  onsubmit="return confirm('Unlink this virtual account ({{ $va->account_number }}) from user?');" class="inline">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="text-slate-400 hover:text-rose-500 p-0.5 transition-colors" title="Unlink Account">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">{{ $va->bank_name }}</p>
+                                <p class="text-base font-mono font-bold tracking-wider text-slate-900 dark:text-white select-all">
+                                    {{ $va->account_number }}
+                                </p>
+                            </div>
+                            <button type="button" onclick="copyDvaText('{{ $va->account_number }}', this)"
+                                    class="p-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-vtu-primary hover:border-vtu-primary transition-all flex items-center justify-center flex-shrink-0"
+                                    title="Copy Account Number">
+                                <svg class="w-4 h-4 copy-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1 truncate">Account Name: <span class="font-semibold text-slate-700 dark:text-slate-300">{{ $va->account_name }}</span></p>
+                    </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-center py-5 px-3 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-800/20">
+                    <div class="h-10 w-10 mx-auto rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-vtu-primary flex items-center justify-center text-lg mb-2">
+                        🏦
+                    </div>
+                    <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-0.5">No Virtual Account Assigned</p>
+                    <p class="text-[11px] text-slate-400 max-w-xs mx-auto mb-3">Generate automated personal bank accounts (9PSB, PalmPay, Wema, etc.) for this user.</p>
+                    <button type="button" onclick="openDvaModal()"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-vtu-primary hover:bg-indigo-700 rounded-xl transition-colors shadow-sm">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Generate DVA Now
+                    </button>
+                </div>
+            @endif
+        </div>
+
         {{-- Toggle Status --}}
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Account Actions</p>
@@ -388,4 +473,199 @@
 
 </div>
 
+{{-- ── DVA Generation & Link Modal ────────────────────────────────────────── --}}
+<div id="dvaModal" class="fixed inset-0 z-50 bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full p-6 shadow-2xl relative">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+            <div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Dedicated Virtual Account (DVA)</h3>
+                <p class="text-xs text-slate-400">Generate or link bank deposit accounts for <strong class="text-slate-700 dark:text-slate-300">{{ $user->name }}</strong></p>
+            </div>
+            <button type="button" onclick="closeDvaModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">✕</button>
+        </div>
+
+        {{-- Modal Tabs --}}
+        <div class="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 text-xs font-semibold">
+            <button type="button" id="tabBtnGenerate" onclick="switchDvaTab('generate')"
+                    class="flex-1 py-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all text-center">
+                ⚡ Auto-Generate (Live API)
+            </button>
+            <button type="button" id="tabBtnManual" onclick="switchDvaTab('manual')"
+                    class="flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-all text-center">
+                🔗 Link Account Manually
+            </button>
+        </div>
+
+        {{-- Tab 1: Live API Auto-Generation --}}
+        <div id="tabContentGenerate">
+            <form method="POST" action="{{ route('admin.users.generate-dva', $user) }}" class="space-y-4"
+                  onsubmit="document.getElementById('btnSubmitDva').disabled = true; document.getElementById('btnSubmitDva').innerText = 'Generating via Gateway API...';">
+                @csrf
+
+                {{-- User summary card --}}
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs space-y-1">
+                    <div class="flex justify-between text-slate-500">
+                        <span>Account Holder:</span>
+                        <strong class="text-slate-800 dark:text-slate-200">{{ $user->name }}</strong>
+                    </div>
+                    <div class="flex justify-between text-slate-500">
+                        <span>Phone / Email:</span>
+                        <span class="text-slate-700 dark:text-slate-300 font-mono">{{ $user->phone }} &bull; {{ $user->email }}</span>
+                    </div>
+                </div>
+
+                {{-- Gateway selection --}}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                        Select Payment Gateway
+                    </label>
+                    <select name="provider" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        <option value="all">All Active Providers (Auto-provision best available)</option>
+                        <option value="payscribe">PayScribe (9PSB & PalmPay)</option>
+                        <option value="monnify">Monnify (Wema / Providus / Fidelity)</option>
+                        <option value="paystack">Paystack (Wema Bank & Titan)</option>
+                        <option value="flutterwave">Flutterwave</option>
+                    </select>
+                </div>
+
+                {{-- BVN Input --}}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                        Customer BVN (11 Digits) <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="bvn" required maxlength="11" minlength="11" pattern="\d{11}"
+                           placeholder="Enter customer's 11-digit BVN"
+                           class="w-full px-3 py-2.5 text-base font-mono tracking-widest rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    <p class="text-[11px] text-slate-400 mt-1.5 flex items-start gap-1">
+                        <span>ℹ️</span>
+                        <span>Under CBN regulations, a valid BVN is strictly required by licensed banks to create and bind dedicated NUBAN virtual accounts.</span>
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="closeDvaModal()" class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        Cancel
+                    </button>
+                    <button type="submit" id="btnSubmitDva" class="px-5 py-2 text-xs font-bold text-white bg-vtu-primary hover:bg-indigo-700 rounded-xl transition-colors shadow-sm">
+                        Generate Account Now
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {{-- Tab 2: Manual Account Assignment --}}
+        <div id="tabContentManual" class="hidden">
+            <form method="POST" action="{{ route('admin.users.assign-dva', $user) }}" class="space-y-3">
+                @csrf
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Gateway Provider</label>
+                    <select name="provider" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none">
+                        <option value="payscribe">PayScribe</option>
+                        <option value="monnify">Monnify</option>
+                        <option value="paystack">Paystack</option>
+                        <option value="flutterwave">Flutterwave</option>
+                        <option value="safehaven">SafeHaven</option>
+                        <option value="manual">Manual Bank Account</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Bank Name</label>
+                        <input type="text" name="bank_name" required placeholder="e.g. 9PSB or PalmPay"
+                               class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Bank Code (Optional)</label>
+                        <input type="text" name="bank_code" placeholder="e.g. 120001"
+                               class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Account Number (10 Digits)</label>
+                    <input type="text" name="account_number" required maxlength="12" minlength="9" placeholder="e.g. 9012345678"
+                           class="w-full px-3 py-2 text-base font-mono tracking-wider rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Account Name</label>
+                    <input type="text" name="account_name" required value="{{ $user->name }}"
+                           class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none">
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="closeDvaModal()" class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-vtu-primary hover:bg-indigo-700 rounded-xl transition-colors shadow-sm">
+                        Link Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
+
+@section('scripts')
+<script>
+    function openDvaModal() {
+        const modal = document.getElementById('dvaModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeDvaModal() {
+        const modal = document.getElementById('dvaModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function switchDvaTab(tab) {
+        const btnGen = document.getElementById('tabBtnGenerate');
+        const btnMan = document.getElementById('tabBtnManual');
+        const contentGen = document.getElementById('tabContentGenerate');
+        const contentMan = document.getElementById('tabContentManual');
+
+        if (tab === 'generate') {
+            btnGen.className = 'flex-1 py-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all text-center';
+            btnMan.className = 'flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-all text-center';
+            contentGen.classList.remove('hidden');
+            contentMan.classList.add('hidden');
+        } else {
+            btnMan.className = 'flex-1 py-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all text-center';
+            btnGen.className = 'flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-all text-center';
+            contentMan.classList.remove('hidden');
+            contentGen.classList.add('hidden');
+        }
+    }
+
+    function copyDvaText(text, btn) {
+        if (!navigator.clipboard) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showDvaCopyFeedback(btn);
+            return;
+        }
+
+        navigator.clipboard.writeText(text).then(() => {
+            showDvaCopyFeedback(btn);
+        });
+    }
+
+    function showDvaCopyFeedback(btn) {
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold">✓</span>';
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+        }, 1800);
+    }
+</script>
+@endsection
+
