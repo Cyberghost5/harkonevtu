@@ -127,10 +127,10 @@ class AdminSettingsController extends Controller
             'nine_mobile_evc_username','nine_mobile_evc_password','nine_mobile_evc_key','nine_mobile_evc_token','nine_mobile_evc_source_id','nine_mobile_evc_third_party_id','nine_mobile_evc_channel_id','nine_mobile_evc_endpoint','nine_mobile_evc_mode','nine_mobile_evc_status',
             'google_client_id','google_client_secret','google_redirect_uri','google_auth_status',
             'airtime2cash_phone','airtime2cash_tx_charge','airtime2cash_max_per_payment','airtime2cash_min_per_payment',
-            'airtime2cash_phone_mtn','airtime2cash_charge_mtn',
-            'airtime2cash_phone_airtel','airtime2cash_charge_airtel',
-            'airtime2cash_phone_glo','airtime2cash_charge_glo',
-            'airtime2cash_phone_9mobile','airtime2cash_charge_9mobile',
+            'airtime2cash_phone_mtn','airtime2cash_charge_mtn','airtime2cash_status_mtn',
+            'airtime2cash_phone_airtel','airtime2cash_charge_airtel','airtime2cash_status_airtel',
+            'airtime2cash_phone_glo','airtime2cash_charge_glo','airtime2cash_status_glo',
+            'airtime2cash_phone_9mobile','airtime2cash_charge_9mobile','airtime2cash_status_9mobile',
             'referral_commission','referral_min_withdrawal','referral_min_total_spent',
         ];
         $s = AppSetting::getMany($keys);
@@ -140,6 +140,7 @@ class AdminSettingsController extends Controller
             'primebiller_status','aabaxztech_status','autopilot_status','easyaccess_status','legitdataway_status',
             'merrybills_status','clubkonnect_status','globacom_status','termii_status','bulksms_status',
             'onesignal_status','qoreid_status','mtn_ers_status','glo_ers_status','nine_mobile_evc_status','google_auth_status',
+            'airtime2cash_status_mtn','airtime2cash_status_airtel','airtime2cash_status_glo','airtime2cash_status_9mobile',
         ];
         foreach ($statusKeys as $stKey) {
             if (!isset($s[$stKey]) || $s[$stKey] === '') {

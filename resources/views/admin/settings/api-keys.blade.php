@@ -1106,7 +1106,18 @@
                                     <span class="text-[10px] text-amber-700 block">Protocol: Share 'N' Sell (*321#)</span>
                                 </div>
                             </div>
-                            <span class="text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">On-Net</span>
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">On-Net</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="hidden" name="airtime2cash_status_mtn" value="0">
+                                    <input type="checkbox" name="airtime2cash_status_mtn" value="1" {{ ($s['airtime2cash_status_mtn'] ?? '1') === '1' ? 'checked' : '' }}
+                                           class="sr-only peer provider-toggle">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                    <span class="ml-2 text-xs font-bold status-label uppercase tracking-wider {{ ($s['airtime2cash_status_mtn'] ?? '1') === '1' ? 'text-emerald-600' : 'text-slate-400' }}">
+                                        {{ ($s['airtime2cash_status_mtn'] ?? '1') === '1' ? 'Enabled' : 'Disabled' }}
+                                    </span>
+                                </label>
+                            </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <div class="sm:col-span-2">
@@ -1134,7 +1145,18 @@
                                     <span class="text-[10px] text-red-700 block">Protocol: Me2U (*432#)</span>
                                 </div>
                             </div>
-                            <span class="text-[10px] font-semibold uppercase tracking-wider text-red-700 bg-red-100 px-2 py-0.5 rounded-full">On-Net</span>
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-[10px] font-semibold uppercase tracking-wider text-red-700 bg-red-100 px-2 py-0.5 rounded-full">On-Net</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="hidden" name="airtime2cash_status_airtel" value="0">
+                                    <input type="checkbox" name="airtime2cash_status_airtel" value="1" {{ ($s['airtime2cash_status_airtel'] ?? '1') === '1' ? 'checked' : '' }}
+                                           class="sr-only peer provider-toggle">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                    <span class="ml-2 text-xs font-bold status-label uppercase tracking-wider {{ ($s['airtime2cash_status_airtel'] ?? '1') === '1' ? 'text-emerald-600' : 'text-slate-400' }}">
+                                        {{ ($s['airtime2cash_status_airtel'] ?? '1') === '1' ? 'Enabled' : 'Disabled' }}
+                                    </span>
+                                </label>
+                            </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <div class="sm:col-span-2">
@@ -1162,7 +1184,18 @@
                                     <span class="text-[10px] text-emerald-700 block">Protocol: EasyShare (*131#)</span>
                                 </div>
                             </div>
-                            <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">On-Net</span>
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">On-Net</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="hidden" name="airtime2cash_status_glo" value="0">
+                                    <input type="checkbox" name="airtime2cash_status_glo" value="1" {{ ($s['airtime2cash_status_glo'] ?? '1') === '1' ? 'checked' : '' }}
+                                           class="sr-only peer provider-toggle">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                    <span class="ml-2 text-xs font-bold status-label uppercase tracking-wider {{ ($s['airtime2cash_status_glo'] ?? '1') === '1' ? 'text-emerald-600' : 'text-slate-400' }}">
+                                        {{ ($s['airtime2cash_status_glo'] ?? '1') === '1' ? 'Enabled' : 'Disabled' }}
+                                    </span>
+                                </label>
+                            </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <div class="sm:col-span-2">
@@ -1190,7 +1223,18 @@
                                     <span class="text-[10px] text-teal-700 block">Protocol: Airtime Transfer (*223#)</span>
                                 </div>
                             </div>
-                            <span class="text-[10px] font-semibold uppercase tracking-wider text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">On-Net</span>
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-[10px] font-semibold uppercase tracking-wider text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">On-Net</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="hidden" name="airtime2cash_status_9mobile" value="0">
+                                    <input type="checkbox" name="airtime2cash_status_9mobile" value="1" {{ ($s['airtime2cash_status_9mobile'] ?? '1') === '1' ? 'checked' : '' }}
+                                           class="sr-only peer provider-toggle">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                    <span class="ml-2 text-xs font-bold status-label uppercase tracking-wider {{ ($s['airtime2cash_status_9mobile'] ?? '1') === '1' ? 'text-emerald-600' : 'text-slate-400' }}">
+                                        {{ ($s['airtime2cash_status_9mobile'] ?? '1') === '1' ? 'Enabled' : 'Disabled' }}
+                                    </span>
+                                </label>
+                            </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <div class="sm:col-span-2">
@@ -1209,22 +1253,13 @@
                     </div>
                 </div>
 
-                {{-- Global Limits & Fallback Parameters --}}
+                {{-- Global Transaction Limits --}}
                 <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
-                    <p class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Global Limits & Fallbacks</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1">Default Fallback Phone</label>
-                            <input type="text" name="airtime2cash_phone" value="{{ $s['airtime2cash_phone'] ?? '' }}"
-                                   placeholder="Used if network line empty"
-                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1">Default Charge (%)</label>
-                            <input type="text" name="airtime2cash_tx_charge" value="{{ $s['airtime2cash_tx_charge'] ?? '' }}"
-                                   placeholder="e.g. 20"
-                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                        </div>
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-xs font-bold text-slate-700 uppercase tracking-wider">Transaction Limits</p>
+                        <span class="text-[11px] text-slate-400">Allowed range per conversion request</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">Min. Amount (₦)</label>
                             <input type="text" name="airtime2cash_min_per_payment" value="{{ $s['airtime2cash_min_per_payment'] ?? '' }}"

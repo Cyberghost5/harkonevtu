@@ -223,30 +223,30 @@ class ExtraApiController extends Controller
         }
 
         $settings = AppSetting::getMany([
-            'airtime2cash_phone',
             'airtime2cash_phone_mtn',
-            'airtime2cash_phone_airtel',
-            'airtime2cash_phone_glo',
-            'airtime2cash_phone_9mobile',
-            'airtime2cash_tx_charge',
             'airtime2cash_charge_mtn',
+            'airtime2cash_status_mtn',
+            'airtime2cash_phone_airtel',
             'airtime2cash_charge_airtel',
+            'airtime2cash_status_airtel',
+            'airtime2cash_phone_glo',
             'airtime2cash_charge_glo',
+            'airtime2cash_status_glo',
+            'airtime2cash_phone_9mobile',
             'airtime2cash_charge_9mobile',
+            'airtime2cash_status_9mobile',
             'airtime2cash_min_per_payment',
             'airtime2cash_max_per_payment',
         ]);
-
-        $defaultPhone  = $settings['airtime2cash_phone'] ?? '08030000000';
-        $defaultCharge = (float) ($settings['airtime2cash_tx_charge'] ?? 20);
 
         $networks = [
             'mtn' => [
                 'name'          => 'MTN',
                 'full_name'     => 'MTN Nigeria',
-                'phone'         => !empty($settings['airtime2cash_phone_mtn']) ? $settings['airtime2cash_phone_mtn'] : $defaultPhone,
-                'charge_percent'=> (float) (!empty($settings['airtime2cash_charge_mtn']) ? $settings['airtime2cash_charge_mtn'] : $defaultCharge),
-                'payout_rate'   => (100 - (float) (!empty($settings['airtime2cash_charge_mtn']) ? $settings['airtime2cash_charge_mtn'] : $defaultCharge)) . '%',
+                'phone'         => $settings['airtime2cash_phone_mtn'] ?? '',
+                'charge_percent'=> (float) ($settings['airtime2cash_charge_mtn'] ?? 20),
+                'payout_rate'   => (100 - (float) ($settings['airtime2cash_charge_mtn'] ?? 20)) . '%',
+                'enabled'       => ($settings['airtime2cash_status_mtn'] ?? '1') === '1',
                 'ussd_template' => '*321*{phone}*{amount}*{pin}#',
                 'default_pin'   => '0000',
                 'protocol'      => "Share 'N' Sell",
@@ -254,9 +254,10 @@ class ExtraApiController extends Controller
             'airtel' => [
                 'name'          => 'Airtel',
                 'full_name'     => 'Airtel Nigeria',
-                'phone'         => !empty($settings['airtime2cash_phone_airtel']) ? $settings['airtime2cash_phone_airtel'] : $defaultPhone,
-                'charge_percent'=> (float) (!empty($settings['airtime2cash_charge_airtel']) ? $settings['airtime2cash_charge_airtel'] : $defaultCharge),
-                'payout_rate'   => (100 - (float) (!empty($settings['airtime2cash_charge_airtel']) ? $settings['airtime2cash_charge_airtel'] : $defaultCharge)) . '%',
+                'phone'         => $settings['airtime2cash_phone_airtel'] ?? '',
+                'charge_percent'=> (float) ($settings['airtime2cash_charge_airtel'] ?? 20),
+                'payout_rate'   => (100 - (float) ($settings['airtime2cash_charge_airtel'] ?? 20)) . '%',
+                'enabled'       => ($settings['airtime2cash_status_airtel'] ?? '1') === '1',
                 'ussd_template' => '*432*1*{phone}*{amount}*{pin}#',
                 'default_pin'   => '1234',
                 'protocol'      => 'Airtel Me2U',
@@ -264,9 +265,10 @@ class ExtraApiController extends Controller
             'glo' => [
                 'name'          => 'Glo',
                 'full_name'     => 'Globacom Nigeria',
-                'phone'         => !empty($settings['airtime2cash_phone_glo']) ? $settings['airtime2cash_phone_glo'] : $defaultPhone,
-                'charge_percent'=> (float) (!empty($settings['airtime2cash_charge_glo']) ? $settings['airtime2cash_charge_glo'] : $defaultCharge),
-                'payout_rate'   => (100 - (float) (!empty($settings['airtime2cash_charge_glo']) ? $settings['airtime2cash_charge_glo'] : $defaultCharge)) . '%',
+                'phone'         => $settings['airtime2cash_phone_glo'] ?? '',
+                'charge_percent'=> (float) ($settings['airtime2cash_charge_glo'] ?? 20),
+                'payout_rate'   => (100 - (float) ($settings['airtime2cash_charge_glo'] ?? 20)) . '%',
+                'enabled'       => ($settings['airtime2cash_status_glo'] ?? '1') === '1',
                 'ussd_template' => '*131*{phone}*{amount}*{pin}#',
                 'default_pin'   => '00000',
                 'protocol'      => 'Glo EasyShare',
@@ -274,9 +276,10 @@ class ExtraApiController extends Controller
             '9mobile' => [
                 'name'          => '9mobile',
                 'full_name'     => '9mobile',
-                'phone'         => !empty($settings['airtime2cash_phone_9mobile']) ? $settings['airtime2cash_phone_9mobile'] : $defaultPhone,
-                'charge_percent'=> (float) (!empty($settings['airtime2cash_charge_9mobile']) ? $settings['airtime2cash_charge_9mobile'] : $defaultCharge),
-                'payout_rate'   => (100 - (float) (!empty($settings['airtime2cash_charge_9mobile']) ? $settings['airtime2cash_charge_9mobile'] : $defaultCharge)) . '%',
+                'phone'         => $settings['airtime2cash_phone_9mobile'] ?? '',
+                'charge_percent'=> (float) ($settings['airtime2cash_charge_9mobile'] ?? 20),
+                'payout_rate'   => (100 - (float) ($settings['airtime2cash_charge_9mobile'] ?? 20)) . '%',
+                'enabled'       => ($settings['airtime2cash_status_9mobile'] ?? '1') === '1',
                 'ussd_template' => '*223*{pin}*{amount}*{phone}#',
                 'default_pin'   => '0000',
                 'protocol'      => 'Airtime Transfer',
@@ -287,12 +290,9 @@ class ExtraApiController extends Controller
             'status'  => true,
             'message' => 'Airtime to cash settings retrieved successfully.',
             'data'    => [
-                'transfer_phone' => $defaultPhone,
-                'charge_percent' => $defaultCharge,
-                'payout_rate'    => (100 - $defaultCharge) . '%',
-                'min_amount'     => (float) ($settings['airtime2cash_min_per_payment'] ?? 500),
-                'max_amount'     => (float) ($settings['airtime2cash_max_per_payment'] ?? 50000),
-                'networks'       => $networks,
+                'min_amount' => (float) ($settings['airtime2cash_min_per_payment'] ?? 500),
+                'max_amount' => (float) ($settings['airtime2cash_max_per_payment'] ?? 50000),
+                'networks'   => $networks,
             ],
         ]);
     }
@@ -335,10 +335,31 @@ class ExtraApiController extends Controller
             ], 422);
         }
 
-        $network       = strtolower((string) $request->network);
+        $network = strtolower((string) $request->network);
+
+        // Check if the selected network is enabled
+        $isEnabled = AppSetting::get('airtime2cash_status_' . $network, '1') === '1';
+        if (!$isEnabled) {
+            return response()->json([
+                'status'  => false,
+                'message' => strtoupper($network) . ' airtime to cash conversion is currently disabled.',
+            ], 422);
+        }
+
+        // Check if receiver phone is configured
+        $receiverPhone = AppSetting::get('airtime2cash_phone_' . $network, '');
+        if (empty($receiverPhone)) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Receiver phone number for ' . strtoupper($network) . ' has not been configured.',
+            ], 422);
+        }
+
         $amount        = (float) $request->amount;
-        $defaultCharge = (float) AppSetting::get('airtime2cash_tx_charge', 20);
-        $chargePercent = (float) AppSetting::get('airtime2cash_charge_' . $network, $defaultCharge);
+        $chargePercent = (float) AppSetting::get('airtime2cash_charge_' . $network, 20);
+        if ($chargePercent <= 0) {
+            $chargePercent = 20;
+        }
         $charge        = ($amount * $chargePercent) / 100;
         $receiveAmount = $amount - $charge;
 

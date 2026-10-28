@@ -228,11 +228,12 @@
                                   {{ request()->routeIs('services.airtime') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                             Airtime Top-Up
                         </a>
-                        <!-- <a href="{{ route('services.airtime-to-cash') }}"
-                           class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
-                                  {{ request()->routeIs('services.airtime-to-cash*') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
-                            Airtime to Cash
-                        </a> -->
+                        <a href="{{ route('services.airtime-to-cash') }}"
+                           class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
+                                  {{ request()->routeIs('services.airtime-to-cash*') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10 font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
+                            <span>Airtime to Cash</span>
+                            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400">4 Nets</span>
+                        </a>
                         <a href="{{ route('services.data') }}"
                            class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
                                   {{ request()->routeIs('services.data*') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">

@@ -20,6 +20,9 @@ class AirtimeToCashTest extends TestCase
         parent::setUp();
 
         AppSetting::set('airtime2cash_phone', '08030000000');
+        AppSetting::set('airtime2cash_phone_mtn', '08030000000');
+        AppSetting::set('airtime2cash_charge_mtn', '20');
+        AppSetting::set('airtime2cash_status_mtn', '1');
         AppSetting::set('airtime2cash_tx_charge', '20'); // 20% fee
         AppSetting::set('airtime2cash_min_per_payment', '500');
         AppSetting::set('airtime2cash_max_per_payment', '20000');
