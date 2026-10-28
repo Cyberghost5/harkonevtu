@@ -1563,7 +1563,104 @@ Accept: application/json</code></pre>
                             </div>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
-                        <p class="text-slate-300 text-xs">Fetch airtime to cash conversion rates, payout percentage, and receiving phone numbers.</p>
+                        <p class="text-slate-300 text-xs">Fetch dedicated receiving phone numbers, USSD transfer templates, conversion fee percentages, and status for all 4 telecommunication networks (MTN, Airtel, Glo, 9mobile).</p>
+                        <div>
+                            <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                            <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800 overflow-x-auto"><code>{
+  "status": true,
+  "message": "Airtime to cash settings retrieved successfully.",
+  "data": {
+    "min_amount": 500,
+    "max_amount": 50000,
+    "networks": {
+      "mtn": {
+        "name": "MTN",
+        "full_name": "MTN Nigeria",
+        "phone": "08031234567",
+        "charge_percent": 20,
+        "payout_rate": "80%",
+        "enabled": true,
+        "ussd_template": "*321*{phone}*{amount}*{pin}#",
+        "default_pin": "0000",
+        "protocol": "Share 'N' Sell"
+      },
+      "airtel": {
+        "name": "Airtel",
+        "full_name": "Airtel Nigeria",
+        "phone": "08021234567",
+        "charge_percent": 20,
+        "payout_rate": "80%",
+        "enabled": true,
+        "ussd_template": "*432*1*{phone}*{amount}*{pin}#",
+        "default_pin": "1234",
+        "protocol": "Airtel Me2U"
+      },
+      "glo": {
+        "name": "Glo",
+        "full_name": "Globacom Nigeria",
+        "phone": "08051234567",
+        "charge_percent": 20,
+        "payout_rate": "80%",
+        "enabled": true,
+        "ussd_template": "*131*{phone}*{amount}*{pin}#",
+        "default_pin": "00000",
+        "protocol": "Glo EasyShare"
+      },
+      "9mobile": {
+        "name": "9mobile",
+        "full_name": "9mobile",
+        "phone": "08091234567",
+        "charge_percent": 20,
+        "payout_rate": "80%",
+        "enabled": true,
+        "ussd_template": "*223*{pin}*{amount}*{phone}#",
+        "default_pin": "0000",
+        "protocol": "Airtime Transfer"
+      }
+    }
+  }
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- POST /airtime-to-cash/submit -->
+                    <div id="post-airtime2cash-submit" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/airtime-to-cash/submit</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Submit an airtime conversion request after transferring airtime to the network's designated receiving number.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request (Multipart/form-data)</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "network": "mtn",
+  "phone": "08031112222",
+  "amount": 2000,
+  "transaction_pin": "1234",
+  "screenshot": "(Binary image file: jpg/png/webp)"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "message": "Airtime conversion request submitted successfully. Admin will process and credit your wallet after verifying transfer.",
+  "data": {
+    "request_id": 14,
+    "network": "MTN",
+    "sender_phone": "08031112222",
+    "airtime_sent": 2000,
+    "receive_amount": 1600,
+    "status": "pending",
+    "created_at": "2026-10-28 07:30:00"
+  }
+}</code></pre>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- POST /vouchers/generate -->
@@ -1575,7 +1672,7 @@ Accept: application/json</code></pre>
                             </div>
                             <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
                         </div>
-                        <p class="text-slate-300 text-xs">Generate physical recharge card / data card pins and serial numbers for resale or printing.</p>
+                        <p class="text-slate-300 text-xs">Generate physical recharge card / data card pins and serial numbers for resale or printing. Supported airtime denominations: <strong>100, 200, 500, 1000</strong>.</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>

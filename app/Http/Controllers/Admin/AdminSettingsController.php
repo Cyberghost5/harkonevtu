@@ -275,7 +275,7 @@ class AdminSettingsController extends Controller
         $datacardIntegrated  = ['vtpass'];
         $datacardProviders   = array_values(array_intersect($availableProviders, $datacardIntegrated));
 
-        $airtimePinIntegrated = ['vtpass', 'mtn_ers', 'glo_ers'];
+        $airtimePinIntegrated = ['vtpass', 'clubkonnect', 'mtn_ers', 'glo_ers'];
         $airtimePinProviders  = array_values(array_intersect($availableProviders, $airtimePinIntegrated));
 
         $bettingIntegrated   = ['payscribe'];
