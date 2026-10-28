@@ -62,7 +62,17 @@
                 {{-- Info --}}
                 <div class="space-y-2 text-sm">
                     <div class="flex gap-2"><span class="text-slate-400 w-28 flex-shrink-0">Sender Phone:</span><span class="font-semibold text-slate-700 dark:text-slate-300">{{ $req->phone }}</span></div>
-                    <div class="flex gap-2"><span class="text-slate-400 w-28 flex-shrink-0">Network:</span><span class="font-bold text-slate-700 dark:text-slate-300 uppercase">{{ $req->network }}</span></div>
+                    <div class="flex gap-2 items-center">
+                        <span class="text-slate-400 w-28 flex-shrink-0">Network:</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider
+                            @if(strtolower($req->network) === 'mtn') bg-amber-400 text-black
+                            @elseif(strtolower($req->network) === 'airtel') bg-red-600 text-white
+                            @elseif(strtolower($req->network) === 'glo') bg-emerald-600 text-white
+                            @else bg-teal-700 text-lime-300
+                            @endif">
+                            {{ strtoupper($req->network) }}
+                        </span>
+                    </div>
                     <div class="flex gap-2"><span class="text-slate-400 w-28 flex-shrink-0">Service Charge:</span><span class="font-semibold text-red-500">₦{{ number_format($req->charge, 2) }}</span></div>
                     @if($req->admin_note)<div class="flex gap-2"><span class="text-slate-400 w-28 flex-shrink-0">Admin Note:</span><span class="text-xs text-slate-600 dark:text-slate-400">{{ $req->admin_note }}</span></div>@endif
                 </div>

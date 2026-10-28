@@ -1082,32 +1082,161 @@
             </div>
 
             {{-- ── Airtime2Cash Parameters ──────────────────────────────── --}}
-            <div class="px-6 py-6">
-                <h4 class="text-lg font-bold text-slate-800 mb-4">Airtime2Cash Parameters</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="px-6 py-6 border-b border-slate-100">
+                <div class="flex items-center justify-between mb-4">
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Phone Number to receive airtime</label>
-                        <input type="text" name="airtime2cash_phone" value="{{ $s['airtime2cash_phone'] ?? '' }}"
-                               placeholder="Enter Phone Number"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        <h4 class="text-lg font-bold text-slate-800">Airtime2Cash Parameters (4 Networks)</h4>
+                        <p class="text-xs text-slate-500">Configure dedicated receiving phone lines and conversion rates for all 4 telecommunication networks.</p>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Transaction charge in % per payment</label>
-                        <input type="text" name="airtime2cash_tx_charge" value="{{ $s['airtime2cash_tx_charge'] ?? '' }}"
-                               placeholder="Enter Transaction Charge"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        4 Networks Active
+                    </span>
+                </div>
+
+                {{-- 4 Dedicated Network Lines Grid --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    {{-- 1. MTN --}}
+                    <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/40 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="h-7 w-7 rounded-lg bg-yellow-400 text-black font-black text-xs flex items-center justify-center shadow-sm">MTN</span>
+                                <div>
+                                    <span class="text-xs font-bold text-slate-800">MTN Nigeria</span>
+                                    <span class="text-[10px] text-amber-700 block">Protocol: Share 'N' Sell (*321#)</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">On-Net</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div class="sm:col-span-2">
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">MTN Receiver Phone Number</label>
+                                <input type="text" name="airtime2cash_phone_mtn" value="{{ $s['airtime2cash_phone_mtn'] ?? '' }}"
+                                       placeholder="e.g. 08031234567"
+                                       class="w-full px-3 py-2 text-sm font-mono border border-amber-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Charge (%)</label>
+                                <input type="text" name="airtime2cash_charge_mtn" value="{{ $s['airtime2cash_charge_mtn'] ?? '' }}"
+                                       placeholder="e.g. 20"
+                                       class="w-full px-3 py-2 text-sm border border-amber-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30">
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Max. Amount per payment</label>
-                        <input type="text" name="airtime2cash_max_per_payment" value="{{ $s['airtime2cash_max_per_payment'] ?? '' }}"
-                               placeholder="Enter Maximum Amount"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+
+                    {{-- 2. AIRTEL --}}
+                    <div class="p-4 rounded-xl border border-red-200 bg-red-50/40 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="h-7 w-7 rounded-lg bg-red-600 text-white font-black text-xs flex items-center justify-center shadow-sm">AIR</span>
+                                <div>
+                                    <span class="text-xs font-bold text-slate-800">Airtel Nigeria</span>
+                                    <span class="text-[10px] text-red-700 block">Protocol: Me2U (*432#)</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider text-red-700 bg-red-100 px-2 py-0.5 rounded-full">On-Net</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div class="sm:col-span-2">
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Airtel Receiver Phone Number</label>
+                                <input type="text" name="airtime2cash_phone_airtel" value="{{ $s['airtime2cash_phone_airtel'] ?? '' }}"
+                                       placeholder="e.g. 08021234567"
+                                       class="w-full px-3 py-2 text-sm font-mono border border-red-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/30">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Charge (%)</label>
+                                <input type="text" name="airtime2cash_charge_airtel" value="{{ $s['airtime2cash_charge_airtel'] ?? '' }}"
+                                       placeholder="e.g. 20"
+                                       class="w-full px-3 py-2 text-sm border border-red-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/30">
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Min. Amount per payment</label>
-                        <input type="text" name="airtime2cash_min_per_payment" value="{{ $s['airtime2cash_min_per_payment'] ?? '' }}"
-                               placeholder="Enter Minimum Amount"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+
+                    {{-- 3. GLO --}}
+                    <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="h-7 w-7 rounded-lg bg-emerald-600 text-white font-black text-xs flex items-center justify-center shadow-sm">GLO</span>
+                                <div>
+                                    <span class="text-xs font-bold text-slate-800">Globacom (Glo)</span>
+                                    <span class="text-[10px] text-emerald-700 block">Protocol: EasyShare (*131#)</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">On-Net</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div class="sm:col-span-2">
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Glo Receiver Phone Number</label>
+                                <input type="text" name="airtime2cash_phone_glo" value="{{ $s['airtime2cash_phone_glo'] ?? '' }}"
+                                       placeholder="e.g. 08051234567"
+                                       class="w-full px-3 py-2 text-sm font-mono border border-emerald-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Charge (%)</label>
+                                <input type="text" name="airtime2cash_charge_glo" value="{{ $s['airtime2cash_charge_glo'] ?? '' }}"
+                                       placeholder="e.g. 20"
+                                       class="w-full px-3 py-2 text-sm border border-emerald-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- 4. 9MOBILE --}}
+                    <div class="p-4 rounded-xl border border-teal-200 bg-teal-50/40 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="h-7 w-7 rounded-lg bg-teal-800 text-lime-300 font-black text-xs flex items-center justify-center shadow-sm">9MOB</span>
+                                <div>
+                                    <span class="text-xs font-bold text-slate-800">9mobile (Etisalat)</span>
+                                    <span class="text-[10px] text-teal-700 block">Protocol: Airtime Transfer (*223#)</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">On-Net</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div class="sm:col-span-2">
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">9mobile Receiver Phone Number</label>
+                                <input type="text" name="airtime2cash_phone_9mobile" value="{{ $s['airtime2cash_phone_9mobile'] ?? '' }}"
+                                       placeholder="e.g. 08091234567"
+                                       class="w-full px-3 py-2 text-sm font-mono border border-teal-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/30">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Charge (%)</label>
+                                <input type="text" name="airtime2cash_charge_9mobile" value="{{ $s['airtime2cash_charge_9mobile'] ?? '' }}"
+                                       placeholder="e.g. 20"
+                                       class="w-full px-3 py-2 text-sm border border-teal-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/30">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Global Limits & Fallback Parameters --}}
+                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                    <p class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Global Limits & Fallbacks</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Default Fallback Phone</label>
+                            <input type="text" name="airtime2cash_phone" value="{{ $s['airtime2cash_phone'] ?? '' }}"
+                                   placeholder="Used if network line empty"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Default Charge (%)</label>
+                            <input type="text" name="airtime2cash_tx_charge" value="{{ $s['airtime2cash_tx_charge'] ?? '' }}"
+                                   placeholder="e.g. 20"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Min. Amount (₦)</label>
+                            <input type="text" name="airtime2cash_min_per_payment" value="{{ $s['airtime2cash_min_per_payment'] ?? '' }}"
+                                   placeholder="e.g. 500"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Max. Amount (₦)</label>
+                            <input type="text" name="airtime2cash_max_per_payment" value="{{ $s['airtime2cash_max_per_payment'] ?? '' }}"
+                                   placeholder="e.g. 50000"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        </div>
                     </div>
                 </div>
             </div>
