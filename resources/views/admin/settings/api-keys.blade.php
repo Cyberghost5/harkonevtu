@@ -890,6 +890,25 @@
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                             <span class="text-[11px] text-slate-400">Discounted rate per unit for upgraded Agent accounts.</span>
                         </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Default Gateway / Delivery Route</label>
+                            <select name="bulksms_gateway"
+                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                                <option value="direct-corporate" {{ ($s['bulksms_gateway'] ?? 'direct-corporate') === 'direct-corporate' ? 'selected' : '' }}>
+                                    Corporate / DND Bypass (direct-corporate) — Recommended
+                                </option>
+                                <option value="direct-refund" {{ ($s['bulksms_gateway'] ?? '') === 'direct-refund' ? 'selected' : '' }}>
+                                    Promotional Route (direct-refund)
+                                </option>
+                                <option value="corporate" {{ ($s['bulksms_gateway'] ?? '') === 'corporate' ? 'selected' : '' }}>
+                                    Corporate Route (corporate)
+                                </option>
+                                <option value="otp" {{ ($s['bulksms_gateway'] ?? '') === 'otp' ? 'selected' : '' }}>
+                                    Dedicated OTP Route (otp)
+                                </option>
+                            </select>
+                            <span class="text-[11px] text-slate-400">Routes transactional alerts & OTPs through NCC-approved corporate channels to bypass promotional route restrictions.</span>
+                        </div>
                     </div>
                 </div>
             </div>

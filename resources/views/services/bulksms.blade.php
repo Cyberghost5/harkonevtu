@@ -49,6 +49,28 @@
                         </p>
                     </div>
 
+                    {{-- Delivery Route / Gateway --}}
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Delivery Route
+                            </label>
+                            <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-500/20">
+                                DND Bypass Active
+                            </span>
+                        </div>
+                        <select x-model="gateway"
+                                class="w-full px-3.5 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-vtu-primary focus:border-transparent transition text-sm font-medium">
+                            <option value="direct-corporate">Corporate / DND Bypass (direct-corporate) — Recommended</option>
+                            <option value="direct-refund">Promotional Route (direct-refund)</option>
+                            <option value="corporate">Corporate Route (corporate)</option>
+                            <option value="otp">Dedicated OTP Route (otp)</option>
+                        </select>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            Routes OTPs, verification codes, and transactional alerts through NCC-approved corporate channels to bypass promotional route filters.
+                        </p>
+                    </div>
+
                     {{-- Recipients Input --}}
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
@@ -322,6 +344,7 @@
 function bulkSmsApp() {
     return {
         senderId: '{{ $defaultSender }}',
+        gateway: '{{ $defaultGateway ?? "direct-corporate" }}',
         recipients: '',
         message: '',
         unitRate: {{ (float) $rate }},
@@ -471,6 +494,7 @@ function bulkSmsApp() {
                     },
                     body: JSON.stringify({
                         sender_id: this.senderId,
+                        gateway: this.gateway,
                         message: this.message,
                         recipients: this.validRecipients.join(','),
                         transaction_pin: pin,

@@ -31,6 +31,8 @@ class BulkSmsApiController extends Controller
                 'unit_rate'          => $rate,
                 'formatted_rate'     => '₦' . number_format($rate, 2),
                 'default_sender_id'  => BulkSmsService::sanitizeSenderId(null),
+                'default_gateway'    => BulkSmsService::getDefaultGateway(),
+                'supported_gateways' => ['direct-corporate', 'direct-refund', 'corporate', 'otp'],
                 'max_sender_length'  => 11,
                 'rules'              => [
                     'gsm_7bit' => [
@@ -112,6 +114,7 @@ class BulkSmsApiController extends Controller
             'sender_id'       => ['required', 'string', 'max:11'],
             'message'         => ['required', 'string', 'min:1', 'max:1000'],
             'recipients'      => ['required'],
+            'gateway'         => ['nullable', 'string', 'in:direct-corporate,direct-refund,corporate,otp'],
             'transaction_pin' => ['required', 'digits:4'],
         ]);
 
@@ -142,7 +145,8 @@ class BulkSmsApiController extends Controller
             $user,
             $request->sender_id,
             $parsed['valid'],
-            $request->message
+            $request->message,
+            $request->input('gateway')
         );
 
         if (!$result['success']) {
@@ -169,6 +173,7 @@ class BulkSmsApiController extends Controller
                 'unit_rate'       => (float) $campaign->unit_rate,
                 'total_amount'    => (float) $campaign->total_amount,
                 'status'          => $campaign->status,
+                'gateway'         => $campaign->gateway,
                 'balance_after'   => $result['balance_after'],
                 'formatted_balance'=> '₦' . number_format($result['balance_after'], 2),
                 'created_at'      => $campaign->created_at?->toIso8601String(),

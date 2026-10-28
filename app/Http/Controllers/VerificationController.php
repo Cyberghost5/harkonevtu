@@ -170,6 +170,7 @@ class VerificationController extends Controller
                     'from' => $sender,
                     'to' => $phone,
                     'body' => $message,
+                    'gateway' => 'direct-corporate',
                 ]);
 
                 if ($response->failed() || ($response->json('status') !== 'success' && $response->json('data.status') !== 'success')) {

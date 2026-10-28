@@ -19,6 +19,7 @@ class BulkSmsCampaign extends Model
         'unit_rate',
         'total_amount',
         'status',
+        'gateway',
         'reference',
         'api_response',
     ];

@@ -156,6 +156,7 @@ class AdminSettingsTest extends TestCase
                 $request->hasHeader('Authorization', 'Bearer test_api_key') &&
                 $request['from'] === 'TestSender' &&
                 $request['to'] === '2348031234567' &&
+                $request['gateway'] === 'direct-corporate' &&
                 str_contains($request['body'], 'verification code is:');
         });
     }

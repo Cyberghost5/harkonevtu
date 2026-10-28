@@ -36,11 +36,12 @@ class BulkSmsController extends Controller implements HasMiddleware
         $user          = auth()->user();
         $rate          = BulkSmsService::getUnitRate($user);
         $defaultSender = BulkSmsService::sanitizeSenderId(null);
+        $defaultGateway = BulkSmsService::getDefaultGateway();
         $campaigns     = BulkSmsCampaign::where('user_id', $user->id)
             ->latest()
             ->paginate(15);
 
-        return view('services.bulksms', compact('user', 'rate', 'defaultSender', 'campaigns'));
+        return view('services.bulksms', compact('user', 'rate', 'defaultSender', 'defaultGateway', 'campaigns'));
     }
 
     /**
@@ -85,6 +86,7 @@ class BulkSmsController extends Controller implements HasMiddleware
             'sender_id'       => ['required', 'string', 'max:11'],
             'message'         => ['required', 'string', 'min:1', 'max:1000'],
             'recipients'      => ['required', 'string'],
+            'gateway'         => ['nullable', 'string', 'in:direct-corporate,direct-refund,corporate,otp'],
             'transaction_pin' => ['required', 'digits:4'],
         ]);
 
@@ -109,7 +111,8 @@ class BulkSmsController extends Controller implements HasMiddleware
             $user,
             $request->sender_id,
             $parsed['valid'],
-            $request->message
+            $request->message,
+            $request->input('gateway')
         );
 
         if (!$result['success']) {

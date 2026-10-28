@@ -155,10 +155,11 @@ class BulkSmsTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
 
-        // Dispatched single HTTP call to BulkSMS Nigeria
+        // Dispatched HTTP call to BulkSMS Nigeria with direct-corporate gateway
         Http::assertSent(function ($request) {
             return $request->url() === 'https://www.bulksmsnigeria.com/api/v2/sms'
                 && $request['from'] === 'MyBrand'
+                && $request['gateway'] === 'direct-corporate'
                 && str_contains($request['to'], '2348031234567')
                 && str_contains($request['to'], '2348123456789')
                 && $request['body'] === 'Exclusive promo code: DISK50';
@@ -171,6 +172,7 @@ class BulkSmsTest extends TestCase
         $campaign = BulkSmsCampaign::where('user_id', $user->id)->first();
         $this->assertNotNull($campaign);
         $this->assertEquals('sent', $campaign->status);
+        $this->assertEquals('direct-corporate', $campaign->gateway);
         $this->assertEquals(2, $campaign->recipient_count);
         $this->assertEquals(8.00, (float) $campaign->total_amount);
         $this->assertEquals('MyBrand', $campaign->sender_id);
@@ -222,6 +224,55 @@ class BulkSmsTest extends TestCase
         ]);
     }
 
+    public function test_bulksms_auto_retry_on_bsng_2013_promotional_rejection(): void
+    {
+        $user = $this->createVerifiedUser();
+        $wallet = $user->wallet()->create(['balance' => 1000]);
+
+        $callCount = 0;
+        Http::fake([
+            'https://www.bulksmsnigeria.com/api/v2/sms' => function ($request) use (&$callCount) {
+                $callCount++;
+                if ($callCount === 1) {
+                    // First call: promotional route rejected by provider with BSNG-2013
+                    return Http::response([
+                        'status' => 'error',
+                        'code'   => 'BSNG-2013',
+                        'error'  => [
+                            'message' => "This message can't be sent on the promotional route. OTPs, verification codes and other transactional messages must use the corporate/OTP route...",
+                            'code'    => 'BSNG-2013',
+                        ],
+                        'message' => "This message can't be sent on the promotional route. OTPs, verification codes and other transactional messages must use the corporate/OTP route...",
+                    ], 200);
+                }
+
+                // Second call: automatic retry via direct-corporate succeeds
+                return Http::response([
+                    'status' => 'success',
+                    'data'   => ['status' => 'success', 'message' => 'Message Sent'],
+                ], 200);
+            },
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('services.bulksms.send'), [
+            'sender_id'       => 'BankAlert',
+            'gateway'         => 'direct-refund',
+            'message'         => 'Your OTP code is 9871',
+            'recipients'      => '08031234567',
+            'transaction_pin' => '1234',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $this->assertEquals(2, $callCount);
+
+        // Campaign persisted with direct-corporate
+        $campaign = BulkSmsCampaign::where('user_id', $user->id)->first();
+        $this->assertNotNull($campaign);
+        $this->assertEquals('sent', $campaign->status);
+        $this->assertEquals('direct-corporate', $campaign->gateway);
+    }
+
     public function test_api_v1_bulksms_pricing_and_agent_rate(): void
     {
         // Standard user rate
@@ -229,6 +280,7 @@ class BulkSmsTest extends TestCase
         $resp = $this->actingAs($user, 'sanctum')->getJson('/api/v1/bulksms/pricing');
         $resp->assertStatus(200);
         $this->assertEquals(4.0, $resp->json('data.unit_rate'));
+        $this->assertEquals('direct-corporate', $resp->json('data.default_gateway'));
         $resp->assertJsonPath('data.user_tier', 'User');
 
         // Agent user rate
@@ -261,6 +313,7 @@ class BulkSmsTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonPath('status', true);
         $response->assertJsonPath('data.sender_id', 'MobileApp');
+        $response->assertJsonPath('data.gateway', 'direct-corporate');
         $response->assertJsonPath('data.recipient_count', 1);
 
         // Fetch history

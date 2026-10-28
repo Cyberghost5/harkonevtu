@@ -90,6 +90,7 @@ class SmsIntegrationTest extends TestCase
                 $request->hasHeader('Authorization', 'Bearer mock_bulksms_key') &&
                 $request['to'] === '2348031234567' &&
                 $request['from'] === 'MyBrand' &&
+                $request['gateway'] === 'direct-corporate' &&
                 str_contains($request['body'], "verification code is: " . $cachedOtp);
         });
     }

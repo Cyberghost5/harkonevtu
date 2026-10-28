@@ -41,6 +41,24 @@ class BulkSmsService
     }
 
     /**
+     * Get the configured default gateway route.
+     */
+    public static function getDefaultGateway(): string
+    {
+        $gateway = AppSetting::get('bulksms_gateway');
+        return !empty($gateway) ? (string) $gateway : 'direct-corporate';
+    }
+
+    /**
+     * Detect whether message body contains OTP / transactional keywords
+     * that require the corporate / OTP route under NCC regulations.
+     */
+    public static function isTransactionalMessage(string $message): bool
+    {
+        return (bool) preg_match('/\b(otp|code|verification|verify|password|pin|token|alert|invoice|receipt|login|test|security|auth|2fa)\b/i', $message);
+    }
+
+    /**
      * Sanitize and format the alphanumeric Sender ID (max 11 characters).
      */
     public static function sanitizeSenderId(?string $senderId): string
@@ -154,7 +172,8 @@ class BulkSmsService
         string $senderId,
         array $recipients,
         string $message,
-        string $reference
+        string $reference,
+        ?string $gateway = null
     ): array {
         $apiKey = AppSetting::get('bulksms_api_key');
         if (empty($apiKey)) {
@@ -166,6 +185,14 @@ class BulkSmsService
             ];
         }
 
+        // Determine effective gateway route:
+        // If message is transactional (e.g. OTP/test/verification), enforce 'direct-corporate' to prevent BSNG-2013.
+        if (empty($gateway)) {
+            $gateway = self::isTransactionalMessage($message)
+                ? 'direct-corporate'
+                : self::getDefaultGateway();
+        }
+
         $endpoint        = self::API_ENDPOINT;
         $start           = hrtime(true);
         $httpStatus      = null;
@@ -173,16 +200,19 @@ class BulkSmsService
         $data            = [];
         $success         = false;
 
+        $payload = [
+            'from'    => $senderId,
+            'to'      => implode(',', $recipients),
+            'body'    => $message,
+            'gateway' => $gateway,
+        ];
+
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type'  => 'application/json',
                 'Accept'        => 'application/json',
-            ])->timeout(45)->post($endpoint, [
-                'from' => $senderId,
-                'to'   => implode(',', $recipients),
-                'body' => $message,
-            ]);
+            ])->timeout(45)->post($endpoint, $payload);
 
             $httpStatus      = $response->status();
             $responseHeaders = $response->headers();
@@ -190,6 +220,32 @@ class BulkSmsService
 
             $statusText = strtolower((string) ($data['status'] ?? $data['data']['status'] ?? ''));
             $success    = ($response->successful() && $statusText === 'success');
+
+            // Automatic fallback retry if provider rejects with BSNG-2013 (Message not permitted on promotional route)
+            $errorCode = $data['code'] ?? $data['error']['code'] ?? '';
+            $errorDesc = $data['error']['message'] ?? $data['message'] ?? '';
+            $isRouteError = ($errorCode === 'BSNG-2013')
+                || str_contains(strtolower($errorDesc), 'promotional route')
+                || str_contains(strtolower($errorDesc), 'corporate/otp');
+
+            if (!$success && $isRouteError && $gateway !== 'direct-corporate') {
+                Log::info("BulkSMS Nigeria route error BSNG-2013 encountered. Retrying via direct-corporate gateway.", ['reference' => $reference]);
+                $gateway = 'direct-corporate';
+                $payload['gateway'] = 'direct-corporate';
+
+                $retryResponse = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json',
+                ])->timeout(45)->post($endpoint, $payload);
+
+                $httpStatus      = $retryResponse->status();
+                $responseHeaders = $retryResponse->headers();
+                $data            = $retryResponse->json() ?? [];
+
+                $statusText = strtolower((string) ($data['status'] ?? $data['data']['status'] ?? ''));
+                $success    = ($retryResponse->successful() && $statusText === 'success');
+            }
 
             if (!$success) {
                 $errorMsg = $data['error']['message'] ?? $data['message'] ?? 'SMS dispatch failed from provider.';
@@ -209,6 +265,7 @@ class BulkSmsService
                 'method'           => 'POST',
                 'payload'          => [
                     'from'            => $senderId,
+                    'gateway'         => $gateway,
                     'recipient_count' => count($recipients),
                     'body_preview'    => mb_substr($message, 0, 50),
                     'sample_to'       => array_slice($recipients, 0, 3),
@@ -224,6 +281,7 @@ class BulkSmsService
         return [
             'success' => $success,
             'message' => $data['message'] ?? ($success ? 'Message sent successfully.' : 'SMS dispatch failed.'),
+            'gateway' => $gateway,
             'raw'     => $data,
         ];
     }
@@ -239,7 +297,8 @@ class BulkSmsService
         User $user,
         string $senderId,
         array $recipients,
-        string $message
+        string $message,
+        ?string $gateway = null
     ): array {
         $senderId = self::sanitizeSenderId($senderId);
         $gsmInfo  = self::calculateGsmPages($message);
@@ -289,7 +348,8 @@ class BulkSmsService
         });
 
         // 2. Dispatch to provider outside the database transaction
-        $providerResult = self::dispatchToProvider($user, $senderId, $recipients, $message, $reference);
+        $providerResult = self::dispatchToProvider($user, $senderId, $recipients, $message, $reference, $gateway);
+        $effectiveGateway = $providerResult['gateway'] ?? ($gateway ?: self::getDefaultGateway());
 
         if (!$providerResult['success']) {
             // Revert debit (auto-refund)
@@ -323,6 +383,7 @@ class BulkSmsService
                 'unit_rate'       => $unitRate,
                 'total_amount'    => $totalCost,
                 'status'          => 'failed',
+                'gateway'         => $effectiveGateway,
                 'reference'       => $reference,
                 'api_response'    => $providerResult['raw'] ? json_encode($providerResult['raw']) : null,
             ]);
@@ -355,6 +416,7 @@ class BulkSmsService
             'unit_rate'       => $unitRate,
             'total_amount'    => $totalCost,
             'status'          => 'sent',
+            'gateway'         => $effectiveGateway,
             'reference'       => $reference,
             'api_response'    => $providerResult['raw'] ? json_encode($providerResult['raw']) : null,
         ]);

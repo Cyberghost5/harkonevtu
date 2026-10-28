@@ -118,7 +118,7 @@ class AdminSettingsController extends Controller
             'clubkonnect_user_id','clubkonnect_api_key','clubkonnect_status',
             'globacom_xapi_key','globacom_email','globacom_sponsor_id','globacom_bucket_id','globacom_status',
             'termii_api_key','termii_status',
-            'bulksms_sender','bulksms_api_key','bulksms_amount_per_unit','bulksms_agent_rate','bulksms_status',
+            'bulksms_sender','bulksms_api_key','bulksms_amount_per_unit','bulksms_agent_rate','bulksms_gateway','bulksms_status',
             'onesignal_app_id','onesignal_api_key','onesignal_status',
             'qoreid_client_key','qoreid_secret_key','qoreid_mode','qoreid_status',
             'kyc_provider',
