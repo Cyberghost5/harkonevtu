@@ -512,7 +512,7 @@
             {{-- Additional Email Recipients --}}
             <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Recipient Email Addresses</label>
-                <textarea name="reports_email_recipients" rows="3" placeholder="admin@dakeventures.com.ng, finance@dakeventures.com.ng"
+                <textarea name="reports_email_recipients" rows="3" placeholder="admin@example.com.ng, finance@example.com.ng"
                           class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none">{{ $schedule['recipients'] }}</textarea>
                 <p class="text-[11px] text-slate-400 mt-1">Separate multiple email addresses with commas. The primary platform administrator email is always included automatically.</p>
             </div>

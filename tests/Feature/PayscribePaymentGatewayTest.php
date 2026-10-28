@@ -1105,7 +1105,7 @@ class PayscribePaymentGatewayTest extends TestCase
             'bank_name'      => '9PSB',
             'bank_code'      => '120001',
             'account_number' => '5301657649',
-            'account_name'   => 'Admin Dakeventures',
+            'account_name'   => 'Admin Sombody',
         ]);
 
         // Virtual account exists -> "How it works" should disappear
