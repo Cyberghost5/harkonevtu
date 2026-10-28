@@ -877,10 +877,18 @@
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1">Amount per unit</label>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Standard Rate per unit (₦)</label>
                             <input type="text" name="bulksms_amount_per_unit" value="{{ $s['bulksms_amount_per_unit'] ?? '' }}"
-                                   placeholder="Enter Amount per unit"
+                                   placeholder="e.g. 4.00"
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <span class="text-[11px] text-slate-400">Default rate per SMS unit for standard users (Default: ₦4.00).</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Agent Tier Rate per unit (₦)</label>
+                            <input type="text" name="bulksms_agent_rate" value="{{ $s['bulksms_agent_rate'] ?? '' }}"
+                                   placeholder="e.g. 3.50"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <span class="text-[11px] text-slate-400">Discounted rate per unit for upgraded Agent accounts.</span>
                         </div>
                     </div>
                 </div>

@@ -264,6 +264,11 @@
                                   {{ request()->routeIs('services.print-pins*') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
                             Airtime PINS
                         </a>
+                        <a href="{{ route('services.bulksms') }}"
+                           class="block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150
+                                  {{ request()->routeIs('services.bulksms*') ? 'text-vtu-primary bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}">
+                            Bulk SMS
+                        </a>
                     </div>
                 </div>
 

@@ -31,8 +31,8 @@ class ClubkonnectVoucherPrintingTest extends TestCase
     public function test_admin_settings_includes_clubkonnect_in_airtime_pin_providers(): void
     {
         $admin = User::factory()->create([
-            'is_admin' => true,
-            'role'     => 'admin',
+            'is_admin'  => true,
+            'user_type' => 'admin',
         ]);
 
         $response = $this->actingAs($admin)->get(route('admin.settings.api'));

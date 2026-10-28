@@ -177,6 +177,10 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked']
         Route::get('/betting',            [\App\Http\Controllers\BettingController::class, 'index'])->name('betting');
         Route::post('/betting/validate',  [\App\Http\Controllers\BettingController::class, 'validateCustomer'])->name('betting.validate');
         Route::post('/betting/purchase',  [\App\Http\Controllers\BettingController::class, 'purchase'])->name('betting.purchase');
+
+        Route::get('/bulksms',           [\App\Http\Controllers\BulkSmsController::class, 'index'])->name('bulksms');
+        Route::post('/bulksms/preview',  [\App\Http\Controllers\BulkSmsController::class, 'preview'])->name('bulksms.preview');
+        Route::post('/bulksms/send',     [\App\Http\Controllers\BulkSmsController::class, 'send'])->name('bulksms.send');
     });
 
     // ── Referral ──────────────────────────────────────────────────────────────

@@ -171,6 +171,17 @@
                             <li><a href="#get-notifications" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /notifications</a></li>
                         </ul>
                     </div>
+
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">8: Bulk SMS Messaging</h3>
+                        <ul class="space-y-2 text-xs font-mono text-slate-300">
+                            <li><a href="#get-bulksms-pricing" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /bulksms/pricing</a></li>
+                            <li><a href="#post-bulksms-preview" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /bulksms/preview</a></li>
+                            <li><a href="#post-bulksms-send" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">POST</span> /bulksms/send</a></li>
+                            <li><a href="#get-bulksms-history" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /bulksms/history</a></li>
+                            <li><a href="#get-bulksms-campaign" class="hover:text-indigo-400 flex items-center gap-2"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">GET</span> /bulksms/campaigns/{ref}</a></li>
+                        </ul>
+                    </div>
                 </div>
             </aside>
 
@@ -1848,6 +1859,162 @@ Accept: application/json</code></pre>
                     </div>
 
                 </div>
+
+                <!-- 8: Bulk SMS Messaging -->
+                <div class="space-y-6">
+                    <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
+                        <span class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">8</span>
+                        <div>
+                            <h2 class="text-xl font-bold text-white">Bulk SMS Messaging</h2>
+                            <p class="text-xs text-slate-400">High-delivery SMS engine with alphanumeric Sender ID (max 11 chars), multi-page concatenation, and live balance verification.</p>
+                        </div>
+                    </div>
+
+                    <!-- GET /bulksms/pricing -->
+                    <div id="get-bulksms-pricing" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/bulksms/pricing</code>
+                            </div>
+                            <span class="text-xs text-slate-400 bg-slate-800 border border-slate-700 px-2.5 py-1 rounded font-mono">Public / Optional Bearer</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Get current SMS rate per unit, character boundaries, default Sender ID, and service availability status.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "success": true,
+  "message": "Bulk SMS pricing and configuration retrieved successfully.",
+  "data": {
+    "enabled": true,
+    "user_tier": "User",
+    "unit_rate": 4.0,
+    "formatted_rate": "₦4.00",
+    "default_sender_id": "VTU",
+    "max_sender_length": 11,
+    "rules": {
+      "gsm_7bit": { "single_page_limit": 160, "multi_page_limit": 153 },
+      "unicode": { "single_page_limit": 70, "multi_page_limit": 67 },
+      "allowed_sender_pattern": "Alphanumeric only, no spaces or special symbols, max 11 characters"
+    }
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- POST /bulksms/preview -->
+                    <div id="post-bulksms-preview" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/bulksms/preview</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Evaluate phone numbers, detect duplicates, calculate GSM / Unicode pages, and verify wallet balance before sending.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "message": "Hello valued customers, enjoy 50% discount today!",
+  "recipients": "08012345678, 08123456789\n09012345678"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "success": true,
+  "data": {
+    "characters": 53,
+    "pages": 1,
+    "is_unicode": false,
+    "remaining_chars": 107,
+    "total_valid": 3,
+    "total_invalid": 0,
+    "duplicates_removed": 0,
+    "unit_rate": 4.0,
+    "total_cost": 12.0,
+    "formatted_cost": "₦12.00",
+    "wallet_balance": 5000.0,
+    "formatted_balance": "₦5,000.00",
+    "has_sufficient_balance": true
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- POST /bulksms/send -->
+                    <div id="post-bulksms-send" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs">POST</span>
+                                <code class="text-base font-bold text-white font-mono">/bulksms/send</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Execute atomic wallet debit and broadcast SMS campaign to all valid recipient numbers via BulkSMS Nigeria.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">Request Payload</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-300 border border-slate-800"><code>{
+  "sender_id": "QuickVTU",
+  "message": "Welcome to our special holiday flash sale!",
+  "recipients": "08031234567, 08098765432",
+  "transaction_pin": "1234"
+}</code></pre>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase mb-1">200 OK Response</div>
+                                <pre class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-emerald-400 border border-slate-800"><code>{
+  "status": true,
+  "success": true,
+  "message": "Bulk SMS campaign sent successfully to 2 recipients!",
+  "data": {
+    "campaign_id": 14,
+    "reference": "SMS-A9K87LM012PQ",
+    "sender_id": "QuickVTU",
+    "recipient_count": 2,
+    "pages": 1,
+    "unit_rate": 4.0,
+    "total_amount": 8.0,
+    "status": "sent",
+    "balance_after": 4992.0,
+    "formatted_balance": "₦4,992.00",
+    "created_at": "2026-10-28T12:00:00+00:00"
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GET /bulksms/history -->
+                    <div id="get-bulksms-history" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/bulksms/history</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Paginated list of all SMS campaigns broadcasted by the authenticated user with status and recipient counts.</p>
+                    </div>
+
+                    <!-- GET /bulksms/campaigns/{reference} -->
+                    <div id="get-bulksms-campaign" class="glass-panel p-6 rounded-2xl space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold text-xs">GET</span>
+                                <code class="text-base font-bold text-white font-mono">/bulksms/campaigns/{reference}</code>
+                            </div>
+                            <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded font-mono">Bearer Token Required</span>
+                        </div>
+                        <p class="text-slate-300 text-xs">Retrieve complete campaign logs, full recipient array, and exact message body using campaign reference or ID.</p>
+                    </div>
 
             </main>
         </div>

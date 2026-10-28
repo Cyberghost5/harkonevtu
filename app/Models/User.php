@@ -85,6 +85,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(VirtualAccount::class);
     }
 
+    public function bulkSmsCampaigns(): HasMany
+    {
+        return $this->hasMany(BulkSmsCampaign::class);
+    }
+
     // ─── PIN Helpers ──────────────────────────────────────────────────────────
 
     public function hasPinSet(): bool

@@ -1192,6 +1192,7 @@ class ExtraApiController extends Controller
                     'betting'                => AppSetting::get('service_betting', '1') === '1',
                     'airtime_to_cash'        => AppSetting::get('service_airtime_to_cash', '1') === '1',
                     'recharge_card_printing' => AppSetting::get('service_recharge_card_printing', '1') === '1',
+                    'bulk_sms'               => AppSetting::get('service_bulksms', '1') === '1',
                     'card_payment'           => AppSetting::get('service_funding_gateway', '1') === '1',
                     'auto_bank_transfer'     => AppSetting::get('service_funding_auto_bank', '1') === '1',
                     'manual_bank_transfer'   => AppSetting::get('service_funding_manual', '1') === '1',

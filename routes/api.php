@@ -110,6 +110,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/onboarding',                      [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'onboardingSlides']);
     Route::get('/onboarding-slides',               [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'onboardingSlides']);
     Route::get('/pricing',                         [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'publicPricing']);
+    Route::get('/bulksms/pricing',                 [\App\Http\Controllers\Api\v1\BulkSms\BulkSmsApiController::class, 'pricing']);
 
     // Authenticated Extra Services
     Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureVerified::class])->group(function () {
@@ -145,6 +146,15 @@ Route::prefix('v1')->group(function () {
         Route::post('/user/device-token/remove',   [\App\Http\Controllers\Api\v1\User\DeviceTokenController::class, 'removeDeviceToken']);
         Route::delete('/user/device-token',        [\App\Http\Controllers\Api\v1\User\DeviceTokenController::class, 'removeDeviceToken']);
         Route::get('/notifications',               [\App\Http\Controllers\Api\v1\User\DeviceTokenController::class, 'notifications']);
+
+        // Bulk SMS Messaging
+        Route::prefix('bulksms')->group(function () {
+            Route::get('/pricing',                 [\App\Http\Controllers\Api\v1\BulkSms\BulkSmsApiController::class, 'pricing']);
+            Route::post('/preview',                [\App\Http\Controllers\Api\v1\BulkSms\BulkSmsApiController::class, 'preview']);
+            Route::post('/send',                   [\App\Http\Controllers\Api\v1\BulkSms\BulkSmsApiController::class, 'send']);
+            Route::get('/history',                 [\App\Http\Controllers\Api\v1\BulkSms\BulkSmsApiController::class, 'history']);
+            Route::get('/campaigns/{reference}',   [\App\Http\Controllers\Api\v1\BulkSms\BulkSmsApiController::class, 'campaignDetails']);
+        });
     });
 
 });
