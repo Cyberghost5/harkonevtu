@@ -659,6 +659,7 @@ class AuthController extends Controller
             ->orWhere('email', $email)
             ->first();
 
+        $isNewUser = false;
         if ($user) {
             $dirty = false;
             if (!$user->google_id) {
@@ -683,6 +684,7 @@ class AuthController extends Controller
                 ]);
             }
         } else {
+            $isNewUser = true;
             $baseUsername = Str::slug(explode('@', $email)[0], '');
             $username = $baseUsername;
             while (User::where('username', $username)->exists()) {
@@ -736,6 +738,7 @@ class AuthController extends Controller
         return $this->jsonResponse(true, 'Google authentication successful.', [
             'token'                       => $token,
             'token_type'                  => 'Bearer',
+            'is_new_user'                 => $isNewUser,
             'is_phone_set'                => $isPhoneSet,
             'is_pin_set'                  => $isPinSet,
             'requires_pin_setup'          => !$isPinSet,
