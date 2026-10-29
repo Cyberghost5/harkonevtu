@@ -478,7 +478,7 @@ class DataApiController extends Controller
 
     private function callClubkonnectData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
-        $endpoint   = 'https://www.nellobytesystems.com/APIDataV1.asp';
+        $endpoint   = 'https://www.nellobytesystems.com/APIDatabundleV1.asp';
         $payload    = [
             'UserID'        => config('services.clubkonnect.user_id') ?: AppSetting::get('clubkonnect_user_id'),
             'APIKey'        => config('services.clubkonnect.api_key') ?: AppSetting::get('clubkonnect_api_key'),

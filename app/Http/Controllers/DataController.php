@@ -434,7 +434,7 @@ class DataController extends Controller
 
     private function callClubkonnectData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
     {
-        $endpoint   = 'https://www.nellobytesystems.com/APIDataV1.asp';
+        $endpoint   = 'https://www.nellobytesystems.com/APIDatabundleV1.asp';
         $payload    = [
             'UserID'        => config('services.clubkonnect.user_id'),
             'APIKey'        => config('services.clubkonnect.api_key'),
