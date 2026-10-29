@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             VTPassDataSeeder::class,
             PayscribeDataSeeder::class,
             PayscribeCableSeeder::class,
+            ClubkonnectDataSeeder::class,
         ]);
     }
 }
