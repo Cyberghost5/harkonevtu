@@ -289,6 +289,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::post('/notifications/send',      [\App\Http\Controllers\Admin\AdminNotificationController::class, 'send'])->name('notifications.send');
     Route::post('/notifications/{id}/resend',[\App\Http\Controllers\Admin\AdminNotificationController::class, 'resend'])->name('notifications.resend');
 
+    // Email Notifications
+    Route::get('/notifications/email',       [\App\Http\Controllers\Admin\AdminNotificationController::class, 'emailIndex'])->name('notifications.email.index');
+    Route::post('/notifications/email/send', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'emailSend'])->name('notifications.email.send');
+
     // Settings - redirect legacy index to general
     Route::get('/settings',                        fn() => redirect()->route('admin.settings.general'))->name('settings.index');
 
