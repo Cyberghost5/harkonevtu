@@ -12,7 +12,9 @@ class AdminFundingController extends Controller
 {
     public function index(Request $request)
     {
-        $query = FundingRequest::with('user')->latest();
+        $query = FundingRequest::with('user')
+            ->whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -25,7 +27,8 @@ class AdminFundingController extends Controller
 
     public function approve(Request $request, int $id)
     {
-        $funding = FundingRequest::findOrFail($id);
+        $funding = FundingRequest::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->findOrFail($id);
 
         if (!$funding->isPending()) {
             return back()->with('error', 'This request has already been reviewed.');
@@ -77,7 +80,8 @@ class AdminFundingController extends Controller
 
     public function reject(Request $request, int $id)
     {
-        $funding = FundingRequest::findOrFail($id);
+        $funding = FundingRequest::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->findOrFail($id);
 
         if (!$funding->isPending()) {
             return back()->with('error', 'This request has already been reviewed.');

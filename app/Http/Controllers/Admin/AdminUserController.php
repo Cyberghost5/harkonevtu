@@ -76,8 +76,8 @@ class AdminUserController extends Controller
 
     public function show(User $user)
     {
-        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
-            abort(403, 'Unauthorized access to Super Admin profile.');
+        if ($user->isSuperAdmin()) {
+            abort(404);
         }
 
         $user->load(['wallet', 'virtualAccounts']);
@@ -146,8 +146,8 @@ class AdminUserController extends Controller
 
     public function edit(User $user)
     {
-        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
-            abort(403, 'Unauthorized. Only a Super Admin can modify a Super Admin account.');
+        if ($user->isSuperAdmin()) {
+            abort(404);
         }
 
         return view('admin.users.edit', compact('user'));
@@ -155,8 +155,8 @@ class AdminUserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
-            abort(403, 'Unauthorized. Only a Super Admin can modify a Super Admin account.');
+        if ($user->isSuperAdmin()) {
+            abort(404);
         }
 
         $rules = [
@@ -216,7 +216,7 @@ class AdminUserController extends Controller
     public function destroy(User $user)
     {
         if ($user->isSuperAdmin()) {
-            return back()->with('error', 'Super Admin accounts cannot be deleted.');
+            abort(404);
         }
 
         $user->delete();
@@ -226,6 +226,9 @@ class AdminUserController extends Controller
 
     public function adjustWallet(Request $request, User $user)
     {
+        if ($user->isSuperAdmin()) {
+            abort(404);
+        }
         $validated = $request->validate([
             'type'        => ['required', Rule::in(['credit', 'debit'])],
             'amount'      => ['required', 'numeric', 'min:1', 'max:1000000'],
@@ -277,12 +280,12 @@ class AdminUserController extends Controller
      */
     public function impersonate(User $user)
     {
-        if (!auth()->user()->isAdmin()) {
-            abort(403, 'Unauthorized.');
+        if ($user->isSuperAdmin()) {
+            abort(404);
         }
 
-        if ($user->isSuperAdmin()) {
-            return back()->with('error', 'Super Admin accounts cannot be impersonated.');
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Unauthorized.');
         }
 
         // Store current admin's ID in the session
@@ -322,6 +325,10 @@ class AdminUserController extends Controller
      */
     public function revokeSessions(User $user)
     {
+        if ($user->isSuperAdmin()) {
+            abort(404);
+        }
+
         $tokenCount = $user->tokens()->count();
         $user->tokens()->delete();
 
@@ -342,6 +349,9 @@ class AdminUserController extends Controller
      */
     public function generateDva(Request $request, User $user)
     {
+        if ($user->isSuperAdmin()) {
+            abort(404);
+        }
         $validated = $request->validate([
             'bvn'      => ['required', 'string', 'numeric', 'digits:11'],
             'provider' => ['nullable', 'string', 'in:all,payscribe,paystack,monnify,flutterwave'],
@@ -409,6 +419,10 @@ class AdminUserController extends Controller
      */
     public function assignVirtualAccount(Request $request, User $user)
     {
+        if ($user->isSuperAdmin()) {
+            abort(404);
+        }
+
         $validated = $request->validate([
             'provider'       => ['required', 'string', 'max:50'],
             'bank_name'      => ['required', 'string', 'max:100'],
@@ -438,6 +452,9 @@ class AdminUserController extends Controller
      */
     public function destroyVirtualAccount(User $user, VirtualAccount $virtualAccount)
     {
+        if ($user->isSuperAdmin()) {
+            abort(404);
+        }
         if ($virtualAccount->user_id !== $user->id) {
             return back()->with('error', 'Unauthorized action.');
         }

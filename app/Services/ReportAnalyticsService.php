@@ -82,6 +82,7 @@ class ReportAnalyticsService
     {
         // ── 1. Wallet Funding (Platform Inflow) ──────────────────────────────
         $fundingQuery = WalletTransaction::where('type', 'credit')
+            ->whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
             ->whereBetween('created_at', [$start, $end])
             ->where('status', 'success')
             ->where('reference', 'not like', 'REF_%')
@@ -99,7 +100,8 @@ class ReportAnalyticsService
             ->sum(fn ($tx) => (float) ($tx->metadata['charge'] ?? 0));
 
         // ── 2. Bill Purchases & Services (Platform Outflow) ───────────────────
-        $serviceQuery = ServiceTransaction::whereBetween('created_at', [$start, $end]);
+        $serviceQuery = ServiceTransaction::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->whereBetween('created_at', [$start, $end]);
 
         $totalServiceVolume = (float) (clone $serviceQuery)->sum('amount');
         $totalServiceCount  = (int) (clone $serviceQuery)->count();
@@ -115,7 +117,8 @@ class ReportAnalyticsService
         $successRate = $totalServiceCount > 0 ? round(($successCount / $totalServiceCount) * 100, 1) : 100.0;
 
         // ── 3. Airtime to Cash Performance ──────────────────────────────────
-        $a2cQuery = AirtimeToCashRequest::whereBetween('created_at', [$start, $end]);
+        $a2cQuery = AirtimeToCashRequest::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->whereBetween('created_at', [$start, $end]);
         $a2cCount = (int) (clone $a2cQuery)->count();
         $a2cApproved = (clone $a2cQuery)->where('status', 'approved');
         $a2cVolume   = (float) (clone $a2cApproved)->sum('amount');
@@ -127,15 +130,19 @@ class ReportAnalyticsService
         $totalEstimatedProfit = round($billMargin + $fundingCharges + $a2cProfit, 2);
 
         // ── 5. User Activity & Growth Metrics ────────────────────────────────
-        $totalUsers = User::where('is_admin', false)->count();
-        $newSignups = User::where('is_admin', false)->whereBetween('created_at', [$start, $end])->count();
-        $agentCount = User::where('is_admin', false)->where('user_type', 'agent')->count();
+        $totalUsers = User::where('is_admin', false)->where('is_super_admin', false)->count();
+        $newSignups = User::where('is_admin', false)->where('is_super_admin', false)->whereBetween('created_at', [$start, $end])->count();
+        $agentCount = User::where('is_admin', false)->where('is_super_admin', false)->where('user_type', 'agent')->count();
         $normalCount = max(0, $totalUsers - $agentCount);
 
         // Active Users: Users who bought services, funded wallet, or logged in
-        $serviceUserIds = ServiceTransaction::whereBetween('created_at', [$start, $end])->pluck('user_id')->toArray();
-        $fundingUserIds = WalletTransaction::where('type', 'credit')->whereBetween('created_at', [$start, $end])->pluck('user_id')->toArray();
-        $loginUserIds   = UserLoginLog::whereBetween('created_at', [$start, $end])->whereNotNull('user_id')->pluck('user_id')->toArray();
+        $serviceUserIds = ServiceTransaction::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->whereBetween('created_at', [$start, $end])->pluck('user_id')->toArray();
+        $fundingUserIds = WalletTransaction::where('type', 'credit')
+            ->whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->whereBetween('created_at', [$start, $end])->pluck('user_id')->toArray();
+        $loginUserIds   = UserLoginLog::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->whereBetween('created_at', [$start, $end])->whereNotNull('user_id')->pluck('user_id')->toArray();
 
         $activeUserIds = array_unique(array_filter(array_merge($serviceUserIds, $fundingUserIds, $loginUserIds)));
         $activeUsersCount = count($activeUserIds);
@@ -177,7 +184,8 @@ class ReportAnalyticsService
      */
     public static function getServiceBreakdown(Carbon $start, Carbon $end, string $sortBy = 'volume', string $direction = 'desc'): array
     {
-        $rawServices = ServiceTransaction::whereBetween('created_at', [$start, $end])
+        $rawServices = ServiceTransaction::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->whereBetween('created_at', [$start, $end])
             ->select(
                 'service_type',
                 DB::raw('COUNT(*) as total_count'),
@@ -231,7 +239,8 @@ class ReportAnalyticsService
         }
 
         // Add Airtime to Cash as a service row
-        $a2cApproved = AirtimeToCashRequest::whereBetween('created_at', [$start, $end])->where('status', 'approved')->get();
+        $a2cApproved = AirtimeToCashRequest::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->whereBetween('created_at', [$start, $end])->where('status', 'approved')->get();
         if ($a2cApproved->isNotEmpty()) {
             $a2cVol = (float) $a2cApproved->sum('amount');
             $a2cCnt = $a2cApproved->count();
@@ -273,6 +282,7 @@ class ReportAnalyticsService
     public static function getGatewayBreakdown(Carbon $start, Carbon $end, string $sortBy = 'volume', string $direction = 'desc'): array
     {
         $transactions = WalletTransaction::where('type', 'credit')
+            ->whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
             ->whereBetween('created_at', [$start, $end])
             ->where('status', 'success')
             ->where('reference', 'not like', 'REF_%')
@@ -353,7 +363,8 @@ class ReportAnalyticsService
      */
     public static function getTopUsers(Carbon $start, Carbon $end, int $limit = 15, string $sortBy = 'total_spent', string $direction = 'desc'): array
     {
-        $topTx = ServiceTransaction::whereBetween('created_at', [$start, $end])
+        $topTx = ServiceTransaction::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->whereBetween('created_at', [$start, $end])
             ->where('status', 'success')
             ->select('user_id', DB::raw('COUNT(*) as tx_count'), DB::raw('SUM(amount) as total_spent'))
             ->groupBy('user_id')
@@ -407,16 +418,19 @@ class ReportAnalyticsService
             $dateKey  = $cursor->format('Y-m-d');
 
             $funded = (float) WalletTransaction::where('type', 'credit')
+                ->whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
                 ->whereBetween('created_at', [$dayStart, $dayEnd])
                 ->where('status', 'success')
                 ->where('reference', 'not like', 'REF_%')
                 ->sum('amount');
 
-            $spent = (float) ServiceTransaction::whereBetween('created_at', [$dayStart, $dayEnd])
+            $spent = (float) ServiceTransaction::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+                ->whereBetween('created_at', [$dayStart, $dayEnd])
                 ->where('status', 'success')
                 ->sum('amount');
 
-            $txCount = ServiceTransaction::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+            $txCount = ServiceTransaction::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+                ->whereBetween('created_at', [$dayStart, $dayEnd])->count();
 
             $days[] = [
                 'date'     => $cursor->format('D, d M'),

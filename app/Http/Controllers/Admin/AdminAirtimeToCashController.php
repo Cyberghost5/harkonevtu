@@ -13,7 +13,9 @@ class AdminAirtimeToCashController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = AirtimeToCashRequest::with('user')->latest();
+        $query = AirtimeToCashRequest::with('user')
+            ->whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -26,7 +28,8 @@ class AdminAirtimeToCashController extends Controller
 
     public function approve(Request $request, int $id): RedirectResponse
     {
-        $reqToCash = AirtimeToCashRequest::findOrFail($id);
+        $reqToCash = AirtimeToCashRequest::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->findOrFail($id);
 
         if ($reqToCash->status !== 'pending') {
             return back()->with('error', 'This request has already been processed.');
@@ -66,7 +69,8 @@ class AdminAirtimeToCashController extends Controller
 
     public function reject(Request $request, int $id): RedirectResponse
     {
-        $reqToCash = AirtimeToCashRequest::findOrFail($id);
+        $reqToCash = AirtimeToCashRequest::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->findOrFail($id);
 
         if ($reqToCash->status !== 'pending') {
             return back()->with('error', 'This request has already been processed.');

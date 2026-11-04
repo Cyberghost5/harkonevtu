@@ -14,7 +14,9 @@ class AdminTransactionController extends Controller
         $tab = $request->input('tab', 'services'); // 'services' | 'wallet'
 
         if ($tab === 'wallet') {
-            $query = WalletTransaction::with('user')->latest();
+            $query = WalletTransaction::with('user')
+                ->whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+                ->latest();
 
             if ($request->filled('status')) {
                 $query->where('status', $request->status);
@@ -42,7 +44,9 @@ class AdminTransactionController extends Controller
             $transactions = $query->paginate(25)->withQueryString();
             $serviceTypes = collect([]);
         } else {
-            $query = ServiceTransaction::with('user')->latest();
+            $query = ServiceTransaction::with('user')
+                ->whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+                ->latest();
 
             if ($request->filled('service')) {
                 $query->where('service_type', $request->service);
@@ -73,7 +77,8 @@ class AdminTransactionController extends Controller
 
             $transactions = $query->paginate(25)->withQueryString();
 
-            $serviceTypes = ServiceTransaction::select('service_type')
+            $serviceTypes = ServiceTransaction::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+                ->select('service_type')
                 ->distinct()->pluck('service_type');
         }
 
@@ -86,16 +91,24 @@ class AdminTransactionController extends Controller
 
         if ($isWallet) {
             $transaction = WalletTransaction::with(['user.wallet', 'user.virtualAccounts'])
-                ->where('id', $id)
-                ->orWhere('reference', $id)
+                ->whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+                ->where(function ($q) use ($id) {
+                    $q->where('id', $id)->orWhere('reference', $id);
+                })
                 ->firstOrFail();
             $transactionType = 'wallet';
         } else {
             $transaction = ServiceTransaction::with(['user.wallet', 'user.virtualAccounts', 'walletTransaction'])
-                ->where('id', $id)
-                ->orWhere('reference', $id)
+                ->whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+                ->where(function ($q) use ($id) {
+                    $q->where('id', $id)->orWhere('reference', $id);
+                })
                 ->firstOrFail();
             $transactionType = 'service';
+        }
+
+        if ($transaction->user?->isSuperAdmin()) {
+            abort(404);
         }
 
         $user = $transaction->user;
@@ -153,27 +166,33 @@ class AdminTransactionController extends Controller
         $ref = trim($reference);
 
         // 1. Direct match on WalletTransaction reference
-        $walletTx = WalletTransaction::where('reference', $ref)->first();
+        $walletTx = WalletTransaction::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->where('reference', $ref)->first();
         if ($walletTx) {
             return redirect()->route('admin.transactions.show', ['type' => 'wallet', 'id' => $walletTx->id]);
         }
 
         // 2. Direct match on ServiceTransaction reference or api_reference
-        $serviceTx = ServiceTransaction::where('reference', $ref)
-            ->orWhere('api_reference', $ref)
+        $serviceTx = ServiceTransaction::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->where(function ($q) use ($ref) {
+                $q->where('reference', $ref)
+                  ->orWhere('api_reference', $ref);
+            })
             ->first();
         if ($serviceTx) {
             return redirect()->route('admin.transactions.show', ['type' => 'service', 'id' => $serviceTx->id]);
         }
 
         // 3. Fallback: Search in WalletTransaction metadata
-        $walletMetaTx = WalletTransaction::where('metadata', 'like', '%' . $ref . '%')->first();
+        $walletMetaTx = WalletTransaction::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->where('metadata', 'like', '%' . $ref . '%')->first();
         if ($walletMetaTx) {
             return redirect()->route('admin.transactions.show', ['type' => 'wallet', 'id' => $walletMetaTx->id]);
         }
 
         // 4. Fallback: Check if this reference exists in ApiLog and has an associated transaction
-        $apiLog = \App\Models\ApiLog::where('reference', $ref)->latest('id')->first();
+        $apiLog = \App\Models\ApiLog::whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->where('reference', $ref)->latest('id')->first();
         if ($apiLog) {
             $associated = $apiLog->resolveTransaction();
             if ($associated) {

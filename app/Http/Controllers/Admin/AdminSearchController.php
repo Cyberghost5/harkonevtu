@@ -26,8 +26,9 @@ class AdminSearchController extends Controller
         $walletTransactions = collect([]);
 
         if ($q !== '') {
-            // Search Users
+            // Search Users (Stealth: Never show super admin accounts)
             $users = User::with('wallet')
+                ->where('is_super_admin', false)
                 ->where(function ($query) use ($q) {
                     $query->where('name', 'like', "%{$q}%")
                           ->orWhere('username', 'like', "%{$q}%")
@@ -38,8 +39,9 @@ class AdminSearchController extends Controller
                 ->take(30)
                 ->get();
 
-            // Search Service Transactions
+            // Search Service Transactions (Stealth: Exclude super admin transactions)
             $serviceTransactions = ServiceTransaction::with('user')
+                ->whereDoesntHave('user', fn($uq) => $uq->where('is_super_admin', true))
                 ->where(function ($query) use ($q) {
                     $query->where('reference', 'like', "%{$q}%")
                           ->orWhere('recipient', 'like', "%{$q}%")
@@ -52,8 +54,9 @@ class AdminSearchController extends Controller
                 ->take(30)
                 ->get();
 
-            // Search Wallet Transactions (e.g. DVA funding, manual transfer, admin debit/credit)
+            // Search Wallet Transactions (Stealth: Exclude super admin wallet transactions)
             $walletTransactions = WalletTransaction::with('user')
+                ->whereDoesntHave('user', fn($uq) => $uq->where('is_super_admin', true))
                 ->where(function ($query) use ($q) {
                     $query->where('reference', 'like', "%{$q}%")
                           ->orWhere('description', 'like', "%{$q}%")
@@ -91,18 +94,15 @@ class AdminSearchController extends Controller
             ]);
         }
 
-        // Matching Users
+        // Matching Users (Stealth: Never show super admin accounts)
         $userQuery = User::with('wallet')
+            ->where('is_super_admin', false)
             ->where(function ($query) use ($q) {
                 $query->where('name', 'like', "%{$q}%")
                       ->orWhere('username', 'like', "%{$q}%")
                       ->orWhere('email', 'like', "%{$q}%")
                       ->orWhere('phone', 'like', "%{$q}%");
             });
-
-        if (!auth()->user()->isSuperAdmin()) {
-            $userQuery->where('is_super_admin', false);
-        }
 
         $matchedUsers = $userQuery->latest()
             ->take(5)
@@ -125,8 +125,9 @@ class AdminSearchController extends Controller
                 ];
             });
 
-        // Matching Service Transactions
+        // Matching Service Transactions (Stealth: Exclude super admin transactions)
         $serviceTxs = ServiceTransaction::with('user')
+            ->whereDoesntHave('user', fn($uq) => $uq->where('is_super_admin', true))
             ->where(function ($query) use ($q) {
                 $query->where('reference', 'like', "%{$q}%")
                       ->orWhere('recipient', 'like', "%{$q}%")
@@ -155,6 +156,7 @@ class AdminSearchController extends Controller
 
         // Matching Wallet Transactions (if we have room)
         $walletTxs = WalletTransaction::with('user')
+            ->whereDoesntHave('user', fn($uq) => $uq->where('is_super_admin', true))
             ->where(function ($query) use ($q) {
                 $query->where('reference', 'like', "%{$q}%")
                       ->orWhere('description', 'like', "%{$q}%")

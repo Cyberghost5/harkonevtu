@@ -245,7 +245,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap font-medium text-slate-600 dark:text-slate-400">
-                                {{ $campaign->admin->name ?? 'Admin' }}
+                                {{ $campaign->admin_display_name }}
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap text-slate-400">
                                 {{ $campaign->created_at->format('M d, Y H:i') }}

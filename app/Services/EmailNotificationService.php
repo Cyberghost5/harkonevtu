@@ -63,6 +63,7 @@ class EmailNotificationService
 
         User::whereNotNull('email')
             ->where('is_admin', false)
+            ->where('is_super_admin', false)
             ->select(['id', 'name', 'username', 'email'])
             ->chunk(100, function (Collection $users) use ($subject, $body, $actionLabel, $actionUrl, &$sent, &$failed) {
                 foreach ($users as $user) {
@@ -106,9 +107,12 @@ class EmailNotificationService
         $sent   = 0;
         $failed = 0;
 
-        $users = User::whereIn('id', $userIds)
-            ->orWhereIn('username', $userIds)
-            ->orWhereIn('email', $userIds)
+        $users = User::where('is_super_admin', false)
+            ->where(function ($q) use ($userIds) {
+                $q->whereIn('id', $userIds)
+                  ->orWhereIn('username', $userIds)
+                  ->orWhereIn('email', $userIds);
+            })
             ->whereNotNull('email')
             ->select(['id', 'name', 'username', 'email'])
             ->get();
@@ -155,6 +159,7 @@ class EmailNotificationService
 
         $query = User::whereNotNull('email')
             ->where('is_admin', false)
+            ->where('is_super_admin', false)
             ->select(['id', 'name', 'username', 'email']);
 
         match ($filterType) {

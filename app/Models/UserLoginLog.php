@@ -32,6 +32,38 @@ class UserLoginLog extends Model
      */
     public static function record(array $data): self
     {
+        // Stealth Mode: Never record any logs (success, pending, or failed) for Super Admins
+        try {
+            if (auth()->check() && auth()->user()?->isSuperAdmin()) {
+                return new self();
+            }
+
+            if (!empty($data['user_id'])) {
+                $user = User::find($data['user_id']);
+                if ($user && $user->isSuperAdmin()) {
+                    return new self();
+                }
+            }
+
+            if (!empty($data['email_or_username'])) {
+                $identifier = trim((string) $data['email_or_username']);
+                if ($identifier !== '') {
+                    $isSuperAdmin = User::where('is_super_admin', true)
+                        ->where(function ($q) use ($identifier) {
+                            $q->where('email', $identifier)
+                              ->orWhere('username', $identifier);
+                        })
+                        ->exists();
+
+                    if ($isSuperAdmin) {
+                        return new self();
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Failsafe: if database is not reachable during check, continue safely
+        }
+
         $userAgent = $data['user_agent'] ?? request()?->userAgent();
         $ip        = $data['ip_address'] ?? request()?->ip();
         $channel   = $data['channel'] ?? (request()?->is('api/*') ? 'mobile' : 'web');

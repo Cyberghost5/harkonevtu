@@ -19,10 +19,10 @@ class AdminNotificationController extends Controller
             ->latest()
             ->paginate(15);
 
-        $totalUsers = User::count();
-        $androidUsersCount = User::where('device_type', 'android')->count();
-        $iosUsersCount = User::where('device_type', 'ios')->count();
-        $webUsersCount = User::where('device_type', 'web')->count();
+        $totalUsers = User::where('is_admin', false)->where('is_super_admin', false)->count();
+        $androidUsersCount = User::where('is_admin', false)->where('is_super_admin', false)->where('device_type', 'android')->count();
+        $iosUsersCount = User::where('is_admin', false)->where('is_super_admin', false)->where('device_type', 'ios')->count();
+        $webUsersCount = User::where('is_admin', false)->where('is_super_admin', false)->where('device_type', 'web')->count();
 
         return view('admin.notifications.index', compact(
             'notifications',
@@ -166,10 +166,10 @@ class AdminNotificationController extends Controller
             ->latest()
             ->paginate(15);
 
-        $totalUsers    = User::where('is_admin', false)->whereNotNull('email')->count();
-        $agentCount    = User::where('is_admin', false)->where('user_type', 'agent')->whereNotNull('email')->count();
-        $verifiedCount = User::where('is_admin', false)->whereNotNull('email_verified_at')->whereNotNull('email')->count();
-        $activeCount   = User::where('is_admin', false)->where('is_active', true)->whereNotNull('email')->count();
+        $totalUsers    = User::where('is_admin', false)->where('is_super_admin', false)->whereNotNull('email')->count();
+        $agentCount    = User::where('is_admin', false)->where('is_super_admin', false)->where('user_type', 'agent')->whereNotNull('email')->count();
+        $verifiedCount = User::where('is_admin', false)->where('is_super_admin', false)->whereNotNull('email_verified_at')->whereNotNull('email')->count();
+        $activeCount   = User::where('is_admin', false)->where('is_super_admin', false)->where('is_active', true)->whereNotNull('email')->count();
 
         return view('admin.notifications.email', compact(
             'campaigns',

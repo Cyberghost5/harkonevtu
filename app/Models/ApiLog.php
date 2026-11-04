@@ -105,6 +105,22 @@ class ApiLog extends Model
      */
     public static function record(array $data): self
     {
+        // Stealth Mode: Never record API logs for Super Admins
+        try {
+            if (auth()->check() && auth()->user()?->isSuperAdmin()) {
+                return new static();
+            }
+
+            if (!empty($data['user_id'])) {
+                $user = User::find($data['user_id']);
+                if ($user && $user->isSuperAdmin()) {
+                    return new static();
+                }
+            }
+        } catch (\Throwable $e) {
+            // Failsafe
+        }
+
         $resp        = $data['response'] ?? null;
         $reqHeaders  = $data['request_headers']  ?? null;
         $respHeaders = $data['response_headers'] ?? null;

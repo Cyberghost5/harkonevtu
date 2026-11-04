@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\UserLoginLog;
 use Illuminate\Http\Request;
 
@@ -10,7 +11,32 @@ class AdminUserLogController extends Controller
 {
     public function index(Request $request)
     {
-        $query = UserLoginLog::with('user')->orderByDesc('created_at');
+        // Stealth Filter: Completely exclude all Super Admin logs and identifiers
+        $superAdminUsers = User::where('is_super_admin', true)->get(['id', 'email', 'username']);
+        $superAdminUserIds = $superAdminUsers->pluck('id')->all();
+        $superAdminIdentifiers = $superAdminUsers
+            ->flatMap(fn($u) => [$u->email, $u->username])
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $applyStealthFilter = function ($q) use ($superAdminUserIds, $superAdminIdentifiers) {
+            if (!empty($superAdminUserIds)) {
+                $q->where(function ($sub) use ($superAdminUserIds) {
+                    $sub->whereNotIn('user_id', $superAdminUserIds)
+                        ->orWhereNull('user_id');
+                });
+            }
+            $q->whereDoesntHave('user', fn($uq) => $uq->where('is_super_admin', true));
+            if (!empty($superAdminIdentifiers)) {
+                $q->whereNotIn('email_or_username', $superAdminIdentifiers);
+            }
+        };
+
+        $query = UserLoginLog::with('user')
+            ->where($applyStealthFilter)
+            ->orderByDesc('created_at');
 
         if ($request->filled('search')) {
             $s = $request->search;
@@ -43,11 +69,11 @@ class AdminUserLogController extends Controller
 
         $logs = $query->paginate(30)->withQueryString();
 
-        // Summary metrics
-        $todayCount  = UserLoginLog::whereDate('created_at', today())->count();
-        $webCount    = UserLoginLog::where('channel', 'web')->count();
-        $mobileCount = UserLoginLog::where('channel', 'mobile')->count();
-        $failedCount = UserLoginLog::where('status', 'failed')->count();
+        // Summary metrics (filtered to exclude super admin activity)
+        $todayCount  = UserLoginLog::where($applyStealthFilter)->whereDate('created_at', today())->count();
+        $webCount    = UserLoginLog::where($applyStealthFilter)->where('channel', 'web')->count();
+        $mobileCount = UserLoginLog::where($applyStealthFilter)->where('channel', 'mobile')->count();
+        $failedCount = UserLoginLog::where($applyStealthFilter)->where('status', 'failed')->count();
 
         return view('admin.user-logs.index', compact('logs', 'todayCount', 'webCount', 'mobileCount', 'failedCount'));
     }

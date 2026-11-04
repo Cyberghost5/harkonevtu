@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApiLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AdminApiLogController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ApiLog::with('user')->orderByDesc('created_at');
+        $query = ApiLog::with('user')
+            ->whereDoesntHave('user', fn($q) => $q->where('is_super_admin', true))
+            ->orderByDesc('created_at');
 
         if ($request->filled('channel')) {
             $query->where(function ($q) use ($request) {
@@ -34,7 +37,12 @@ class AdminApiLogController extends Controller
         }
 
         if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
+            $isSuperAdmin = User::where('id', $request->user_id)->where('is_super_admin', true)->exists();
+            if ($isSuperAdmin) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->where('user_id', $request->user_id);
+            }
         }
 
         if ($request->filled('search')) {

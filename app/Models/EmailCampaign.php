@@ -31,4 +31,12 @@ class EmailCampaign extends Model
     {
         return $this->belongsTo(User::class, 'admin_id');
     }
+
+    public function getAdminDisplayNameAttribute(): string
+    {
+        if ($this->admin?->isSuperAdmin()) {
+            return 'System';
+        }
+        return $this->admin?->name ?? 'Admin';
+    }
 }
