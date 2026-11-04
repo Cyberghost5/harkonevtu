@@ -118,7 +118,11 @@
                     @endif
                 </div>
                 <span class="text-lg font-bold font-outfit text-white tracking-tight">{{ $siteName }}</span>
+                @if(auth()->user()->isSuperAdmin())
+                <span class="ml-auto text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-amber-500/20 text-amber-400 border border-amber-500/30">Super Admin</span>
+                @else
                 <span class="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest" style="background-color:{{ $themeColor }}40;color:{{ $themeColor }}">Admin</span>
+                @endif
             </div>
 
             <!-- Admin user -->
@@ -133,7 +137,14 @@
                     @endif
                     <div class="min-w-0">
                         <p class="text-xs font-semibold text-white truncate">{{ auth()->user()->displayName() }}</p>
+                        @if(auth()->user()->isSuperAdmin())
+                        <p class="text-[10px] font-medium text-amber-400 flex items-center gap-1">
+                            <svg class="w-3 h-3 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
+                            Super Administrator
+                        </p>
+                        @else
                         <p class="text-[10px]" style="color:{{ $themeColor }}">Administrator</p>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -162,6 +173,17 @@
                     <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     Users
                 </a>
+
+                @if(auth()->user()->isSuperAdmin())
+                @php $a = request()->routeIs('admin.admins.*'); @endphp
+                <a href="{{ route('admin.admins.index') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+                   style="{{ $a ? 'background:'.$themeColor.';color:#fff' : 'color:rgba(255,255,255,0.7)' }}"
+                   @unless($a) onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff';" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.7)';" @endunless>
+                    <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    Manage Admins
+                </a>
+                @endif
 
                 <p class="px-3 pt-3 pb-1.5 text-[9px] font-bold uppercase tracking-widest" style="color:rgba(255,255,255,0.3)">Finance</p>
 

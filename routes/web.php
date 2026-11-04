@@ -258,6 +258,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::post('/users/{user}/assign-dva',                       [AdminUserController::class, 'assignVirtualAccount'])->name('users.assign-dva');
     Route::delete('/users/{user}/virtual-accounts/{virtualAccount}', [AdminUserController::class, 'destroyVirtualAccount'])->name('users.virtual-accounts.destroy');
 
+    // Administrators Management (Super Admin only)
+    Route::middleware('super_admin')->group(function () {
+        Route::get('/admins',                [\App\Http\Controllers\Admin\AdminAdministratorController::class, 'index'])->name('admins.index');
+        Route::get('/admins/create',         [\App\Http\Controllers\Admin\AdminAdministratorController::class, 'create'])->name('admins.create');
+        Route::post('/admins',               [\App\Http\Controllers\Admin\AdminAdministratorController::class, 'store'])->name('admins.store');
+        Route::post('/admins/{user}/demote', [\App\Http\Controllers\Admin\AdminAdministratorController::class, 'demote'])->name('admins.demote');
+    });
+
     // Transactions
     Route::get('/transactions',                 [AdminTransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/ref/{reference}', [AdminTransactionController::class, 'viewByReference'])->name('transactions.by-reference');

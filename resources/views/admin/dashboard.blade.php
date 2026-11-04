@@ -71,7 +71,7 @@
                 </div>
             </div>
             <p class="text-xl font-bold font-outfit text-white">{{ number_format($stats['total_admins']) }}</p>
-            <p class="text-[10px] text-white/70 mt-1">Super admins</p>
+            <p class="text-[10px] text-white/70 mt-1">Staff administrators</p>
         </div>
     </div>
 </div>

@@ -20,7 +20,8 @@ class AdminUserController extends Controller
     public function index(Request $request)
     {
         $query = User::with('wallet')
-            ->where('is_admin', false);
+            ->where('is_admin', false)
+            ->where('is_super_admin', false);
 
         if ($request->filled('search')) {
             $s = $request->search;
@@ -75,6 +76,10 @@ class AdminUserController extends Controller
 
     public function show(User $user)
     {
+        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+            abort(403, 'Unauthorized access to Super Admin profile.');
+        }
+
         $user->load(['wallet', 'virtualAccounts']);
         $transactions = $user->wallet?->transactions()->latest()->paginate(15);
         $serviceTransactions = $user->serviceTransactions()->latest()->take(10)->get();
@@ -121,6 +126,11 @@ class AdminUserController extends Controller
         $validated['transaction_pin'] = bcrypt($validated['transaction_pin']);
         $validated['email_verified_at'] = now();
         $validated['phone_verified_at'] = now();
+        if (!auth()->user()->isSuperAdmin()) {
+            $validated['is_admin'] = false;
+        }
+        $validated['is_super_admin'] = false;
+        $validated['role'] = !empty($validated['is_admin']) ? 'admin' : ($validated['user_type'] === 'agent' ? 'agent' : 'user');
 
         DB::transaction(function () use ($validated) {
             $user = User::create($validated);
@@ -136,11 +146,19 @@ class AdminUserController extends Controller
 
     public function edit(User $user)
     {
+        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+            abort(403, 'Unauthorized. Only a Super Admin can modify a Super Admin account.');
+        }
+
         return view('admin.users.edit', compact('user'));
     }
 
     public function update(Request $request, User $user)
     {
+        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+            abort(403, 'Unauthorized. Only a Super Admin can modify a Super Admin account.');
+        }
+
         $rules = [
             'name'            => ['sometimes', 'required', 'string', 'max:255'],
             'username'        => ['sometimes', 'required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
@@ -167,6 +185,14 @@ class AdminUserController extends Controller
             unset($validated['transaction_pin']);
         }
 
+        if (!auth()->user()->isSuperAdmin()) {
+            unset($validated['is_admin']);
+            unset($validated['is_super_admin']);
+            unset($validated['role']);
+        } elseif (array_key_exists('is_admin', $validated)) {
+            $validated['role'] = $validated['is_admin'] ? 'admin' : (($validated['user_type'] ?? $user->user_type) === 'agent' ? 'agent' : 'user');
+        }
+
         $user->update($validated);
 
         // If user was deactivated, revoke all active sessions immediately
@@ -189,6 +215,10 @@ class AdminUserController extends Controller
 
     public function destroy(User $user)
     {
+        if ($user->isSuperAdmin()) {
+            return back()->with('error', 'Super Admin accounts cannot be deleted.');
+        }
+
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
@@ -249,6 +279,10 @@ class AdminUserController extends Controller
     {
         if (!auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized.');
+        }
+
+        if ($user->isSuperAdmin()) {
+            return back()->with('error', 'Super Admin accounts cannot be impersonated.');
         }
 
         // Store current admin's ID in the session

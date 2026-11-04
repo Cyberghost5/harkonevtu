@@ -41,7 +41,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => ['required', 'string', 'email'],
+            'email'    => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
@@ -62,7 +62,10 @@ class AuthController extends Controller
             ]);
         }
 
-        if (Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+        $loginInput = $request->input('email');
+        $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        if (Auth::attempt([$field => $loginInput, 'password' => $request->password], $request->boolean('remember'))) {
             RateLimiter::clear($key);
 
             $user = Auth::user();
@@ -96,6 +99,10 @@ class AuthController extends Controller
                 'channel'           => 'web',
                 'status'            => 'success',
             ]);
+
+            if ($user->isSuperAdmin() || $user->isAdmin()) {
+                return redirect()->intended(route('admin.dashboard'));
+            }
 
             return redirect()->intended(route('dashboard'));
         }
@@ -262,6 +269,10 @@ class AuthController extends Controller
             'channel'           => 'web',
             'status'            => 'success',
         ]);
+
+        if ($user->isSuperAdmin() || $user->isAdmin()) {
+            return redirect()->intended(route('admin.dashboard'));
+        }
 
         return redirect()->intended(route('dashboard'));
     }
@@ -496,6 +507,10 @@ class AuthController extends Controller
 
         if (empty($user->transaction_pin)) {
             return redirect()->route('pin.setup')->with('warning', 'Welcome! Please set up your 4-digit transaction PIN to secure your account.');
+        }
+
+        if ($user->isSuperAdmin() || $user->isAdmin()) {
+            return redirect()->intended(route('admin.dashboard'));
         }
 
         return redirect()->intended(route('dashboard'));

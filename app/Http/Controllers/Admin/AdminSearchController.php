@@ -92,14 +92,19 @@ class AdminSearchController extends Controller
         }
 
         // Matching Users
-        $matchedUsers = User::with('wallet')
+        $userQuery = User::with('wallet')
             ->where(function ($query) use ($q) {
                 $query->where('name', 'like', "%{$q}%")
                       ->orWhere('username', 'like', "%{$q}%")
                       ->orWhere('email', 'like', "%{$q}%")
                       ->orWhere('phone', 'like', "%{$q}%");
-            })
-            ->latest()
+            });
+
+        if (!auth()->user()->isSuperAdmin()) {
+            $userQuery->where('is_super_admin', false);
+        }
+
+        $matchedUsers = $userQuery->latest()
             ->take(5)
             ->get()
             ->map(function (User $u) {
@@ -111,6 +116,8 @@ class AdminSearchController extends Controller
                     'phone'        => $u->phone,
                     'balance'      => number_format((float) ($u->wallet?->balance ?? 0), 2),
                     'is_admin'     => (bool) $u->is_admin,
+                    'is_super_admin' => (bool) $u->is_super_admin,
+                    'role_name'    => $u->roleName(),
                     'is_active'    => (bool) $u->is_active,
                     'avatar'       => $u->avatar,
                     'initials'     => $u->initials(),

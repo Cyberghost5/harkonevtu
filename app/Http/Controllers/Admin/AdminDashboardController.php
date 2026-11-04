@@ -15,14 +15,15 @@ class AdminDashboardController extends Controller
     public function index()
     {
         $stats = [
-            'total_users'     => User::where('is_admin', false)->count(),
-            'total_admins'    => User::where('is_admin', true)->count(),
-            'active_users'    => User::where('is_admin', false)->where('is_active', true)->count(),
+            'total_users'     => User::where('is_admin', false)->where('is_super_admin', false)->count(),
+            'total_admins'    => User::where('is_admin', true)->where('is_super_admin', false)->count(),
+            'total_super_admins' => User::where('is_super_admin', true)->count(),
+            'active_users'    => User::where('is_admin', false)->where('is_super_admin', false)->where('is_active', true)->count(),
             'total_revenue'   => (float) ServiceTransaction::where('status', 'success')->sum('amount'),
             'today_revenue'   => (float) ServiceTransaction::where('status', 'success')
                                      ->where('created_at', '>=', now()->startOfDay())->sum('amount'),
             'users_balance'   => (float) \App\Models\Wallet::whereHas('user', function ($q) {
-                                     $q->where('is_admin', false);
+                                     $q->where('is_admin', false)->where('is_super_admin', false);
                                  })->sum('balance'),
             'pending_funding' => FundingRequest::where('status', 'pending')->count(),
             'total_tx'        => ServiceTransaction::count(),
@@ -44,6 +45,7 @@ class AdminDashboardController extends Controller
 
         // Recent users (latest 8)
         $recentUsers = User::where('is_admin', false)
+            ->where('is_super_admin', false)
             ->latest()->take(8)->get();
 
         // Daily revenue for last 7 days

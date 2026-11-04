@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'username', 'email', 'phone', 'password', 'google_id', 'user_type', 'is_admin', 'is_active', 'referral_code', 'referred_by', 'transaction_pin', 'low_balance_notification', 'kyc_status', 'avatar', 'bank_name', 'bank_account_number', 'bank_account_name', 'fcm_device_token', 'device_type'])]
+#[Fillable(['name', 'username', 'email', 'phone', 'password', 'google_id', 'user_type', 'role', 'is_admin', 'is_super_admin', 'is_active', 'referral_code', 'referred_by', 'transaction_pin', 'low_balance_notification', 'kyc_status', 'avatar', 'bank_name', 'bank_account_number', 'bank_account_name', 'fcm_device_token', 'device_type'])]
 #[Hidden(['password', 'remember_token', 'transaction_pin'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -121,12 +121,36 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isAgent(): bool
     {
-        return $this->user_type === 'agent';
+        return $this->user_type === 'agent' || $this->role === 'agent';
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_super_admin || $this->role === 'super_admin';
     }
 
     public function isAdmin(): bool
     {
-        return (bool) $this->is_admin;
+        return (bool) $this->is_admin || $this->isSuperAdmin();
+    }
+
+    public function isStaffAdmin(): bool
+    {
+        return (bool) $this->is_admin && !$this->isSuperAdmin();
+    }
+
+    public function roleName(): string
+    {
+        if ($this->isSuperAdmin()) {
+            return 'Super Admin';
+        }
+        if ($this->isStaffAdmin()) {
+            return 'Admin';
+        }
+        if ($this->isAgent()) {
+            return 'Agent';
+        }
+        return 'User';
     }
 
     public function isActive(): bool
@@ -189,6 +213,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'phone_verified_at'         => 'datetime',
             'password'                  => 'hashed',
             'is_admin'                  => 'boolean',
+            'is_super_admin'            => 'boolean',
             'is_active'                 => 'boolean',
             'low_balance_notification'  => 'boolean',
             'referral_commission_paid'  => 'boolean',
