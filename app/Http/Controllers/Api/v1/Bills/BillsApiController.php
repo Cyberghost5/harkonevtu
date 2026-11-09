@@ -807,7 +807,16 @@ class BillsApiController extends Controller
             'status'                => 'success',
             'reference'             => $reference,
             'api_reference'         => $apiRes['reference'] ?? $reference,
-            'api_response'          => array_merge(is_array($apiRes['response']) ? $apiRes['response'] : ['raw' => $apiRes['response']], ['api_provider' => $api]),
+            'api_response'          => array_merge(
+                is_array($apiRes['response']) ? $apiRes['response'] : ['raw' => $apiRes['response']],
+                [
+                    'api_provider' => $api,
+                    'pins'         => $apiRes['tokens'] ?? $apiRes['pins'] ?? [],
+                    'tokens'       => $apiRes['tokens'] ?? $apiRes['pins'] ?? [],
+                    'exam_name'    => $examType->name,
+                    'quantity'     => $quantity,
+                ]
+            ),
         ]);
 
         $freshWallet = $user->fresh()->wallet;
@@ -825,6 +834,129 @@ class BillsApiController extends Controller
                 'balance_after' => (float) ($freshWallet ? $freshWallet->balance : 0),
                 'date'          => now()->toDateTimeString(),
             ],
+        ]);
+    }
+
+    /**
+     * Get exam pins transaction history with parsed tokens & serial numbers.
+     */
+    public function examPinHistory(Request $request): JsonResponse
+    {
+        $user  = auth()->user();
+        $query = ServiceTransaction::where('user_id', $user->id)
+            ->where('service_type', 'epin');
+
+        if ($request->filled('exam_type') && strtolower($request->exam_type) !== 'all') {
+            $query->where('provider', strtolower($request->exam_type));
+        }
+
+        if ($request->filled('status') && strtolower($request->status) !== 'all') {
+            $query->where('status', strtolower($request->status));
+        }
+
+        if ($request->filled('search')) {
+            $term = '%' . $request->search . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('reference', 'like', $term)
+                  ->orWhere('recipient', 'like', $term);
+            });
+        }
+
+        $perPage      = min(max((int) $request->input('per_page', 30), 1), 100);
+        $transactions = $query->latest('id')->paginate($perPage);
+
+        $items = $transactions->getCollection()->map(function ($tx) {
+            $pins = \App\Services\ExamPinA4PdfService::extractNormalizedPins($tx);
+            $apiResponse = $tx->api_response ?? [];
+            return [
+                'id'            => $tx->id,
+                'reference'     => $tx->reference,
+                'api_reference' => $tx->api_reference,
+                'exam_type'     => $tx->provider,
+                'exam_name'     => $apiResponse['exam_name'] ?? strtoupper((string) $tx->provider),
+                'recipient'     => $tx->recipient,
+                'amount'        => (float) $tx->amount,
+                'quantity'      => !empty($pins) ? count($pins) : (int) ($apiResponse['quantity'] ?? 1),
+                'status'        => $tx->status,
+                'pins'          => $pins,
+                'created_at'    => $tx->created_at ? $tx->created_at->toIso8601String() : null,
+            ];
+        });
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Exam pin history retrieved successfully.',
+            'data'    => [
+                'total'        => $transactions->total(),
+                'current_page' => $transactions->currentPage(),
+                'last_page'    => $transactions->lastPage(),
+                'per_page'     => $transactions->perPage(),
+                'transactions' => $items,
+            ],
+        ]);
+    }
+
+    /**
+     * Download or stream purchased exam pins formatted as an A4 PDF.
+     */
+    public function downloadExamPinPdf(Request $request): mixed
+    {
+        $user = auth('sanctum')->user() ?: auth()->user();
+
+        // Support token passed via query string for mobile download
+        if (!$user && $request->filled('token')) {
+            $tokenRecord = \Laravel\Sanctum\PersonalAccessToken::findToken($request->token);
+            if ($tokenRecord) {
+                $user = $tokenRecord->tokenable;
+            }
+        }
+
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $query = ServiceTransaction::where('user_id', $user->id)
+            ->where('service_type', 'epin');
+
+        // Filter by transaction IDs if provided
+        if ($request->filled('ids')) {
+            $rawIds = $request->input('ids');
+            $ids = is_array($rawIds) ? $rawIds : array_filter(array_map('intval', explode(',', (string) $rawIds)));
+            if (!empty($ids)) {
+                $query->whereIn('id', $ids);
+            }
+        }
+
+        if ($request->filled('exam_type') && strtolower($request->exam_type) !== 'all') {
+            $query->where('provider', strtolower($request->exam_type));
+        }
+
+        if ($request->filled('status') && strtolower($request->status) !== 'all') {
+            $query->where('status', strtolower($request->status));
+        } else {
+            $query->where('status', 'success');
+        }
+
+        $transactions = $query->latest('id')->limit(100)->get();
+
+        $allCards = [];
+        foreach ($transactions as $tx) {
+            $cards = \App\Services\ExamPinA4PdfService::extractNormalizedPins($tx);
+            foreach ($cards as $c) {
+                $allCards[] = $c;
+            }
+        }
+
+        $pdfService = new \App\Services\ExamPinA4PdfService();
+        $pdfContent = $pdfService->generate($allCards);
+
+        $filename = 'Exam_PINs_' . date('Ymd_His') . '.pdf';
+
+        return response($pdfContent, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control'       => 'private, max-age=0, must-revalidate',
+            'Pragma'              => 'public',
         ]);
     }
 

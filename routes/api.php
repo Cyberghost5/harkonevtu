@@ -86,6 +86,7 @@ Route::prefix('v1')->group(function () {
         // Exam Pins
         Route::get('/exam-pins/types',             [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'examTypes']);
         Route::post('/exam-pins/purchase',         [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'purchaseExamPin']);
+        Route::get('/exam-pins/history',          [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'examPinHistory']);
     });
 
     // ── Wallet & Payment Gateway Endpoints (Milestone 5) ──────────────────────
@@ -157,4 +158,7 @@ Route::prefix('v1')->group(function () {
         });
     });
 
+    // ── Direct PDF Downloads (supports Bearer header and ?token=... query string) ─
+    Route::match(['get', 'post'], '/vouchers/download-pdf',  [\App\Http\Controllers\Api\v1\Extra\ExtraApiController::class, 'downloadVoucherPdf']);
+    Route::match(['get', 'post'], '/exam-pins/download-pdf', [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'downloadExamPinPdf']);
 });

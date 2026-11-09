@@ -13,36 +13,43 @@
             padding: 20px;
         }
 
+        @page {
+            size: A4 portrait;
+            margin: 5mm;
+        }
+
         .voucher-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 15px;
-            max-width: 1200px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2.5mm;
+            max-width: 100%;
             margin: 0 auto;
         }
 
         .voucher-card {
-            border: 2px dashed #000;
-            border-radius: 8px;
-            padding: 15px;
+            border: 1px dashed #64748b;
+            border-radius: 4px;
+            padding: 4px 5px;
             background: #fff;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             position: relative;
-            min-height: 175px;
+            min-height: 125px;
             page-break-inside: avoid;
         }
 
         .network-header {
-            font-size: 14px;
+            font-size: 8px;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-            border-bottom: 2px solid;
-            padding-bottom: 3px;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+            border-bottom: 1.5px solid;
+            padding-bottom: 1px;
+            display: flex;
+            justify-content: space-between;
         }
 
         /* Network Color Accents */
@@ -52,56 +59,58 @@
         .network-9mobile { border-color: #0f766e; color: #0f766e; }
 
         .value-badge {
-            font-size: 20px;
+            font-size: 10px;
             font-weight: 800;
-            margin: 5px 0;
+            margin: 2px 0;
         }
 
         .pin-section {
-            background: #f3f4f6;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 10px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 3px 2px;
             text-align: center;
-            margin: 8px 0;
+            margin: 3px 0;
         }
 
         .pin-label {
-            font-size: 8px;
-            color: #4b5563;
+            font-size: 6px;
+            color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
         .pin-code {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 16px;
+            font-size: 9.5px;
             font-weight: 800;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
+            color: #0f172a;
         }
 
         .serial-section {
-            font-size: 10px;
-            color: #374151;
-            margin-bottom: 8px;
+            font-size: 6.5px;
+            color: #475569;
+            margin-bottom: 2px;
         }
 
         .instructions {
-            font-size: 8px;
-            color: #4b5563;
-            line-height: 1.3;
-            margin-top: 5px;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 5px;
+            font-size: 6px;
+            color: #334155;
+            line-height: 1.2;
+            margin-top: 2px;
+            border-top: 0.5px solid #e2e8f0;
+            padding-top: 2px;
+            font-weight: 600;
         }
 
         .business-footer {
-            font-size: 8px;
+            font-size: 5.5px;
             font-weight: bold;
-            color: #9ca3af;
+            color: #94a3b8;
             text-align: center;
-            margin-top: 5px;
+            margin-top: 2px;
             text-transform: uppercase;
         }
 
@@ -110,33 +119,45 @@
             body {
                 padding: 0;
                 margin: 0;
+                background: #fff;
             }
             .no-print {
                 display: none !important;
             }
             .voucher-grid {
-                gap: 10px;
+                grid-template-columns: repeat(5, 1fr) !important;
+                gap: 2mm !important;
             }
             .voucher-card {
                 border-style: dashed;
-                border-color: #000;
+                border-color: #94a3b8;
             }
         }
         
         .print-btn-container {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
         }
         .print-btn {
             background-color: #4f46e5;
             color: white;
-            padding: 10px 24px;
-            font-size: 14px;
+            padding: 9px 20px;
+            font-size: 13px;
             font-weight: 600;
             border-radius: 8px;
             border: none;
             cursor: pointer;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .print-btn.btn-secondary {
+            background-color: #059669;
         }
         .print-btn:hover {
             opacity: 0.9;
@@ -146,7 +167,14 @@
 <body>
 
     <div class="print-btn-container no-print">
-        <button class="print-btn" onclick="window.print()">Send to Printer</button>
+        <button class="print-btn" onclick="window.print()">
+            <svg style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Send to Printer (A4)
+        </button>
+        <a href="{{ route('print-pins.download-pdf', ['ids' => $vouchers->pluck('id')->implode(',')]) }}" class="print-btn btn-secondary">
+            <svg style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Download as PDF (5 Columns)
+        </a>
     </div>
 
     <div class="voucher-grid">

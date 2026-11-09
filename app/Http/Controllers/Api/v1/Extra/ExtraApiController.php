@@ -19,8 +19,10 @@ use App\Models\WalletTransaction;
 use App\Services\KycService;
 use App\Services\QoreIDService;
 use App\Services\ProviderAlertService;
+use App\Services\VoucherA4PdfService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -789,16 +791,95 @@ class ExtraApiController extends Controller
      */
     public function voucherHistory(Request $request): JsonResponse
     {
-        $user     = auth()->user();
-        $vouchers = PrintedVoucher::where('user_id', $user->id)->latest()->paginate(20);
+        $user  = auth()->user();
+        $query = PrintedVoucher::where('user_id', $user->id);
+
+        if ($request->filled('network')) {
+            $query->where('network', strtolower($request->network));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', strtolower($request->status));
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', strtolower($request->type));
+        }
+
+        if ($request->filled('denomination')) {
+            $query->where('value', $request->denomination);
+        }
+
+        $perPage  = min(max((int) $request->input('per_page', 30), 1), 200);
+        $vouchers = $query->latest('id')->paginate($perPage);
 
         return response()->json([
             'status'  => true,
             'message' => 'Voucher history retrieved successfully.',
             'data'    => [
-                'total'    => $vouchers->total(),
-                'vouchers' => $vouchers->items(),
+                'total'        => $vouchers->total(),
+                'current_page' => $vouchers->currentPage(),
+                'last_page'    => $vouchers->lastPage(),
+                'per_page'     => $vouchers->perPage(),
+                'vouchers'     => $vouchers->items(),
             ],
+        ]);
+    }
+
+    /**
+     * Download or stream purchased vouchers formatted as an A4 PDF with 5 columns.
+     */
+    public function downloadVoucherPdf(Request $request): Response
+    {
+        $user = auth()->user();
+
+        // Support bearer token in Authorization header or query parameter
+        if (!$user && $request->filled('token')) {
+            $tokenRecord = \Laravel\Sanctum\PersonalAccessToken::findToken($request->token);
+            if ($tokenRecord) {
+                $user = $tokenRecord->tokenable;
+            }
+        }
+
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $query = PrintedVoucher::where('user_id', $user->id);
+
+        // 1. Filter by specific voucher IDs if provided
+        if ($request->filled('ids')) {
+            $rawIds = $request->input('ids');
+            $ids = is_array($rawIds) ? $rawIds : array_filter(array_map('intval', explode(',', (string) $rawIds)));
+            if (!empty($ids)) {
+                $query->whereIn('id', $ids);
+            }
+        }
+
+        // 2. Optional filters: network, type, status
+        if ($request->filled('network')) {
+            $query->where('network', strtolower($request->network));
+        }
+        if ($request->filled('type')) {
+            $query->where('type', strtolower($request->type));
+        }
+
+        $limit = min(max((int) $request->input('limit', 200), 1), 400);
+        $vouchers = $query->latest('id')->take($limit)->get();
+
+        if ($vouchers->isEmpty()) {
+            return response()->json(['status' => false, 'message' => 'No vouchers found for this selection.'], 404);
+        }
+
+        $pdfService = new VoucherA4PdfService();
+        $pdfContent = $pdfService->generate($vouchers);
+        $filename   = 'Airtime_Vouchers_A4_' . date('Ymd_His') . '.pdf';
+
+        return response($pdfContent, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Length'      => strlen($pdfContent),
+            'Cache-Control'       => 'private, no-transform, no-store, must-revalidate',
         ]);
     }
 

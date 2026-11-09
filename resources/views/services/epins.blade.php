@@ -204,9 +204,18 @@
     <div class="rounded-2xl bg-white dark:bg-vtu-darkCard border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
         <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
             <h2 class="text-base font-semibold text-slate-900 dark:text-white">Recent Transactions</h2>
-            @if($history->isNotEmpty())
-            <span class="text-xs text-slate-500 dark:text-slate-400">{{ $history->total() }} total</span>
-            @endif
+            <div class="flex items-center gap-3">
+                @if($history->isNotEmpty())
+                <a href="{{ route('epins.download-pdf') }}" target="_blank"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Download PDF (A4)
+                </a>
+                <span class="text-xs text-slate-500 dark:text-slate-400">{{ $history->total() }} total</span>
+                @endif
+            </div>
         </div>
 
         @if($history->isEmpty())
@@ -257,15 +266,25 @@
                         </td>
                         <td class="px-6 py-3.5">
                             @if(count($txPins) > 0)
-                            <button type="button"
-                                    onclick='showPinsModal(@json($txPins), "{{ addslashes($txExam) }}")'
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-500/10 text-vtu-primary hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors">
-                                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                </svg>
-                                View Pins
-                            </button>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button"
+                                        onclick='showPinsModal(@json($txPins), "{{ addslashes($txExam) }}")'
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-500/10 text-vtu-primary hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors">
+                                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    View Pins
+                                </button>
+                                <a href="{{ route('epins.download-pdf', ['ids' => $tx->id]) }}" target="_blank"
+                                   class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors"
+                                   title="Download A4 PDF">
+                                    <svg class="h-3 w-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    PDF
+                                </a>
+                            </div>
                             @else
                             <span class="text-xs text-slate-400">-</span>
                             @endif
@@ -314,10 +333,19 @@
         {{-- Footer --}}
         <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-700">
             <p id="pins-modal-ref" class="text-xs font-mono text-slate-400 dark:text-slate-500 mb-3"></p>
-            <button onclick="closePinsModal()"
-                    class="w-full py-2.5 rounded-xl text-sm font-semibold bg-vtu-primary hover:bg-indigo-600 text-white transition-colors">
-                Done
-            </button>
+            <div class="flex gap-2">
+                <a id="pins-modal-download-btn" href="{{ route('epins.download-pdf') }}" target="_blank"
+                   class="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white text-center transition-colors inline-flex items-center justify-center gap-1.5">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Download PDF
+                </a>
+                <button onclick="closePinsModal()"
+                        class="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors">
+                    Done
+                </button>
+            </div>
         </div>
     </div>
 </div>

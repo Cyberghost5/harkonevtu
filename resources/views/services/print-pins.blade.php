@@ -217,18 +217,32 @@
         <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3">
             <h2 class="text-base font-semibold text-slate-900 dark:text-white">Generated PINs History</h2>
 
-            {{-- Print selected --}}
-            <form method="GET" action="{{ route('services.print-pins.print') }}" target="_blank" x-show="selectedIds.length > 0" class="inline-block transition-all">
-                <template x-for="id in selectedIds" :key="id">
-                    <input type="hidden" name="ids[]" :value="id"/>
-                </template>
-                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-vtu-primary hover:bg-indigo-600 text-white rounded-xl shadow-sm">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                    </svg>
-                    Print Selected (<span x-text="selectedIds.length"></span>)
-                </button>
-            </form>
+            {{-- Print & PDF selected --}}
+            <div x-show="selectedIds.length > 0" class="flex items-center gap-2 transition-all">
+                <form method="GET" action="{{ route('services.print-pins.print') }}" target="_blank" class="inline-block">
+                    <template x-for="id in selectedIds" :key="id">
+                        <input type="hidden" name="ids[]" :value="id"/>
+                    </template>
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold bg-vtu-primary hover:bg-indigo-600 text-white rounded-xl shadow-sm">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        Print (<span x-text="selectedIds.length"></span>)
+                    </button>
+                </form>
+
+                <form method="GET" action="{{ route('services.print-pins.download-pdf') }}" class="inline-block">
+                    <template x-for="id in selectedIds" :key="'pdf-' + id">
+                        <input type="hidden" name="ids[]" :value="id"/>
+                    </template>
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Download PDF (5 Cols)
+                    </button>
+                </form>
+            </div>
         </div>
 
         {{-- Table --}}

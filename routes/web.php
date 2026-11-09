@@ -164,8 +164,9 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked']
         Route::post('/cable/validate-card',    [CableController::class, 'validateCard'])->name('cable.validate');
         Route::post('/cable/purchase',         [CableController::class, 'purchase'])->name('cable.purchase');
 
-        Route::get('/epins',           [ExamPinController::class, 'index'])->name('epins');
-        Route::post('/epins/purchase', [ExamPinController::class, 'purchase'])->name('epins.purchase');
+        Route::get('/epins',              [ExamPinController::class, 'index'])->name('epins');
+        Route::post('/epins/purchase',    [ExamPinController::class, 'purchase'])->name('epins.purchase');
+        Route::match(['get', 'post'], '/epins/download-pdf', [ExamPinController::class, 'downloadPdf'])->name('epins.download-pdf');
 
         Route::get('/airtime-to-cash',         [\App\Http\Controllers\AirtimeToCashController::class, 'index'])->name('airtime-to-cash');
         Route::post('/airtime-to-cash/submit', [\App\Http\Controllers\AirtimeToCashController::class, 'submit'])->name('airtime-to-cash.submit');
@@ -173,6 +174,7 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked']
         Route::get('/print-pins',            [\App\Http\Controllers\VoucherPrintingController::class, 'index'])->name('print-pins');
         Route::post('/print-pins/generate',  [\App\Http\Controllers\VoucherPrintingController::class, 'generate'])->name('print-pins.generate');
         Route::get('/print-pins/print',      [\App\Http\Controllers\VoucherPrintingController::class, 'printVouchers'])->name('print-pins.print');
+        Route::match(['get', 'post'], '/print-pins/download-pdf', [\App\Http\Controllers\VoucherPrintingController::class, 'downloadPdf'])->name('print-pins.download-pdf');
 
         Route::get('/betting',            [\App\Http\Controllers\BettingController::class, 'index'])->name('betting');
         Route::post('/betting/validate',  [\App\Http\Controllers\BettingController::class, 'validateCustomer'])->name('betting.validate');

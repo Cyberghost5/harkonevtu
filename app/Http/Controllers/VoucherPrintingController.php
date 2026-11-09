@@ -7,9 +7,11 @@ use App\Models\PrintedVoucher;
 use App\Models\NetworkAirtime;
 use App\Models\ApiLog;
 use App\Services\ProviderAlertService;
+use App\Services\VoucherA4PdfService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -275,6 +277,37 @@ class VoucherPrintingController extends Controller implements HasMiddleware
         }
 
         return view('services.print-pins-layout', compact('vouchers'));
+    }
+
+    public function downloadPdf(Request $request): Response
+    {
+        $user = auth()->user();
+        $rawIds = $request->input('ids');
+        $query = PrintedVoucher::where('user_id', $user->id);
+
+        if (!empty($rawIds)) {
+            $ids = is_array($rawIds) ? $rawIds : array_filter(array_map('intval', explode(',', (string) $rawIds)));
+            if (!empty($ids)) {
+                $query->whereIn('id', $ids);
+            }
+        }
+
+        $vouchers = $query->latest('id')->take(400)->get();
+
+        if ($vouchers->isEmpty()) {
+            return back()->with('error', 'No vouchers found to generate PDF.');
+        }
+
+        $pdfService = new VoucherA4PdfService();
+        $pdfContent = $pdfService->generate($vouchers);
+        $filename   = 'Airtime_Vouchers_A4_' . date('Ymd_His') . '.pdf';
+
+        return response($pdfContent, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Length'      => strlen($pdfContent),
+            'Cache-Control'       => 'private, no-transform, no-store, must-revalidate',
+        ]);
     }
 
     /**

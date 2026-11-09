@@ -36,6 +36,53 @@ class ExamPinController extends Controller
         return view('services.epins', compact('user', 'examTypes', 'history'));
     }
 
+    /**
+     * Download purchased exam pins as an A4 PDF slip.
+     */
+    public function downloadPdf(Request $request): mixed
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $query = ServiceTransaction::where('user_id', $user->id)
+            ->where('service_type', 'epin')
+            ->where('status', 'success');
+
+        if ($request->filled('ids')) {
+            $rawIds = $request->input('ids');
+            $ids = is_array($rawIds) ? $rawIds : array_filter(array_map('intval', explode(',', (string) $rawIds)));
+            if (!empty($ids)) {
+                $query->whereIn('id', $ids);
+            }
+        }
+
+        if ($request->filled('exam_type') && strtolower($request->exam_type) !== 'all') {
+            $query->where('provider', strtolower($request->exam_type));
+        }
+
+        $transactions = $query->latest('id')->limit(100)->get();
+
+        $allCards = [];
+        foreach ($transactions as $tx) {
+            $cards = \App\Services\ExamPinA4PdfService::extractNormalizedPins($tx);
+            foreach ($cards as $c) {
+                $allCards[] = $c;
+            }
+        }
+
+        $pdfService = new \App\Services\ExamPinA4PdfService();
+        $pdfContent = $pdfService->generate($allCards);
+
+        $filename = 'Exam_PINs_' . date('Ymd_His') . '.pdf';
+
+        return response($pdfContent, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
     // ─── Purchase ─────────────────────────────────────────────────────────────
 
     public function purchase(Request $request): JsonResponse
