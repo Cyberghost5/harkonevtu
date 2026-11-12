@@ -231,7 +231,7 @@
                     </button>
                 </form>
 
-                <form method="GET" action="{{ route('services.print-pins.download-pdf') }}" class="inline-block">
+                <form method="GET" action="{{ Route::has('services.print-pins.download-pdf') ? route('services.print-pins.download-pdf') : url('/services/print-pins/download-pdf') }}" class="inline-block">
                     <template x-for="id in selectedIds" :key="'pdf-' + id">
                         <input type="hidden" name="ids[]" :value="id"/>
                     </template>

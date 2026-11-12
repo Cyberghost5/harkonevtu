@@ -206,7 +206,7 @@
             <h2 class="text-base font-semibold text-slate-900 dark:text-white">Recent Transactions</h2>
             <div class="flex items-center gap-3">
                 @if($history->isNotEmpty())
-                <a href="{{ route('services.epins.download-pdf') }}" target="_blank"
+                <a href="{{ Route::has('services.epins.download-pdf') ? route('services.epins.download-pdf') : url('/services/epins/download-pdf') }}" target="_blank"
                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors">
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -276,7 +276,7 @@
                                     </svg>
                                     View Pins
                                 </button>
-                                <a href="{{ route('services.epins.download-pdf', ['ids' => $tx->id]) }}" target="_blank"
+                                <a href="{{ Route::has('services.epins.download-pdf') ? route('services.epins.download-pdf', ['ids' => $tx->id]) : url('/services/epins/download-pdf?ids=' . $tx->id) }}" target="_blank"
                                    class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors"
                                    title="Download A4 PDF">
                                     <svg class="h-3 w-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -334,7 +334,7 @@
         <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-700">
             <p id="pins-modal-ref" class="text-xs font-mono text-slate-400 dark:text-slate-500 mb-3"></p>
             <div class="flex gap-2">
-                <a id="pins-modal-download-btn" href="{{ route('services.epins.download-pdf') }}" target="_blank"
+                <a id="pins-modal-download-btn" href="{{ Route::has('services.epins.download-pdf') ? route('services.epins.download-pdf') : url('/services/epins/download-pdf') }}" target="_blank"
                    class="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white text-center transition-colors inline-flex items-center justify-center gap-1.5">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>

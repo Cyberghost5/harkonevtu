@@ -187,10 +187,6 @@ Route::middleware(['auth', 'ensure.verified', 'ensure.pin', 'ensure.not_locked']
         Route::post('/bulksms/send',     [\App\Http\Controllers\BulkSmsController::class, 'send'])->name('bulksms.send');
     });
 
-    // Aliases without services. prefix for convenience
-    Route::match(['get', 'post'], '/services/print-pins/download-pdf', [\App\Http\Controllers\VoucherPrintingController::class, 'downloadPdf'])->name('print-pins.download-pdf');
-    Route::match(['get', 'post'], '/services/epins/download-pdf',      [\App\Http\Controllers\ExamPinController::class, 'downloadPdf'])->name('epins.download-pdf');
-
     // ── Referral ──────────────────────────────────────────────────────────────
     Route::get('/referral',           [ReferralController::class, 'index'])->name('referral');
     Route::post('/referral/withdraw', [ReferralController::class, 'withdraw'])->name('referral.withdraw');
