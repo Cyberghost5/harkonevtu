@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin'           => \App\Http\Middleware\EnsureAdmin::class,
             'super_admin'     => \App\Http\Middleware\EnsureSuperAdmin::class,
             'ensure.not_locked' => \App\Http\Middleware\EnsureNotLocked::class,
+            'permission'      => \App\Http\Middleware\CheckPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

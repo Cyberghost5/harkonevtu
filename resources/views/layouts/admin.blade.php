@@ -121,7 +121,7 @@
                 @if(auth()->user()->isSuperAdmin())
                 <span class="ml-auto text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest bg-amber-500/20 text-amber-400 border border-amber-500/30">Super Admin</span>
                 @else
-                <span class="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest" style="background-color:{{ $themeColor }}40;color:{{ $themeColor }}">Admin</span>
+                <span class="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest" style="background-color:{{ $themeColor }}40;color:{{ $themeColor }}">{{ auth()->user()->roleName() }}</span>
                 @endif
             </div>
 
@@ -143,7 +143,7 @@
                             Super Administrator
                         </p>
                         @else
-                        <p class="text-[10px]" style="color:{{ $themeColor }}">Administrator</p>
+                        <p class="text-[10px]" style="color:{{ $themeColor }}">{{ auth()->user()->roleName() }}</p>
                         @endif
                     </div>
                 </div>
@@ -154,6 +154,7 @@
 
                 <p class="px-3 pt-1 pb-1.5 text-[9px] font-bold uppercase tracking-widest" style="color:rgba(255,255,255,0.3)">Main</p>
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('dashboard', 'read'))
                 @php $a = request()->routeIs('admin.dashboard'); @endphp
                 <a href="{{ route('admin.dashboard') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -162,9 +163,12 @@
                     <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                     Dashboard
                 </a>
+                @endif
 
-                <p class="px-3 pt-3 pb-1.5 text-[9px] font-bold uppercase tracking-widest" style="color:rgba(255,255,255,0.3)">Users</p>
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('users', 'read') || auth()->user()->canAccess('admins', 'read') || auth()->user()->canAccess('roles', 'read'))
+                <p class="px-3 pt-3 pb-1.5 text-[9px] font-bold uppercase tracking-widest" style="color:rgba(255,255,255,0.3)">Users & Access</p>
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('users', 'read'))
                 @php $a = request()->routeIs('admin.users.*'); @endphp
                 <a href="{{ route('admin.users.index') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -173,8 +177,9 @@
                     <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     Users
                 </a>
+                @endif
 
-                @if(auth()->user()->isSuperAdmin())
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('admins', 'read'))
                 @php $a = request()->routeIs('admin.admins.*'); @endphp
                 <a href="{{ route('admin.admins.index') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -185,8 +190,22 @@
                 </a>
                 @endif
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('roles', 'read'))
+                @php $a = request()->routeIs('admin.roles.*'); @endphp
+                <a href="{{ route('admin.roles.index') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+                   style="{{ $a ? 'background:'.$themeColor.';color:#fff' : 'color:rgba(255,255,255,0.7)' }}"
+                   @unless($a) onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff';" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.7)';" @endunless>
+                    <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    Roles & Permissions
+                </a>
+                @endif
+                @endif
+
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('reports', 'read') || auth()->user()->canAccess('transactions', 'read') || auth()->user()->canAccess('funding', 'read') || auth()->user()->canAccess('coupons', 'read') || auth()->user()->canAccess('airtime_to_cash', 'read'))
                 <p class="px-3 pt-3 pb-1.5 text-[9px] font-bold uppercase tracking-widest" style="color:rgba(255,255,255,0.3)">Finance</p>
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('reports', 'read'))
                 @php $a = request()->routeIs('admin.reports.*'); @endphp
                 <a href="{{ route('admin.reports.index') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -195,7 +214,9 @@
                     <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"/></svg>
                     Reports & Analytics
                 </a>
+                @endif
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('transactions', 'read'))
                 @php $a = request()->routeIs('admin.transactions.*'); @endphp
                 <a href="{{ route('admin.transactions.index') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -204,7 +225,9 @@
                     <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                     Transactions
                 </a>
+                @endif
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('funding', 'read'))
                 @php $a = request()->routeIs('admin.funding.*'); $pf = \App\Models\FundingRequest::where('status','pending')->count(); @endphp
                 <a href="{{ route('admin.funding.index') }}"
                    class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -216,7 +239,9 @@
                     </div>
                     @if($pf > 0)<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style="background:rgba(245,158,11,0.3);color:#fcd34d">{{ $pf }}</span>@endif
                 </a>
+                @endif
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('coupons', 'read'))
                 @php $a = request()->routeIs('admin.coupons.*'); @endphp
                 <a href="{{ route('admin.coupons.index') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -225,7 +250,9 @@
                     <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
                     Coupons
                 </a>
+                @endif
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('airtime_to_cash', 'read'))
                 @php $a = request()->routeIs('admin.airtime-to-cash.*'); $pa = \App\Models\AirtimeToCashRequest::where('status','pending')->count(); @endphp
                 <a href="{{ route('admin.airtime-to-cash.index') }}"
                    class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -237,9 +264,13 @@
                     </div>
                     @if($pa > 0)<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style="background:rgba(245,158,11,0.3);color:#fcd34d">{{ $pa }}</span>@endif
                 </a>
+                @endif
+                @endif
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('settings', 'read') || auth()->user()->canAccess('api_logs', 'read') || auth()->user()->canAccess('users', 'read'))
                 <p class="px-3 pt-3 pb-1.5 text-[9px] font-bold uppercase tracking-widest" style="color:rgba(255,255,255,0.3)">System</p>
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('settings', 'read'))
                 @php $settingsOpen = request()->routeIs('admin.settings.*'); @endphp
                 {{-- Settings parent --}}
                 <button type="button" id="settings-toggle" onclick="toggleSettingsMenu()"
@@ -258,7 +289,7 @@
                             ['route' => 'admin.settings.general',    'label' => 'General Settings'],
                             ['route' => 'admin.settings.onboarding', 'label' => 'Onboarding Slides'],
                             ['route' => 'admin.settings.email',       'label' => 'Email Settings'],
-                            ['route' => 'admin.settings.api-keys',    'label' => 'API Keys Settings'],
+                            ['route' => 'admin.settings.api-keys',    'label' => 'API Keys Settings', 'perm' => 'settings.api_keys'],
                             ['route' => 'admin.settings.api',         'label' => 'API Settings'],
                             ['route' => 'admin.settings.accounts',    'label' => 'Account Settings'],
                             ['route' => 'admin.settings.data-plans',  'label' => 'Data Plan Settings'],
@@ -266,6 +297,7 @@
                         ];
                     @endphp
                     @foreach($settingsSubs as $sub)
+                    @if(!isset($sub['perm']) || auth()->user()->isSuperAdmin() || auth()->user()->hasPermission($sub['perm']))
                     @php $si = request()->routeIs($sub['route']); @endphp
                     <a href="{{ route($sub['route']) }}"
                        class="block px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150"
@@ -273,9 +305,12 @@
                        @unless($si) onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff';" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.6)';" @endunless>
                         {{ $sub['label'] }}
                     </a>
+                    @endif
                     @endforeach
                 </div>
+                @endif
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('api_logs', 'read'))
                 @php $a = request()->routeIs('admin.api-logs.*'); @endphp
                 <a href="{{ route('admin.api-logs.index') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -284,7 +319,9 @@
                     <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
                     API Logs
                 </a>
+                @endif
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('users', 'read'))
                 @php $a = request()->routeIs('admin.user-logs.*'); @endphp
                 <a href="{{ route('admin.user-logs.index') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -293,7 +330,9 @@
                     <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 004 11c0 2.473.345 4.866.99 7.132"/></svg>
                     User Logs
                 </a>
+                @endif
 
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->canAccess('settings', 'update'))
                 @php $a = request()->routeIs('admin.notifications.*') && !request()->routeIs('admin.notifications.email.*'); @endphp
                 <a href="{{ route('admin.notifications.index') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -311,7 +350,9 @@
                     <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     Email Notifications
                 </a>
+                @endif
 
+                @if(auth()->user()->isSuperAdmin())
                 @php $a = request()->routeIs('admin.monitoring'); @endphp
                 <a href="{{ route('admin.monitoring') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
@@ -320,6 +361,8 @@
                     <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"/></svg>
                     Server Monitoring
                 </a>
+                @endif
+                @endif
 
                 <div class="my-2" style="border-top:1px solid rgba(255,255,255,0.1)"></div>
 

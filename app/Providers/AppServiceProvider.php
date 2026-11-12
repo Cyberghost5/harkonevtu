@@ -26,6 +26,17 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Authorization Gate check for roles & permissions
+        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
+            if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+                return true;
+            }
+
+            if (method_exists($user, 'hasPermission')) {
+                return $user->hasPermission($ability) ? true : null;
+            }
+        });
+
         try {
             if (Schema::hasTable('app_settings')) {
                 $s = AppSetting::getMany([

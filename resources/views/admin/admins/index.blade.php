@@ -35,6 +35,15 @@
                class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
     </div>
     <div>
+        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Role</label>
+        <select name="role_id" class="px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none">
+            <option value="">All Roles</option>
+            @foreach($roles as $role)
+            <option value="{{ $role->id }}" {{ request('role_id') == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div>
         <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Status</label>
         <select name="status" class="px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none">
             <option value="">All Statuses</option>
@@ -43,7 +52,7 @@
         </select>
     </div>
     <button type="submit" class="px-4 py-2 text-sm font-medium bg-vtu-primary text-white rounded-xl hover:bg-indigo-700 transition-colors">Filter</button>
-    @if(request()->hasAny(['search','status']))
+    @if(request()->hasAny(['search','status','role_id']))
     <a href="{{ route('admin.admins.index') }}" class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-white">Clear</a>
     @endif
 </form>
@@ -92,9 +101,15 @@
 
                     {{-- Role Column --}}
                     <td class="px-5 py-3.5 text-xs">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
-                            Staff Admin
-                        </span>
+                        @if($admin->assignedRole)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
+                                {{ $admin->assignedRole->name }}
+                            </span>
+                        @else
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
+                                Staff Admin
+                            </span>
+                        @endif
                     </td>
 
                     {{-- Status Column --}}
@@ -118,6 +133,10 @@
 
                     {{-- Actions --}}
                     <td class="px-5 py-3.5 text-right space-x-2">
+                        <a href="{{ route('admin.admins.edit', $admin->id) }}"
+                           class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 transition-colors">
+                            Edit
+                        </a>
                         <a href="{{ route('admin.users.show', $admin->id) }}"
                            class="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-vtu-primary transition-colors">
                             View
@@ -126,7 +145,7 @@
                               onsubmit="return confirm('Are you sure you want to demote {{ $admin->name }} to a regular user? They will lose all admin panel privileges.');">
                             @csrf
                             <button type="submit" class="text-xs font-medium text-amber-600 hover:text-amber-700 transition-colors">
-                                Demote to User
+                                Demote
                             </button>
                         </form>
                     </td>

@@ -58,10 +58,17 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Role Assigned</label>
-                    <input type="text" value="Staff Administrator" readonly
-                           class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-500 cursor-not-allowed">
-                    <p class="text-[11px] text-slate-400 mt-1">Granted full administrative dashboard access.</p>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Assigned Role</label>
+                    <select name="role_id" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                        <option value="">Default Admin (Full Staff Privileges)</option>
+                        @foreach($roles as $role)
+                        <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                            {{ $role->name }} ({{ $role->permissions()->count() }} permissions)
+                        </option>
+                        @endforeach
+                    </select>
+                    <p class="text-[11px] text-slate-400 mt-1">Select an RBAC role to enforce specific CRUD permissions.</p>
+                    @error('role_id') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Account Status</label>

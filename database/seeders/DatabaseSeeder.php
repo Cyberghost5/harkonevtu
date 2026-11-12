@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             PayscribeCableSeeder::class,
             ClubkonnectDataSeeder::class,
             SuperAdminSeeder::class,
+            RoleAndPermissionSeeder::class,
         ]);
     }
 }

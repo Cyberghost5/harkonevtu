@@ -19,6 +19,8 @@ use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminCouponController;
 use App\Http\Controllers\Admin\AdminSearchController;
 use App\Http\Controllers\Admin\AdminReportController;
+use App\Http\Controllers\Admin\AdminRoleController;
+use App\Http\Controllers\Admin\AdminAdministratorController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\TransactionController;
@@ -250,116 +252,126 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'ensure.not
     Route::get('/search/live',         [AdminSearchController::class, 'live'])->name('search.live');
 
     // Users
-    Route::get('/users',                       [AdminUserController::class, 'index'])->name('users.index');
-    Route::get('/users/create',                [AdminUserController::class, 'create'])->name('users.create');
-    Route::post('/users',                      [AdminUserController::class, 'store'])->name('users.store');
-    Route::get('/users/{user}',                [AdminUserController::class, 'show'])->name('users.show');
-    Route::get('/users/{user}/edit',           [AdminUserController::class, 'edit'])->name('users.edit');
-    Route::patch('/users/{user}',              [AdminUserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}',             [AdminUserController::class, 'destroy'])->name('users.destroy');
-    Route::post('/users/{user}/adjust-wallet',   [AdminUserController::class, 'adjustWallet'])->name('users.adjust-wallet');
-    Route::post('/users/{user}/impersonate',     [AdminUserController::class, 'impersonate'])->name('users.impersonate');
-    Route::post('/users/{user}/revoke-sessions', [AdminUserController::class, 'revokeSessions'])->name('users.revoke-sessions');
-    Route::post('/users/{user}/generate-dva',                     [AdminUserController::class, 'generateDva'])->name('users.generate-dva');
-    Route::post('/users/{user}/assign-dva',                       [AdminUserController::class, 'assignVirtualAccount'])->name('users.assign-dva');
-    Route::delete('/users/{user}/virtual-accounts/{virtualAccount}', [AdminUserController::class, 'destroyVirtualAccount'])->name('users.virtual-accounts.destroy');
+    Route::get('/users',                       [AdminUserController::class, 'index'])->name('users.index')->middleware('permission:users.read');
+    Route::get('/users/create',                [AdminUserController::class, 'create'])->name('users.create')->middleware('permission:users.create');
+    Route::post('/users',                      [AdminUserController::class, 'store'])->name('users.store')->middleware('permission:users.create');
+    Route::get('/users/{user}',                [AdminUserController::class, 'show'])->name('users.show')->middleware('permission:users.read');
+    Route::get('/users/{user}/edit',           [AdminUserController::class, 'edit'])->name('users.edit')->middleware('permission:users.update');
+    Route::patch('/users/{user}',              [AdminUserController::class, 'update'])->name('users.update')->middleware('permission:users.update');
+    Route::delete('/users/{user}',             [AdminUserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users.delete');
+    Route::post('/users/{user}/adjust-wallet',   [AdminUserController::class, 'adjustWallet'])->name('users.adjust-wallet')->middleware('permission:users.wallet_adjust');
+    Route::post('/users/{user}/impersonate',     [AdminUserController::class, 'impersonate'])->name('users.impersonate')->middleware('permission:users.impersonate');
+    Route::post('/users/{user}/revoke-sessions', [AdminUserController::class, 'revokeSessions'])->name('users.revoke-sessions')->middleware('permission:users.update');
+    Route::post('/users/{user}/generate-dva',                     [AdminUserController::class, 'generateDva'])->name('users.generate-dva')->middleware('permission:users.update');
+    Route::post('/users/{user}/assign-dva',                       [AdminUserController::class, 'assignVirtualAccount'])->name('users.assign-dva')->middleware('permission:users.update');
+    Route::delete('/users/{user}/virtual-accounts/{virtualAccount}', [AdminUserController::class, 'destroyVirtualAccount'])->name('users.virtual-accounts.destroy')->middleware('permission:users.update');
 
-    // Administrators Management (Super Admin only)
-    Route::middleware('super_admin')->group(function () {
-        Route::get('/admins',                [\App\Http\Controllers\Admin\AdminAdministratorController::class, 'index'])->name('admins.index');
-        Route::get('/admins/create',         [\App\Http\Controllers\Admin\AdminAdministratorController::class, 'create'])->name('admins.create');
-        Route::post('/admins',               [\App\Http\Controllers\Admin\AdminAdministratorController::class, 'store'])->name('admins.store');
-        Route::post('/admins/{user}/demote', [\App\Http\Controllers\Admin\AdminAdministratorController::class, 'demote'])->name('admins.demote');
-    });
+    // Administrators Management
+    Route::get('/admins',                [AdminAdministratorController::class, 'index'])->name('admins.index')->middleware('permission:admins.read');
+    Route::get('/admins/create',         [AdminAdministratorController::class, 'create'])->name('admins.create')->middleware('permission:admins.create');
+    Route::post('/admins',               [AdminAdministratorController::class, 'store'])->name('admins.store')->middleware('permission:admins.create');
+    Route::get('/admins/{user}/edit',    [AdminAdministratorController::class, 'edit'])->name('admins.edit')->middleware('permission:admins.update');
+    Route::patch('/admins/{user}',       [AdminAdministratorController::class, 'update'])->name('admins.update')->middleware('permission:admins.update');
+    Route::post('/admins/{user}/demote', [AdminAdministratorController::class, 'demote'])->name('admins.demote')->middleware('permission:admins.delete');
+
+    // Roles & Permissions Management (RBAC)
+    Route::get('/roles',                 [AdminRoleController::class, 'index'])->name('roles.index')->middleware('permission:roles.read');
+    Route::get('/roles/create',          [AdminRoleController::class, 'create'])->name('roles.create')->middleware('permission:roles.create');
+    Route::post('/roles',                [AdminRoleController::class, 'store'])->name('roles.store')->middleware('permission:roles.create');
+    Route::get('/roles/{role}/edit',     [AdminRoleController::class, 'edit'])->name('roles.edit')->middleware('permission:roles.update');
+    Route::patch('/roles/{role}',        [AdminRoleController::class, 'update'])->name('roles.update')->middleware('permission:roles.update');
+    Route::delete('/roles/{role}',       [AdminRoleController::class, 'destroy'])->name('roles.destroy')->middleware('permission:roles.delete');
 
     // Transactions
-    Route::get('/transactions',                 [AdminTransactionController::class, 'index'])->name('transactions.index');
-    Route::get('/transactions/ref/{reference}', [AdminTransactionController::class, 'viewByReference'])->name('transactions.by-reference');
-    Route::get('/transactions/{type}/{id}',     [AdminTransactionController::class, 'show'])->name('transactions.show');
+    Route::get('/transactions',                 [AdminTransactionController::class, 'index'])->name('transactions.index')->middleware('permission:transactions.read');
+    Route::get('/transactions/ref/{reference}', [AdminTransactionController::class, 'viewByReference'])->name('transactions.by-reference')->middleware('permission:transactions.read');
+    Route::get('/transactions/{type}/{id}',     [AdminTransactionController::class, 'show'])->name('transactions.show')->middleware('permission:transactions.read');
 
     // Reports & Analytics
-    Route::get('/reports',                       [AdminReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/pdf',                   [AdminReportController::class, 'exportPdf'])->name('reports.pdf');
-    Route::get('/reports/print',                 [AdminReportController::class, 'printView'])->name('reports.print');
-    Route::post('/reports/send-email',           [AdminReportController::class, 'sendEmailReport'])->name('reports.send-email');
-    Route::post('/reports/settings',             [AdminReportController::class, 'updateSchedule'])->name('reports.settings');
+    Route::get('/reports',                       [AdminReportController::class, 'index'])->name('reports.index')->middleware('permission:reports.read');
+    Route::get('/reports/pdf',                   [AdminReportController::class, 'exportPdf'])->name('reports.pdf')->middleware('permission:reports.export');
+    Route::get('/reports/print',                 [AdminReportController::class, 'printView'])->name('reports.print')->middleware('permission:reports.export');
+    Route::post('/reports/send-email',           [AdminReportController::class, 'sendEmailReport'])->name('reports.send-email')->middleware('permission:reports.read');
+    Route::post('/reports/settings',             [AdminReportController::class, 'updateSchedule'])->name('reports.settings')->middleware('permission:settings.update');
 
     // Funding Requests
-    Route::get('/funding',             [AdminFundingController::class, 'index'])->name('funding.index');
-    Route::post('/funding/{id}/approve', [AdminFundingController::class, 'approve'])->name('funding.approve');
-    Route::post('/funding/{id}/reject',  [AdminFundingController::class, 'reject'])->name('funding.reject');
+    Route::get('/funding',             [AdminFundingController::class, 'index'])->name('funding.index')->middleware('permission:funding.read');
+    Route::post('/funding/{id}/approve', [AdminFundingController::class, 'approve'])->name('funding.approve')->middleware('permission:funding.update');
+    Route::post('/funding/{id}/reject',  [AdminFundingController::class, 'reject'])->name('funding.reject')->middleware('permission:funding.update');
 
     // Airtime to Cash Requests
-    Route::get('/airtime-to-cash',             [\App\Http\Controllers\Admin\AdminAirtimeToCashController::class, 'index'])->name('airtime-to-cash.index');
-    Route::post('/airtime-to-cash/{id}/approve', [\App\Http\Controllers\Admin\AdminAirtimeToCashController::class, 'approve'])->name('airtime-to-cash.approve');
-    Route::post('/airtime-to-cash/{id}/reject',  [\App\Http\Controllers\Admin\AdminAirtimeToCashController::class, 'reject'])->name('airtime-to-cash.reject');
+    Route::get('/airtime-to-cash',             [\App\Http\Controllers\Admin\AdminAirtimeToCashController::class, 'index'])->name('airtime-to-cash.index')->middleware('permission:airtime_to_cash.read');
+    Route::post('/airtime-to-cash/{id}/approve', [\App\Http\Controllers\Admin\AdminAirtimeToCashController::class, 'approve'])->name('airtime-to-cash.approve')->middleware('permission:airtime_to_cash.update');
+    Route::post('/airtime-to-cash/{id}/reject',  [\App\Http\Controllers\Admin\AdminAirtimeToCashController::class, 'reject'])->name('airtime-to-cash.reject')->middleware('permission:airtime_to_cash.update');
 
     // API Logs & User Logs
-    Route::get('/api-logs',            [AdminApiLogController::class, 'index'])->name('api-logs.index');
-    Route::get('/user-logs',           [\App\Http\Controllers\Admin\AdminUserLogController::class, 'index'])->name('user-logs.index');
+    Route::get('/api-logs',            [AdminApiLogController::class, 'index'])->name('api-logs.index')->middleware('permission:api_logs.read');
+    Route::get('/user-logs',           [\App\Http\Controllers\Admin\AdminUserLogController::class, 'index'])->name('user-logs.index')->middleware('permission:users.read');
 
     // Push Notifications
-    Route::get('/notifications',            [\App\Http\Controllers\Admin\AdminNotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/send',      [\App\Http\Controllers\Admin\AdminNotificationController::class, 'send'])->name('notifications.send');
-    Route::post('/notifications/{id}/resend',[\App\Http\Controllers\Admin\AdminNotificationController::class, 'resend'])->name('notifications.resend');
+    Route::get('/notifications',            [\App\Http\Controllers\Admin\AdminNotificationController::class, 'index'])->name('notifications.index')->middleware('permission:settings.update');
+    Route::post('/notifications/send',      [\App\Http\Controllers\Admin\AdminNotificationController::class, 'send'])->name('notifications.send')->middleware('permission:settings.update');
+    Route::post('/notifications/{id}/resend',[\App\Http\Controllers\Admin\AdminNotificationController::class, 'resend'])->name('notifications.resend')->middleware('permission:settings.update');
 
     // Email Notifications
-    Route::get('/notifications/email',       [\App\Http\Controllers\Admin\AdminNotificationController::class, 'emailIndex'])->name('notifications.email.index');
-    Route::post('/notifications/email/send', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'emailSend'])->name('notifications.email.send');
+    Route::get('/notifications/email',       [\App\Http\Controllers\Admin\AdminNotificationController::class, 'emailIndex'])->name('notifications.email.index')->middleware('permission:settings.update');
+    Route::post('/notifications/email/send', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'emailSend'])->name('notifications.email.send')->middleware('permission:settings.update');
 
     // Settings - redirect legacy index to general
     Route::get('/settings',                        fn() => redirect()->route('admin.settings.general'))->name('settings.index');
 
     // General Settings
-    Route::get('/settings/general',                [AdminSettingsController::class, 'general'])->name('settings.general');
-    Route::post('/settings/general',               [AdminSettingsController::class, 'updateGeneral'])->name('settings.general.update');
+    Route::get('/settings/general',                [AdminSettingsController::class, 'general'])->name('settings.general')->middleware('permission:settings.read');
+    Route::post('/settings/general',               [AdminSettingsController::class, 'updateGeneral'])->name('settings.general.update')->middleware('permission:settings.update');
 
     // Email Settings
-    Route::get('/settings/email',                  [AdminSettingsController::class, 'email'])->name('settings.email');
-    Route::post('/settings/email',                 [AdminSettingsController::class, 'updateEmail'])->name('settings.email.update');
-    Route::post('/settings/email/test',            [AdminSettingsController::class, 'sendTestEmail'])->name('settings.email.test');
+    Route::get('/settings/email',                  [AdminSettingsController::class, 'email'])->name('settings.email')->middleware('permission:settings.read');
+    Route::post('/settings/email',                 [AdminSettingsController::class, 'updateEmail'])->name('settings.email.update')->middleware('permission:settings.update');
+    Route::post('/settings/email/test',            [AdminSettingsController::class, 'sendTestEmail'])->name('settings.email.test')->middleware('permission:settings.update');
 
     // API Keys Settings
-    Route::get('/settings/api-keys',               [AdminSettingsController::class, 'apiKeys'])->name('settings.api-keys');
-    Route::post('/settings/api-keys',              [AdminSettingsController::class, 'updateApiKeys'])->name('settings.api-keys.update');
+    Route::get('/settings/api-keys',               [AdminSettingsController::class, 'apiKeys'])->name('settings.api-keys')->middleware('permission:settings.api_keys');
+    Route::post('/settings/api-keys',              [AdminSettingsController::class, 'updateApiKeys'])->name('settings.api-keys.update')->middleware('permission:settings.api_keys');
 
     // API Settings
-    Route::get('/settings/api',                    [AdminSettingsController::class, 'api'])->name('settings.api');
-    Route::post('/settings/api',                   [AdminSettingsController::class, 'updateApi'])->name('settings.api.update');
+    Route::get('/settings/api',                    [AdminSettingsController::class, 'api'])->name('settings.api')->middleware('permission:settings.read');
+    Route::post('/settings/api',                   [AdminSettingsController::class, 'updateApi'])->name('settings.api.update')->middleware('permission:settings.update');
 
     // Account Settings (bank accounts CRUD)
-    Route::get('/settings/accounts',               [AdminSettingsController::class, 'accounts'])->name('settings.accounts');
-    Route::post('/settings/accounts',              [AdminSettingsController::class, 'storeAccount'])->name('settings.accounts.store');
-    Route::patch('/settings/accounts/{id}',        [AdminSettingsController::class, 'updateAccount'])->name('settings.accounts.update');
-    Route::delete('/settings/accounts/{id}',       [AdminSettingsController::class, 'destroyAccount'])->name('settings.accounts.destroy');
+    Route::get('/settings/accounts',               [AdminSettingsController::class, 'accounts'])->name('settings.accounts')->middleware('permission:settings.read');
+    Route::post('/settings/accounts',              [AdminSettingsController::class, 'storeAccount'])->name('settings.accounts.store')->middleware('permission:settings.update');
+    Route::patch('/settings/accounts/{id}',        [AdminSettingsController::class, 'updateAccount'])->name('settings.accounts.update')->middleware('permission:settings.update');
+    Route::delete('/settings/accounts/{id}',       [AdminSettingsController::class, 'destroyAccount'])->name('settings.accounts.destroy')->middleware('permission:settings.update');
 
     // Cable Plan Settings
-    Route::get('/settings/cable-plans',            [AdminSettingsController::class, 'cablePlans'])->name('settings.cable-plans');
-    Route::post('/settings/cable-plans',           [AdminSettingsController::class, 'storeCablePlan'])->name('settings.cable-plans.store');
-    Route::patch('/settings/cable-plans/{id}',     [AdminSettingsController::class, 'updateCablePlan'])->name('settings.cable-plans.update');
-    Route::delete('/settings/cable-plans/{id}',    [AdminSettingsController::class, 'destroyCablePlan'])->name('settings.cable-plans.destroy');
+    Route::get('/settings/cable-plans',            [AdminSettingsController::class, 'cablePlans'])->name('settings.cable-plans')->middleware('permission:settings.read');
+    Route::post('/settings/cable-plans',           [AdminSettingsController::class, 'storeCablePlan'])->name('settings.cable-plans.store')->middleware('permission:settings.update');
+    Route::patch('/settings/cable-plans/{id}',     [AdminSettingsController::class, 'updateCablePlan'])->name('settings.cable-plans.update')->middleware('permission:settings.update');
+    Route::delete('/settings/cable-plans/{id}',    [AdminSettingsController::class, 'destroyCablePlan'])->name('settings.cable-plans.destroy')->middleware('permission:settings.update');
 
     // Data Plan Settings
-    Route::get('/settings/data-plans/{network?}',  [AdminSettingsController::class, 'dataPlans'])->name('settings.data-plans');
-    Route::post('/settings/data-plans',            [AdminSettingsController::class, 'storeDataPlan'])->name('settings.data-plans.store');
-    Route::patch('/settings/data-plans/{id}',      [AdminSettingsController::class, 'updateDataPlan'])->name('settings.data-plans.update');
-    Route::delete('/settings/data-plans/{id}',     [AdminSettingsController::class, 'destroyDataPlan'])->name('settings.data-plans.destroy');
+    Route::get('/settings/data-plans/{network?}',  [AdminSettingsController::class, 'dataPlans'])->name('settings.data-plans')->middleware('permission:settings.read');
+    Route::post('/settings/data-plans',            [AdminSettingsController::class, 'storeDataPlan'])->name('settings.data-plans.store')->middleware('permission:settings.update');
+    Route::patch('/settings/data-plans/{id}',      [AdminSettingsController::class, 'updateDataPlan'])->name('settings.data-plans.update')->middleware('permission:settings.update');
+    Route::delete('/settings/data-plans/{id}',     [AdminSettingsController::class, 'destroyDataPlan'])->name('settings.data-plans.destroy')->middleware('permission:settings.update');
 
     // Onboarding Slides Settings
-    Route::get('/settings/onboarding',             [AdminSettingsController::class, 'onboardingSlides'])->name('settings.onboarding');
-    Route::post('/settings/onboarding',            [AdminSettingsController::class, 'storeOnboardingSlide'])->name('settings.onboarding.store');
-    Route::patch('/settings/onboarding/{id}',      [AdminSettingsController::class, 'updateOnboardingSlide'])->name('settings.onboarding.update');
-    Route::delete('/settings/onboarding/{id}',     [AdminSettingsController::class, 'destroyOnboardingSlide'])->name('settings.onboarding.destroy');
+    Route::get('/settings/onboarding',             [AdminSettingsController::class, 'onboardingSlides'])->name('settings.onboarding')->middleware('permission:settings.read');
+    Route::post('/settings/onboarding',            [AdminSettingsController::class, 'storeOnboardingSlide'])->name('settings.onboarding.store')->middleware('permission:settings.update');
+    Route::patch('/settings/onboarding/{id}',      [AdminSettingsController::class, 'updateOnboardingSlide'])->name('settings.onboarding.update')->middleware('permission:settings.update');
+    Route::delete('/settings/onboarding/{id}',     [AdminSettingsController::class, 'destroyOnboardingSlide'])->name('settings.onboarding.destroy')->middleware('permission:settings.update');
 
     // Coupons
-    Route::get('/coupons',             [AdminCouponController::class, 'index'])->name('coupons.index');
-    Route::post('/coupons',            [AdminCouponController::class, 'store'])->name('coupons.store');
-    Route::patch('/coupons/{coupon}',  [AdminCouponController::class, 'update'])->name('coupons.update');
-    Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
+    Route::get('/coupons',             [AdminCouponController::class, 'index'])->name('coupons.index')->middleware('permission:coupons.read');
+    Route::post('/coupons',            [AdminCouponController::class, 'store'])->name('coupons.store')->middleware('permission:coupons.create');
+    Route::patch('/coupons/{coupon}',  [AdminCouponController::class, 'update'])->name('coupons.update')->middleware('permission:coupons.update');
+    Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy')->middleware('permission:coupons.delete');
 
-    // Server Monitoring
-    Route::get('/monitoring',          [\App\Http\Controllers\Admin\AdminMonitoringController::class, 'index'])->name('monitoring');
-    Route::get('/monitoring/data',     [\App\Http\Controllers\Admin\AdminMonitoringController::class, 'data'])->name('monitoring.data');
+    // Server Monitoring (Super Admin only)
+    Route::middleware('super_admin')->group(function () {
+        Route::get('/monitoring',          [\App\Http\Controllers\Admin\AdminMonitoringController::class, 'index'])->name('monitoring');
+        Route::get('/monitoring/data',     [\App\Http\Controllers\Admin\AdminMonitoringController::class, 'data'])->name('monitoring.data');
+    });
 });
 
 

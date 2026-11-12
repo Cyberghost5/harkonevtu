@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'username', 'email', 'phone', 'password', 'google_id', 'user_type', 'role', 'is_admin', 'is_super_admin', 'is_active', 'referral_code', 'referred_by', 'transaction_pin', 'low_balance_notification', 'kyc_status', 'avatar', 'bank_name', 'bank_account_number', 'bank_account_name', 'fcm_device_token', 'device_type'])]
+#[Fillable(['name', 'username', 'email', 'phone', 'password', 'google_id', 'user_type', 'role', 'role_id', 'is_admin', 'is_super_admin', 'is_active', 'referral_code', 'referred_by', 'transaction_pin', 'low_balance_notification', 'kyc_status', 'avatar', 'bank_name', 'bank_account_number', 'bank_account_name', 'fcm_device_token', 'device_type'])]
 #[Hidden(['password', 'remember_token', 'transaction_pin'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -44,6 +44,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     // ─── Relationships ────────────────────────────────────────────────────────
+
+    public function assignedRole(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
 
     public function wallet(): HasOne
     {
@@ -144,6 +149,9 @@ class User extends Authenticatable implements MustVerifyEmail
         if ($this->isSuperAdmin()) {
             return 'Super Admin';
         }
+        if ($this->assignedRole) {
+            return $this->assignedRole->name;
+        }
         if ($this->isStaffAdmin()) {
             return 'Admin';
         }
@@ -151,6 +159,59 @@ class User extends Authenticatable implements MustVerifyEmail
             return 'Agent';
         }
         return 'User';
+    }
+
+    /**
+     * Check if user has a specific permission slug.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        // 1. Super Admin has all permissions unconditionally
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        // 2. Non-admins have no admin permissions
+        if (!$this->isAdmin()) {
+            return false;
+        }
+
+        // 3. Check assigned role permissions
+        $role = $this->assignedRole;
+        if (!$role && $this->role_id) {
+            $role = Role::with('permissions')->find($this->role_id);
+        }
+
+        if ($role) {
+            return $role->hasPermission($permission);
+        }
+
+        // 4. Fallback for staff admins without a role assigned yet
+        return !in_array($permission, ['roles.delete', 'admins.delete', 'settings.api-keys']);
+    }
+
+    /**
+     * Check if user can perform a specific CRUD action on a module.
+     * e.g. canAccess('users', 'create') or canAccess('funding', 'update')
+     */
+    public function canAccess(string $module, string $action = 'read'): bool
+    {
+        return $this->hasPermission(strtolower($module) . '.' . strtolower($action));
+    }
+
+    /**
+     * Check if user has an assigned role by slug or name.
+     */
+    public function hasRole(string|array $roles): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        $roles = (array) $roles;
+        $currentRoleSlug = $this->assignedRole?->slug ?? $this->role;
+
+        return in_array($currentRoleSlug, $roles);
     }
 
     public function isActive(): bool

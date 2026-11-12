@@ -182,12 +182,14 @@
                     </div>
                 </div>
             </form>
+            @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('users.impersonate'))
             <form method="POST" action="{{ route('admin.users.impersonate', $user) }}" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                 @csrf
                 <button type="submit" class="w-full inline-flex justify-center items-center py-2 text-xs font-semibold bg-vtu-primary text-white rounded-xl transition-colors">
                     Impersonate User
                 </button>
             </form>
+            @endif
 
             {{-- Revoke All Sessions --}}
             <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
@@ -216,7 +218,7 @@
         </div>
 
         {{-- Wallet Adjustment --}}
-        @if($user->wallet)
+        @if($user->wallet && (auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('users.wallet_adjust')))
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Adjust Wallet</p>
             <form method="POST" action="{{ route('admin.users.adjust-wallet', $user) }}" class="space-y-3">
