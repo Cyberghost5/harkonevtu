@@ -3,17 +3,43 @@ name: Deploy VTU App
 on:
   push:
     branches:
-      - main # Triggers when you push to the main branch
+      - main
 
 jobs:
   deploy:
+    name: Deploy to Server
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Server 1
-        uses: appleboy/ssh-action@master
+      - name: Execute Remote SSH Commands
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SERVER_PORT || '22' }}
+          script_stop: true
           script: |
-            ./deploy.sh
+            echo "🚀 Navigating to project directory..."
+            cd ${{ secrets.SERVER_PATH || 'public_html' }}
+
+            echo "📦 Pulling latest changes from main branch..."
+            git pull origin main
+
+            echo "⚙️ Installing Composer dependencies if available..."
+            if command -v composer &> /dev/null; then
+              composer install --no-dev --optimize-autoloader --no-interaction
+            fi
+
+            echo "🗄️ Running database migrations & seeds..."
+            php artisan migrate --force
+            php artisan db:seed --class=RoleAndPermissionSeeder --force
+
+            echo "🧹 Clearing and rebuilding application cache..."
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            echo "✅ Deployment completed successfully!"
