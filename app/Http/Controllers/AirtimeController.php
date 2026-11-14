@@ -115,8 +115,25 @@ class AirtimeController extends Controller
         }
 
         // ── 4. Call active API ───────────────────────────────────────────────
+        $api = AppSetting::get('airtime_net_' . $networkKey);
+        if (empty($api) || in_array($api, ['Enable', 'Disable'])) {
+            $api = AppSetting::get('airtime_api', 'vtpass');
+        }
+
+        if ($api === 'mtn_ers' && $networkKey !== 'mtn') {
+            $api = 'vtpass';
+        }
+
+        if ($api === 'glo_ers' && $networkKey !== 'glo') {
+            $api = 'vtpass';
+        }
+
+        if ($api === 'nine_mobile_evc' && $networkKey !== 'etisalat') {
+            $api = 'vtpass';
+        }
+
         ['success' => $apiSuccess, 'reference' => $apiRef, 'response' => $apiResponse]
-            = $this->callAirtimeApi($network, $amount, $phone, $reference);
+            = $this->callAirtimeApi($network, $amount, $phone, $reference, $api);
 
         // ── 5. Refund on failure - do NOT record failed transactions ─────────
         if (!$apiSuccess) {
@@ -138,7 +155,6 @@ class AirtimeController extends Controller
                 ]);
             }
 
-            $api = AppSetting::get('airtime_api', 'vtpass');
             $rawMsg = $apiResponse['message'] ?? 'Airtime delivery failed.';
             $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
                 'service'   => 'Airtime (' . $network->name . ')',
@@ -157,8 +173,6 @@ class AirtimeController extends Controller
         }
 
         // ── 6. Record successful transaction only ────────────────────────────
-        $api = AppSetting::get('airtime_api', 'vtpass');
-
         ServiceTransaction::create([
             'user_id'               => $user->id,
             'wallet_transaction_id' => $walletTx->id,
@@ -214,28 +228,30 @@ class AirtimeController extends Controller
 
     // ─── API Dispatcher ───────────────────────────────────────────────────────
 
-    private function callAirtimeApi(NetworkAirtime $network, float $amount, string $phone, string $reference): array
+    private function callAirtimeApi(NetworkAirtime $network, float $amount, string $phone, string $reference, ?string $api = null): array
     {
         $networkKey = $network->network_key;
         
-        $api = AppSetting::get('airtime_net_' . $networkKey);
-        if (empty($api) || in_array($api, ['Enable', 'Disable'])) {
-            $api = AppSetting::get('airtime_api', 'vtpass');
-        }
+        if (empty($api)) {
+            $api = AppSetting::get('airtime_net_' . $networkKey);
+            if (empty($api) || in_array($api, ['Enable', 'Disable'])) {
+                $api = AppSetting::get('airtime_api', 'vtpass');
+            }
 
-        // mtn_ers is MTN-specific. Fallback to vtpass for other networks.
-        if ($api === 'mtn_ers' && $networkKey !== 'mtn') {
-            $api = 'vtpass';
-        }
+            // mtn_ers is MTN-specific. Fallback to vtpass for other networks.
+            if ($api === 'mtn_ers' && $networkKey !== 'mtn') {
+                $api = 'vtpass';
+            }
 
-        // glo_ers is Glo-specific. Fallback to vtpass for other networks.
-        if ($api === 'glo_ers' && $networkKey !== 'glo') {
-            $api = 'vtpass';
-        }
+            // glo_ers is Glo-specific. Fallback to vtpass for other networks.
+            if ($api === 'glo_ers' && $networkKey !== 'glo') {
+                $api = 'vtpass';
+            }
 
-        // nine_mobile_evc is 9mobile-specific. Fallback to vtpass for other networks.
-        if ($api === 'nine_mobile_evc' && $networkKey !== 'etisalat') {
-            $api = 'vtpass';
+            // nine_mobile_evc is 9mobile-specific. Fallback to vtpass for other networks.
+            if ($api === 'nine_mobile_evc' && $networkKey !== 'etisalat') {
+                $api = 'vtpass';
+            }
         }
 
         return match ($api) {

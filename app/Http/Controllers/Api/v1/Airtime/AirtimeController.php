@@ -200,8 +200,25 @@ class AirtimeController extends Controller
         }
 
         // 5. Dispatch API call to configured VTU gateway
+        $api = AppSetting::get('airtime_net_' . $networkKey);
+        if (empty($api) || in_array($api, ['Enable', 'Disable'])) {
+            $api = AppSetting::get('airtime_api', 'vtpass');
+        }
+
+        if ($api === 'mtn_ers' && $networkKey !== 'mtn') {
+            $api = 'vtpass';
+        }
+
+        if ($api === 'glo_ers' && $networkKey !== 'glo') {
+            $api = 'vtpass';
+        }
+
+        if ($api === 'nine_mobile_evc' && $networkKey !== 'etisalat') {
+            $api = 'vtpass';
+        }
+
         ['success' => $apiSuccess, 'reference' => $apiRef, 'response' => $apiResponse]
-            = $this->callAirtimeGateway($network, $faceAmount, $phone, $reference);
+            = $this->callAirtimeGateway($network, $faceAmount, $phone, $reference, $api);
 
         // 6. Handle refund on VTU failure
         if (!$apiSuccess) {
@@ -223,7 +240,6 @@ class AirtimeController extends Controller
                 ]);
             }
 
-            $api = AppSetting::get('airtime_api', 'vtpass');
             $rawMsg = $apiResponse['message'] ?? 'Airtime delivery failed.';
             $friendlyMsg = ProviderAlertService::processFailure($rawMsg, [
                 'service'   => 'Airtime (' . $network->name . ')',
@@ -242,8 +258,6 @@ class AirtimeController extends Controller
         }
 
         // 7. Record transaction log on clean success
-        $api = AppSetting::get('airtime_api', 'vtpass');
-
         ServiceTransaction::create([
             'user_id'               => $user->id,
             'wallet_transaction_id' => $walletTx->id,
@@ -297,25 +311,27 @@ class AirtimeController extends Controller
     /**
      * Dispatch VTU airtime call to active gateway provider.
      */
-    private function callAirtimeGateway(NetworkAirtime $network, float $amount, string $phone, string $reference): array
+    private function callAirtimeGateway(NetworkAirtime $network, float $amount, string $phone, string $reference, ?string $api = null): array
     {
         $networkKey = $network->network_key;
         
-        $api = AppSetting::get('airtime_net_' . $networkKey);
-        if (empty($api) || in_array($api, ['Enable', 'Disable'])) {
-            $api = AppSetting::get('airtime_api', 'vtpass');
-        }
+        if (empty($api)) {
+            $api = AppSetting::get('airtime_net_' . $networkKey);
+            if (empty($api) || in_array($api, ['Enable', 'Disable'])) {
+                $api = AppSetting::get('airtime_api', 'vtpass');
+            }
 
-        if ($api === 'mtn_ers' && $networkKey !== 'mtn') {
-            $api = 'vtpass';
-        }
+            if ($api === 'mtn_ers' && $networkKey !== 'mtn') {
+                $api = 'vtpass';
+            }
 
-        if ($api === 'glo_ers' && $networkKey !== 'glo') {
-            $api = 'vtpass';
-        }
+            if ($api === 'glo_ers' && $networkKey !== 'glo') {
+                $api = 'vtpass';
+            }
 
-        if ($api === 'nine_mobile_evc' && $networkKey !== 'etisalat') {
-            $api = 'vtpass';
+            if ($api === 'nine_mobile_evc' && $networkKey !== 'etisalat') {
+                $api = 'vtpass';
+            }
         }
 
         return match ($api) {
@@ -325,11 +341,19 @@ class AirtimeController extends Controller
             'legitdataway'   => $this->callLegitdataway($network, $amount, $phone, $reference),
             'merrybills'     => $this->callMerrybills($network, $amount, $phone, $reference),
             'payscribe'      => $this->callPayscribe($network, $amount, $phone, $reference),
+            'smeplug'        => $this->callSmeplug($network, $amount, $phone, $reference),
             'mtn_ers'        => $this->callMtnErs($network, $amount, $phone, $reference),
             'glo_ers'        => $this->callGloErs($network, $amount, $phone, $reference),
             'nine_mobile_evc'=> $this->callNineMobileEvc($network, $amount, $phone, $reference),
             default          => $this->callVtpass($network, $amount, $phone, $reference),
         };
+    }
+
+    private function callSmeplug(NetworkAirtime $network, float $amount, string $phone, string $reference): array
+    {
+        /** @var \App\Services\SmeplugService $service */
+        $service = app(\App\Services\SmeplugService::class);
+        return $service->purchaseAirtime($network->network_key, $amount, $phone, $reference);
     }
 
     private function callNineMobileEvc(NetworkAirtime $network, float $amount, string $phone, string $reference): array
