@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             PayscribeDataSeeder::class,
             PayscribeCableSeeder::class,
             ClubkonnectDataSeeder::class,
+            SmeplugDataSeeder::class,
             SuperAdminSeeder::class,
             RoleAndPermissionSeeder::class,
         ]);
