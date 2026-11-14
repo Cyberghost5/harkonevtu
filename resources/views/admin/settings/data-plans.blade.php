@@ -85,6 +85,7 @@
                     <th class="px-4 py-3 text-left">Clubkonnect ID</th>
                     <th class="px-4 py-3 text-left">EasyAccess ID</th>
                     <th class="px-4 py-3 text-left">Payscribe ID</th>
+                    <th class="px-4 py-3 text-left">SME Plug ID</th>
                     @if($network === 'mtn')
                     <th class="px-4 py-3 text-left">MTN ERS ID</th>
                     @elseif($network === 'glo')
@@ -112,6 +113,7 @@
                     <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->clubkonnect_id ?? '-' }}</td>
                     <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->easyaccess_id ?? '-' }}</td>
                     <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->payscribe_id ?? '-' }}</td>
+                    <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->smeplug_id ?? '-' }}</td>
                     @if($network === 'mtn')
                     <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ $plan->mtn_ers_id ?? '-' }}</td>
                     @elseif($network === 'glo')
@@ -205,7 +207,7 @@
                 <div class="col-span-2 pt-2">
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">API Provider IDs</p>
                     <div class="grid grid-cols-2 gap-3">
-                        @foreach(['vtpass_id'=>'VTPass','clubkonnect_id'=>'Clubkonnect','easyaccess_id'=>'EasyAccess','payscribe_id'=>'Payscribe','aabaxztech_id'=>'Aabaxztech','legitdataway_id'=>'LegitDataway','globacom_id'=>'Globacom','glo_ers_id'=>'Glo ERS (Product SKU)','autopilot_id'=>'AutoPilot','merrybills_product_id'=>'Merrybills Product','merrybills_id'=>'Merrybills ID','mtn_ers_id'=>'MTN ERS (Tariff Type ID)'] as $field => $lbl)
+                        @foreach(['vtpass_id'=>'VTPass','clubkonnect_id'=>'Clubkonnect','easyaccess_id'=>'EasyAccess','payscribe_id'=>'Payscribe','smeplug_id'=>'SME Plug','aabaxztech_id'=>'Aabaxztech','legitdataway_id'=>'LegitDataway','globacom_id'=>'Globacom','glo_ers_id'=>'Glo ERS (Product SKU)','autopilot_id'=>'AutoPilot','merrybills_product_id'=>'Merrybills Product','merrybills_id'=>'Merrybills ID','mtn_ers_id'=>'MTN ERS (Tariff Type ID)'] as $field => $lbl)
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">{{ $lbl }}</label>
                             <input type="text" name="{{ $field }}" placeholder="-"
@@ -285,7 +287,7 @@
                 <div class="col-span-2 pt-2">
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">API Provider IDs</p>
                     <div class="grid grid-cols-2 gap-3">
-                        @foreach(['vtpass_id'=>'VTPass','clubkonnect_id'=>'Clubkonnect','easyaccess_id'=>'EasyAccess','payscribe_id'=>'Payscribe','aabaxztech_id'=>'Aabaxztech','legitdataway_id'=>'LegitDataway','globacom_id'=>'Globacom','glo_ers_id'=>'Glo ERS (Product SKU)','autopilot_id'=>'AutoPilot','merrybills_product_id'=>'Merrybills Product','merrybills_id'=>'Merrybills ID','mtn_ers_id'=>'MTN ERS (Tariff Type ID)'] as $field => $lbl)
+                        @foreach(['vtpass_id'=>'VTPass','clubkonnect_id'=>'Clubkonnect','easyaccess_id'=>'EasyAccess','payscribe_id'=>'Payscribe','smeplug_id'=>'SME Plug','aabaxztech_id'=>'Aabaxztech','legitdataway_id'=>'LegitDataway','globacom_id'=>'Globacom','glo_ers_id'=>'Glo ERS (Product SKU)','autopilot_id'=>'AutoPilot','merrybills_product_id'=>'Merrybills Product','merrybills_id'=>'Merrybills ID','mtn_ers_id'=>'MTN ERS (Tariff Type ID)'] as $field => $lbl)
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">{{ $lbl }}</label>
                             <input type="text" id="edit_{{ $field }}" name="{{ $field }}"
@@ -329,7 +331,7 @@
 
     function openEditModal(plan) {
         const fields = ['plan_name','data_type','validity','amount','amount_agent',
-                        'vtpass_id','clubkonnect_id','easyaccess_id','payscribe_id','aabaxztech_id',
+                        'vtpass_id','clubkonnect_id','easyaccess_id','payscribe_id','smeplug_id','aabaxztech_id',
                         'legitdataway_id','globacom_id','glo_ers_id','autopilot_id',
                         'merrybills_product_id','merrybills_id','mtn_ers_id','sort_order'];
         fields.forEach(f => {

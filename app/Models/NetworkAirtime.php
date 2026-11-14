@@ -11,7 +11,7 @@ class NetworkAirtime extends Model
     protected $fillable = [
         'network_key', 'name', 'vtpass_id',
         'clubkonnect_id', 'autopilot_id', 'merrybills_id',
-        'easyaccess_id', 'aabaxztech_id', 'legitdataway_id', 'globacom_id', 'payscribe_id',
+        'easyaccess_id', 'aabaxztech_id', 'legitdataway_id', 'globacom_id', 'payscribe_id', 'smeplug_id',
         'enabled', 'sort_order',
     ];
 
@@ -42,6 +42,7 @@ class NetworkAirtime extends Model
             'legitdataway' => $this->legitdataway_id ?? $this->network_key,
             'globacom'     => $this->globacom_id     ?? $this->network_key,
             'payscribe'    => $this->payscribe_id    ?? ($this->network_key === 'etisalat' ? '9mobile' : $this->network_key),
+            'smeplug'      => $this->smeplug_id      ?? (string) (\App\Services\SmeplugService::networkIdFromKey($this->network_key) ?? 1),
             default        => $this->vtpass_id,       // vtpass
         };
     }

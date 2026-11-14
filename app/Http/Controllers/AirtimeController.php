@@ -244,6 +244,7 @@ class AirtimeController extends Controller
             'legitdataway'   => $this->callLegitdataway($network, $amount, $phone, $reference),
             'merrybills'     => $this->callMerrybills($network, $amount, $phone, $reference),
             'payscribe'      => $this->callPayscribe($network, $amount, $phone, $reference),
+            'smeplug'        => $this->callSmeplug($network, $amount, $phone, $reference),
             'mtn_ers'        => $this->callMtnErs($network, $amount, $phone, $reference),
             'glo_ers'        => $this->callGloErs($network, $amount, $phone, $reference),
             'nine_mobile_evc'=> $this->callNineMobileEvc($network, $amount, $phone, $reference),
@@ -566,6 +567,15 @@ class AirtimeController extends Controller
         }
 
         return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
+    }
+
+    // ─── SME Plug ──────────────────────────────────────────────────────────────
+
+    private function callSmeplug(NetworkAirtime $network, float $amount, string $phone, string $reference): array
+    {
+        /** @var \App\Services\SmeplugService $service */
+        $service = app(\App\Services\SmeplugService::class);
+        return $service->purchaseAirtime($network->network_key, $amount, $phone, $reference);
     }
 
     // ─── Legitdataway ────────────────────────────────────────────────────────────

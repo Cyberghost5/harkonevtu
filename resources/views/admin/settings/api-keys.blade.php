@@ -230,6 +230,47 @@
                 </div>
             </div>
 
+            {{-- ── SME Plug ─────────────────────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        SME Plug
+                        <span class="text-sm font-normal text-slate-400">from
+                            <a href="https://smeplug.ng" target="_blank" class="text-blue-500 hover:underline">SME Plug</a>
+                        </span>
+                    </h4>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="hidden" name="smeplug_status" value="0">
+                        <input type="checkbox" name="smeplug_status" value="1" {{ ($s['smeplug_status'] ?? '1') === '1' ? 'checked' : '' }}
+                               class="sr-only peer provider-toggle" data-target="section-smeplug">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-vtu-primary"></div>
+                        <span class="ml-2.5 text-xs font-bold status-label uppercase tracking-wider {{ ($s['smeplug_status'] ?? '1') === '1' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500' }}">
+                            {{ ($s['smeplug_status'] ?? '1') === '1' ? 'Enabled' : 'Disabled' }}
+                        </span>
+                    </label>
+                </div>
+                <div id="section-smeplug" class="provider-content transition-all duration-300 {{ ($s['smeplug_status'] ?? '1') === '1' ? '' : 'hidden' }}">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-500 mb-1">
+                                Private Key (API Bearer Token)
+                            </label>
+                            <input type="password" name="smeplug_private_key" value="{{ $s['smeplug_private_key'] ?? '' }}"
+                                   placeholder="Enter SME Plug Private Key"
+                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                            <p class="text-[11px] text-slate-400 mt-1">Bearer token obtained from your SME Plug account dashboard for airtime and data purchases.</p>
+                        </div>
+                        <div class="sm:col-span-2 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/70 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Webhook URL:</span>
+                                <code class="ml-1 text-xs text-blue-600 dark:text-blue-400 font-mono select-all">{{ url('/webhook/smeplug') }}</code>
+                            </div>
+                            <span class="text-[11px] text-slate-400">Configure this URL on SME Plug to receive instant status updates</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- ── VTU API: VTPass ──────────────────────────────────────── --}}
             <div class="px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">

@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/docs', [\App\Http\Controllers\ApiDocController::class, 'index']);
 
+// Provider Webhook fallback on api prefix (/api/webhook/smeplug)
+Route::post('/webhook/smeplug', [\App\Http\Controllers\WalletFundingController::class, 'smeplugWebhook']);
+
 Route::prefix('v1')->group(function () {
 
     // ── Authentication Endpoints (Milestone 1) ───────────────────────────────

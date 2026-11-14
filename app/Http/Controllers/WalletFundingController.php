@@ -1669,6 +1669,16 @@ class WalletFundingController extends Controller implements HasMiddleware
         return response()->json(['status' => 'ok', 'message' => 'VTpass webhook processed.']);
     }
 
+    public function smeplugWebhook(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $payload = $request->all();
+        /** @var \App\Services\SmeplugService $service */
+        $service = app(\App\Services\SmeplugService::class);
+        $result = $service->handleWebhook($payload);
+
+        return response()->json($result);
+    }
+
     // ─── Manual Funding ───────────────────────────────────────────────────────
 
     public function submitManual(Request $request): RedirectResponse

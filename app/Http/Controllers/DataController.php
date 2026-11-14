@@ -327,6 +327,7 @@ class DataController extends Controller
             'mtn_ers'      => $this->callMtnErsData($network, $plan, $phone, $reference),
             'glo_ers'      => $this->callGloErsData($network, $plan, $phone, $reference),
             'payscribe'    => $this->callPayscribeData($network, $plan, $phone, $reference),
+            'smeplug'      => $this->callSmeplugData($network, $plan, $phone, $reference),
             default        => $this->callVtpassData($network, $plan, $phone, $reference),
         };
     }
@@ -990,5 +991,23 @@ class DataController extends Controller
         }
 
         return ['success' => $success, 'reference' => $apiRef, 'response' => $data];
+    }
+
+    // ─── SME Plug ──────────────────────────────────────────────────────────────
+
+    private function callSmeplugData(NetworkAirtime $network, DataPlan $plan, string $phone, string $reference): array
+    {
+        $planCode = $plan->idForApi('smeplug');
+        if (!$planCode) {
+            return [
+                'success'   => false,
+                'reference' => $reference,
+                'response'  => ['message' => 'SME Plug Plan ID is not configured for this data plan.'],
+            ];
+        }
+
+        /** @var \App\Services\SmeplugService $service */
+        $service = app(\App\Services\SmeplugService::class);
+        return $service->purchaseData($network->network_key, $planCode, $phone, $reference);
     }
 }

@@ -107,6 +107,7 @@ class AdminSettingsController extends Controller
             'paystack_public_key','paystack_secret_key','paystack_status',
             'monnify_api_key','monnify_secret_key','monnify_contract_no','monnify_mode','monnify_status',
             'payscribe_secret_key','payscribe_public_key','payscribe_status',
+            'smeplug_private_key','smeplug_status',
             'tx_charge_m2m','tx_charge_m2m_type','tx_charge_bank','tx_charge_bank_type','active_gateway',
             'vtpass_username','vtpass_password','vtpass_api_key','vtpass_public_key','vtpass_secret_key','vtpass_base_url','vtpass_status',
             'primebiller_api_key','primebiller_status',
@@ -136,7 +137,7 @@ class AdminSettingsController extends Controller
         $s = AppSetting::getMany($keys);
         
         $statusKeys = [
-            'flutterwave_status','paystack_status','monnify_status','payscribe_status','vtpass_status',
+            'flutterwave_status','paystack_status','monnify_status','payscribe_status','smeplug_status','vtpass_status',
             'primebiller_status','aabaxztech_status','autopilot_status','easyaccess_status','legitdataway_status',
             'merrybills_status','clubkonnect_status','globacom_status','termii_status','bulksms_status',
             'onesignal_status','qoreid_status','mtn_ers_status','glo_ers_status','nine_mobile_evc_status','google_auth_status',
@@ -153,7 +154,7 @@ class AdminSettingsController extends Controller
 
     public function updateApiKeys(Request $request)
     {
-        $passwordFields = ['vtpass_password','aabaxztech_password','legitdataway_password','merrybills_password', 'mtn_ers_pin', 'glo_ers_password', 'nine_mobile_evc_password', 'nine_mobile_evc_key', 'nine_mobile_evc_token', 'google_client_secret', 'payscribe_secret_key'];
+        $passwordFields = ['vtpass_password','aabaxztech_password','legitdataway_password','merrybills_password', 'mtn_ers_pin', 'glo_ers_password', 'nine_mobile_evc_password', 'nine_mobile_evc_key', 'nine_mobile_evc_token', 'google_client_secret', 'payscribe_secret_key', 'smeplug_private_key'];
         $data = $request->except(['_token','_method']);
         foreach ($data as $key => $value) {
             if (in_array($key, $passwordFields) && $value === '') {
@@ -231,6 +232,7 @@ class AdminSettingsController extends Controller
             'aabaxztech'      => ['cred' => 'aabaxztech_api_key',  'status' => 'aabaxztech_status'],
             'legitdataway'    => ['cred' => 'legitdataway_api_key','status' => 'legitdataway_status'],
             'globacom'        => ['cred' => 'globacom_xapi_key',   'status' => 'globacom_status'],
+            'smeplug'         => ['cred' => 'smeplug_private_key', 'status' => 'smeplug_status'],
             'mtn_ers'         => ['cred' => 'mtn_ers_username',    'status' => 'mtn_ers_status'],
             'glo_ers'         => ['cred' => 'glo_ers_username',    'status' => 'glo_ers_status'],
             'nine_mobile_evc' => ['cred' => 'nine_mobile_evc_username', 'status' => 'nine_mobile_evc_status'],
@@ -249,6 +251,7 @@ class AdminSettingsController extends Controller
                 || !empty(config("services.{$name}.secret_key"))
                 || !empty(config("services.{$name}.api_key"))
                 || !empty(config("services.{$name}.public_key"))
+                || !empty(config("services.{$name}.private_key"))
                 || !empty(config("services.{$name}.token"));
             $isEnabled = ($credValues[$cfg['status']] ?? '1') !== '0';
             if ($hasCred && $isEnabled) {
@@ -258,10 +261,10 @@ class AdminSettingsController extends Controller
 
         // Per-service integrated API lists — only show APIs that are actually
         // coded into each service controller AND have credentials configured.
-        $airtimeIntegrated   = ['vtpass', 'clubkonnect', 'autopilot', 'legitdataway', 'merrybills', 'payscribe', 'mtn_ers', 'glo_ers', 'nine_mobile_evc'];
+        $airtimeIntegrated   = ['vtpass', 'clubkonnect', 'autopilot', 'legitdataway', 'merrybills', 'payscribe', 'smeplug', 'mtn_ers', 'glo_ers', 'nine_mobile_evc'];
         $airtimeProviders    = array_values(array_intersect($availableProviders, $airtimeIntegrated));
 
-        $dataIntegrated      = ['vtpass', 'clubkonnect', 'autopilot', 'merrybills', 'easyaccess', 'aabaxztech', 'legitdataway', 'globacom', 'mtn_ers', 'glo_ers', 'payscribe'];
+        $dataIntegrated      = ['vtpass', 'clubkonnect', 'autopilot', 'merrybills', 'easyaccess', 'aabaxztech', 'legitdataway', 'globacom', 'mtn_ers', 'glo_ers', 'payscribe', 'smeplug'];
         $dataProviders       = array_values(array_intersect($availableProviders, $dataIntegrated));
 
         $electricityIntegrated = ['vtpass', 'easyaccess', 'payscribe'];
@@ -448,6 +451,7 @@ class AdminSettingsController extends Controller
             'merrybills_id'         => 'nullable|string|max:100',
             'mtn_ers_id'            => 'nullable|string|max:100',
             'payscribe_id'          => 'nullable|string|max:100',
+            'smeplug_id'            => 'nullable|string|max:100',
             'amount'                => 'required|numeric|min:0',
             'amount_agent'          => 'nullable|numeric|min:0',
             'sort_order'            => 'nullable|integer|min:0',
@@ -457,7 +461,7 @@ class AdminSettingsController extends Controller
                 'network_key','data_type','plan_name','validity',
                 'vtpass_id','clubkonnect_id','easyaccess_id','aabaxztech_id',
                 'legitdataway_id','globacom_id','glo_ers_id','autopilot_id',
-                'merrybills_product_id','merrybills_id','mtn_ers_id','payscribe_id',
+                'merrybills_product_id','merrybills_id','mtn_ers_id','payscribe_id','smeplug_id',
                 'amount','amount_agent','sort_order',
             ]),
             ['enabled' => $request->boolean('enabled', true)]
@@ -473,7 +477,7 @@ class AdminSettingsController extends Controller
                 'network_key','data_type','plan_name','validity',
                 'vtpass_id','clubkonnect_id','easyaccess_id','aabaxztech_id',
                 'legitdataway_id','globacom_id','glo_ers_id','autopilot_id',
-                'merrybills_product_id','merrybills_id','mtn_ers_id','payscribe_id',
+                'merrybills_product_id','merrybills_id','mtn_ers_id','payscribe_id','smeplug_id',
                 'amount','amount_agent','sort_order',
             ]),
             ['enabled' => $request->boolean('enabled', false)]

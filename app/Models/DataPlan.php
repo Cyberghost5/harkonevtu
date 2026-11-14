@@ -24,6 +24,7 @@ class DataPlan extends Model
         'mtn_ers_id',
         'mtn_ers_cis_id',
         'payscribe_id',
+        'smeplug_id',
         'amount',
         'amount_agent',
         'enabled',
@@ -70,6 +71,7 @@ class DataPlan extends Model
             'glo_ers'      => $query->whereNotNull('glo_ers_id'),
             'mtn_ers'      => $query->whereNotNull('mtn_ers_id'),
             'payscribe'    => $query->whereNotNull('payscribe_id'),
+            'smeplug'      => $query->whereNotNull('smeplug_id'),
             default        => $query->whereNotNull('vtpass_id'),   // vtpass
         };
     }
@@ -101,6 +103,7 @@ class DataPlan extends Model
             'glo_ers'      => $this->glo_ers_id,
             'mtn_ers'      => $this->mtn_ers_id,
             'payscribe'    => $this->payscribe_id,
+            'smeplug'      => $this->smeplug_id,
             default        => $this->vtpass_id,
         };
     }

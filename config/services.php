@@ -98,6 +98,11 @@ return [
         'base_url'   => env('PAYSCRIBE_BASE_URL', 'https://api.payscribe.ng/api/v1'),
     ],
 
+    'smeplug' => [
+        'private_key' => env('SMEPLUG_PRIVATE_KEY'),
+        'base_url'    => env('SMEPLUG_BASE_URL', 'https://smeplug.ng/api/v1'),
+    ],
+
     'primebiller' => [
         'token'    => env('PRIMEBILLER_TOKEN'),
         'base_url' => env('PRIMEBILLER_BASE_URL', 'https://primebiller.com/api/v1'),

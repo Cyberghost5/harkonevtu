@@ -237,6 +237,7 @@ Route::withoutMiddleware(['web'])->group(function () {
     Route::post('/webhook/monnify',     [WalletFundingController::class, 'monnifyWebhook'])->name('webhook.monnify');
     Route::post('/webhook/payscribe',   [WalletFundingController::class, 'payscribeWebhook'])->name('webhook.payscribe');
     Route::post('/webhook/vtpass',      [WalletFundingController::class, 'vtpassWebhook'])->name('webhook.vtpass');
+    Route::post('/webhook/smeplug',     [WalletFundingController::class, 'smeplugWebhook'])->name('webhook.smeplug');
 });
 
 // ── Admin Panel ───────────────────────────────────────────────────────────────
