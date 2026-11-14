@@ -215,7 +215,6 @@
                             <input type="text" name="payscribe_secret_key" value="{{ $s['payscribe_secret_key'] ?? '' }}"
                                    placeholder="ps_live_..."
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            <p class="text-[11px] text-slate-400 mt-1">Used for PayScribe webhook signature verification (starts with <code class="text-xs">ps_live_</code>).</p>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">
@@ -224,7 +223,6 @@
                             <input type="text" name="payscribe_public_key" value="{{ $s['payscribe_public_key'] ?? '' }}"
                                    placeholder="pk_live_..."
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            <p class="text-[11px] text-slate-400 mt-1">Bearer token for PayScribe API transactions &amp; validation (starts with <code class="text-xs">pk_live_</code>).</p>
                         </div>
                     </div>
                 </div>
@@ -258,14 +256,6 @@
                             <input type="password" name="smeplug_private_key" value="{{ $s['smeplug_private_key'] ?? '' }}"
                                    placeholder="Enter SME Plug Private Key"
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            <p class="text-[11px] text-slate-400 mt-1">Bearer token obtained from your SME Plug account dashboard for airtime and data purchases.</p>
-                        </div>
-                        <div class="sm:col-span-2 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/70 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Webhook URL:</span>
-                                <code class="ml-1 text-xs text-blue-600 dark:text-blue-400 font-mono select-all">{{ url('/webhook/smeplug') }}</code>
-                            </div>
-                            <span class="text-[11px] text-slate-400">Configure this URL on SME Plug to receive instant status updates</span>
                         </div>
                     </div>
                 </div>
@@ -922,14 +912,12 @@
                             <input type="text" name="bulksms_amount_per_unit" value="{{ $s['bulksms_amount_per_unit'] ?? '' }}"
                                    placeholder="e.g. 4.00"
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            <span class="text-[11px] text-slate-400">Default rate per SMS unit for standard users (Default: ₦4.00).</span>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">Agent Tier Rate per unit (₦)</label>
                             <input type="text" name="bulksms_agent_rate" value="{{ $s['bulksms_agent_rate'] ?? '' }}"
                                    placeholder="e.g. 3.50"
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                            <span class="text-[11px] text-slate-400">Discounted rate per unit for upgraded Agent accounts.</span>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">Default Gateway / Delivery Route</label>
@@ -948,7 +936,6 @@
                                     Dedicated OTP Route (otp)
                                 </option>
                             </select>
-                            <span class="text-[11px] text-slate-400">Routes transactional alerts & OTPs through NCC-approved corporate channels to bypass promotional route restrictions.</span>
                         </div>
                     </div>
                 </div>
@@ -980,14 +967,12 @@
                             <input type="text" name="onesignal_app_id" value="{{ $s['onesignal_app_id'] ?? '' }}"
                                    placeholder="e.g. 12345678-abcd-1234-abcd-1234567890ab"
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono text-xs">
-                            <p class="mt-1 text-[11px] text-slate-400">Found in OneSignal Dashboard &rarr; Settings &rarr; Keys &amp; IDs &rarr; <strong>OneSignal App ID</strong> (36-character UUID format).</p>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-500 mb-1">REST API Key (App API Key)</label>
                             <input type="text" name="onesignal_api_key" value="{{ $s['onesignal_api_key'] ?? '' }}"
                                    placeholder="os_v2_app_... or REST API Key"
                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 font-mono text-xs">
-                            <p class="mt-1 text-[11px] text-slate-400">Must be the <strong>REST API Key (App API Key)</strong> under Settings &rarr; Keys &amp; IDs (usually starts with <code>os_v2_app_...</code>). Do not enter the App ID or User Auth Key.</p>
                         </div>
                     </div>
                 </div>
