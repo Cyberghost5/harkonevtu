@@ -362,16 +362,34 @@
                         <input type="text" name="betting_min_amount" value="{{ $s['betting_min_amount'] ?? '100' }}"
                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
                     </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">
-                            Betting Daily Limit <span class="text-slate-400">(₦)</span>
-                        </label>
-                        <input type="text" name="betting_daily_limit" value="{{ $s['betting_daily_limit'] ?? '30000' }}"
-                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
-                    </div>
                 </div>
                 @endif
+            </div>
+
+            {{-- ── Daily Spending Limits ────────────────────────────────── --}}
+            <div class="px-6 py-6">
+                <h4 class="text-xl font-bold text-slate-800 mb-1">Daily Spending Limits</h4>
+                <p class="text-xs text-slate-400 mb-5">Maximum total amount (₦) a user can spend per service within a single day (resets at midnight)</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach([
+                        'airtime_daily_limit'     => ['label' => 'Airtime Daily Limit',     'default' => '100000'],
+                        'data_daily_limit'        => ['label' => 'Data Daily Limit',        'default' => '100000'],
+                        'electricity_daily_limit' => ['label' => 'Electricity Daily Limit', 'default' => '100000'],
+                        'cable_daily_limit'       => ['label' => 'Cable TV Daily Limit',    'default' => '100000'],
+                        'epins_daily_limit'       => ['label' => 'Exam Pins Daily Limit',   'default' => '50000'],
+                        'betting_daily_limit'     => ['label' => 'Betting Daily Limit',     'default' => '30000'],
+                    ] as $limitKey => $limitDef)
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">
+                            {{ $limitDef['label'] }} <span class="text-slate-400">(₦)</span>
+                        </label>
+                        <input type="number" name="{{ $limitKey }}" min="0" step="1"
+                               value="{{ ($s[$limitKey] ?? '') !== '' ? $s[$limitKey] : $limitDef['default'] }}"
+                               placeholder="{{ $limitDef['default'] }}"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30">
+                    </div>
+                    @endforeach
+                </div>
             </div>
 
             {{-- ── Airtime Pricing ──────────────────────────────────────── --}}
