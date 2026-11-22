@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             // LegacyUserSeeder::class,
-            // ExamPinTypeSeeder::class,
+            ExamPinTypeSeeder::class,
             // NewMilleUserSeeder::class,
             VTPassDataSeeder::class,
             PayscribeDataSeeder::class,

@@ -11,8 +11,6 @@ use App\Models\ElectricityDisco;
 use App\Models\ExamPinType;
 use App\Models\ServiceTransaction;
 use App\Models\Wallet;
-use App\Services\EasyaccessService;
-use App\Services\PayscribeService;
 use App\Services\ProviderAlertService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -642,7 +640,10 @@ class BillsApiController extends Controller
         $types = ExamPinType::active()->orderBy('amount', 'asc')->get()->map(fn (ExamPinType $t) => [
             'id'         => $t->id,
             'name'       => $t->name,
-            'code'       => $t->code,
+            'code'       => $t->slug,
+            'slug'       => $t->slug,
+            'amount'     => (float) $t->amount,
+            'price'      => (float) $t->amount,
             'unit_price' => (float) $t->amount,
         ]);
 
@@ -668,8 +669,23 @@ class BillsApiController extends Controller
             ], 503);
         }
 
+        $typeParam = $request->input('exam_type_id') ?? $request->input('exam_type');
+        $examType  = null;
+        if (is_numeric($typeParam)) {
+            $examType = ExamPinType::where('id', (int) $typeParam)->where('is_active', true)->first();
+        } elseif (is_string($typeParam)) {
+            $examType = ExamPinType::where('slug', strtolower(trim($typeParam)))->where('is_active', true)->first();
+        }
+
+        if (!$examType) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'The selected examination body is invalid or currently inactive.',
+                'errors'  => ['exam_type_id' => ['The selected examination body is invalid or inactive.']],
+            ], 422);
+        }
+
         $request->validate([
-            'exam_type_id'    => ['required', 'integer', 'exists:exam_pin_types,id'],
             'quantity'        => ['required', 'integer', 'min:1', 'max:10'],
             'phone'           => ['required', 'string', 'regex:/^(0|\+234)[789][01]\d{8}$/'],
             'pin'             => ['nullable', 'digits:4'],
@@ -695,7 +711,6 @@ class BillsApiController extends Controller
             ], 422);
         }
 
-        $examType = ExamPinType::where('id', $request->exam_type_id)->where('is_active', true)->firstOrFail();
         $quantity = (int) $request->quantity;
         $amount   = (float) ($examType->amount * $quantity);
         $phone    = preg_replace('/^\+234/', '0', $request->phone);
@@ -747,7 +762,18 @@ class BillsApiController extends Controller
         }
 
         // Call API Gateway
-        $api = AppSetting::get('epins_api', 'easyaccess');
+        $api = AppSetting::get('epins_api');
+        if (empty($api)) {
+            if (AppSetting::get('payscribe_secret_key') || config('services.payscribe.secret_key')) {
+                $api = 'payscribe';
+            } elseif (AppSetting::get('vtpass_api_key') || config('services.vtpass.api_key')) {
+                $api = 'vtpass';
+            } elseif (AppSetting::get('easyaccess_api_key') || config('services.easyaccess.token')) {
+                $api = 'easyaccess';
+            } else {
+                $api = 'vtpass';
+            }
+        }
         $apiRes = $this->callExamPinGateway($examType, $quantity, $phone, $reference, $api);
 
         if (!$apiRes['success']) {
@@ -980,16 +1006,15 @@ class BillsApiController extends Controller
         $success = false;
 
         try {
-            $service = app(EasyaccessService::class);
-            $res     = $service->verifyElectricity($disco->easyaccess_code ?? $disco->slug, $meterNumber, $meterType);
-            $data    = is_array($res) ? $res : ['raw' => $res];
-            $success = $res['success'] ?? false;
+            $response = Http::withHeaders($requestHeaders)->timeout(20)->post($endpoint, $payload);
+            $data     = $response->json() ?? [];
+            $success  = isset($data['status']) ? ($data['status'] === 'success' || $data['status'] === true) : (($data['code'] ?? null) === 200);
 
             return [
                 'success'       => $success,
-                'customer_name' => $res['customer_name'] ?? 'VALIDATED CUSTOMER',
-                'address'       => $res['address'] ?? null,
-                'message'       => $res['message'] ?? null,
+                'customer_name' => $data['customer_name'] ?? ($data['name'] ?? 'VALIDATED CUSTOMER'),
+                'address'       => $data['customer_address'] ?? ($data['address'] ?? null),
+                'message'       => $data['message'] ?? null,
             ];
         } catch (\Throwable $e) {
             $data = ['error' => $e->getMessage()];
@@ -1151,8 +1176,24 @@ class BillsApiController extends Controller
         $start = hrtime(true);
         try {
             if ($api === 'easyaccess') {
-                $service  = app(EasyaccessService::class);
-                $res      = $service->payElectricity($disco->easyaccess_id ?? $disco->slug, $meterNumber, $meterType, $amount, $phone, $reference);
+                $endpoint = config('services.easyaccess.base_url') . '/pay-electricity';
+                if ($meterType === 'prepaid') {
+                    $meterTypeRequest = '1';
+                } else {
+                    $meterTypeRequest = '2';
+                }
+                $payload  = [
+                    'company'   => $disco->easyaccess_code ?? ($disco->easyaccess_id ?? $disco->slug),
+                    'metertype' => $meterTypeRequest,
+                    'meterno'   => $meterNumber,
+                    'amount'    => (int) $amount,
+                ];
+                $requestHeaders = [
+                    'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
+                ];
+                $response = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+                $res      = $response->json() ?? [];
+                $success  = isset($res['status']) ? ($res['status'] === 'success' || $res['status'] === true) : (($res['code'] ?? null) === 200);
                 $duration = (int) ((hrtime(true) - $start) / 1e6);
 
                 ApiLog::record([
@@ -1160,18 +1201,18 @@ class BillsApiController extends Controller
                     'service'     => 'electricity',
                     'provider'    => 'easyaccess',
                     'reference'   => $reference,
-                    'endpoint'    => config('services.easyaccess.base_url') . '/pay_electricity',
+                    'endpoint'    => $endpoint,
                     'method'      => 'POST',
                     'payload'     => ['disco' => $disco->slug, 'meter' => $meterNumber, 'amount' => $amount],
                     'response'    => $res,
                     'duration_ms' => $duration,
-                    'success'     => $res['success'] ?? false,
+                    'success'     => $success,
                 ]);
 
                 return [
-                    'success'   => $res['success'] ?? false,
-                    'reference' => $res['reference'] ?? $reference,
-                    'token'     => $res['token'] ?? 'N/A',
+                    'success'   => $success,
+                    'reference' => $res['reference_no'] ?? ($res['reference'] ?? $reference),
+                    'token'     => $res['token'] ?? ($res['pin'] ?? 'N/A'),
                     'units'     => $res['units'] ?? null,
                     'response'  => $res,
                 ];
@@ -1365,15 +1406,14 @@ class BillsApiController extends Controller
         $success = false;
 
         try {
-            $service = app(EasyaccessService::class);
-            $res     = $service->verifyCable($provider->easyaccess_id ?? $provider->slug, $smartcard);
-            $data    = is_array($res) ? $res : ['raw' => $res];
-            $success = $res['success'] ?? false;
+            $response = Http::withHeaders($requestHeaders)->timeout(20)->post($endpoint, $payload);
+            $data     = $response->json() ?? [];
+            $success  = isset($data['status']) ? ($data['status'] === 'success' || $data['status'] === true) : (($data['code'] ?? null) === 200);
 
             return [
                 'success'       => $success,
-                'customer_name' => $res['customer_name'] ?? 'VALIDATED SUBSCRIBER',
-                'message'       => $res['message'] ?? null,
+                'customer_name' => $data['customer_name'] ?? ($data['name'] ?? 'VALIDATED SUBSCRIBER'),
+                'message'       => $data['message'] ?? null,
             ];
         } catch (\Throwable $e) {
             $data = ['error' => $e->getMessage()];
@@ -1531,8 +1571,19 @@ class BillsApiController extends Controller
         $start = hrtime(true);
         try {
             if ($api === 'easyaccess') {
-                $service  = app(EasyaccessService::class);
-                $res      = $service->payCable($provider->easyaccess_id ?? $provider->slug, $plan->easyaccess_id ?? $plan->id, $smartcard, $phone, $reference);
+                $endpoint = config('services.easyaccess.base_url') . '/pay-tv';
+                $payload  = [
+                    'company' => $provider->idForApi('easyaccess'),
+                    'iucno'   => $smartcard,
+                    'package' => $plan->idForApi('easyaccess'),
+                ];
+                $requestHeaders = [
+                    'Authorization' => 'Bearer ' . config('services.easyaccess.token'),
+                    'Cache-Control' => 'no-cache',
+                ];
+                $response = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
+                $res      = $response->json() ?? [];
+                $success  = isset($res['status']) ? ($res['status'] === 'success' || $res['status'] === true) : (($res['code'] ?? null) === 200);
                 $duration = (int) ((hrtime(true) - $start) / 1e6);
 
                 ApiLog::record([
@@ -1540,17 +1591,17 @@ class BillsApiController extends Controller
                     'service'     => 'cable',
                     'provider'    => 'easyaccess',
                     'reference'   => $reference,
-                    'endpoint'    => config('services.easyaccess.base_url') . '/pay_tv',
+                    'endpoint'    => $endpoint,
                     'method'      => 'POST',
                     'payload'     => ['provider' => $provider->slug, 'smartcard' => $smartcard, 'plan' => $plan->name],
                     'response'    => $res,
                     'duration_ms' => $duration,
-                    'success'     => $res['success'] ?? false,
+                    'success'     => $success,
                 ]);
 
                 return [
-                    'success'   => $res['success'] ?? false,
-                    'reference' => $res['reference'] ?? $reference,
+                    'success'   => $success,
+                    'reference' => $res['reference_no'] ?? ($res['reference'] ?? $reference),
                     'response'  => $res,
                 ];
             }
@@ -1706,28 +1757,118 @@ class BillsApiController extends Controller
         $start = hrtime(true);
         try {
             if ($api === 'easyaccess') {
-                $service  = app(EasyaccessService::class);
-                $res      = $service->payExamPin($examType->easyaccess_code ?? $examType->slug, $quantity, $phone, $reference);
+                $baseUrl  = config('services.easyaccess.base_url') ?: AppSetting::get('easyaccess_base_url', 'https://easyaccess.com.ng');
+                $endpoint = rtrim((string) $baseUrl, '/') . '/exam-pins';
+                $payload  = [
+                    'exam_board' => $examType->id,
+                    'no_of_pins' => $quantity,
+                ];
+                $requestHeaders = [
+                    'Authorization' => 'Bearer ' . (config('services.easyaccess.token') ?: AppSetting::get('easyaccess_api_key')),
+                    'Cache-Control' => 'no-cache',
+                ];
+
+                $response        = Http::withHeaders($requestHeaders)->timeout(30)->asForm()->post($endpoint, $payload);
+                $httpStatus      = $response->status();
+                $responseHeaders = $response->headers();
+                $raw             = $response->json();
+                $data            = is_array($raw) ? $raw : ['message' => 'Unknown EasyAccess response'];
+                $rawSuccess      = $data['status'] ?? 'false';
+                $msgCode         = $data['code'] ?? null;
+                $success         = ($rawSuccess === 'true' || $rawSuccess === true || $msgCode === 200);
+                $apiRef          = $data['reference_no'] ?? $reference;
+                $pins            = [];
+
+                if ($success) {
+                    $pins = $this->extractPayscribeExamPins($data['pins'] ?? $data);
+                } else {
+                    $data['message'] = $data['message'] ?? 'EasyAccess exam pin purchase failed.';
+                }
+
                 $duration = (int) ((hrtime(true) - $start) / 1e6);
+                $loggedHeaders = $requestHeaders;
+                $loggedHeaders['Authorization'] = 'Bearer ***';
 
                 ApiLog::record([
-                    'user_id'     => auth()->id(),
-                    'service'     => 'epin',
-                    'provider'    => 'easyaccess',
-                    'reference'   => $reference,
-                    'endpoint'    => config('services.easyaccess.base_url') . '/pay_pin',
-                    'method'      => 'POST',
-                    'payload'     => ['exam' => $examType->slug, 'quantity' => $quantity],
-                    'response'    => $res,
-                    'duration_ms' => $duration,
-                    'success'     => $res['success'] ?? false,
+                    'user_id'          => auth()->id(),
+                    'service'          => 'epin',
+                    'provider'         => 'easyaccess',
+                    'reference'        => $reference,
+                    'endpoint'         => $endpoint,
+                    'method'           => 'POST',
+                    'payload'          => $payload,
+                    'request_headers'  => $loggedHeaders,
+                    'response'         => $data,
+                    'http_status'      => $httpStatus,
+                    'response_headers' => $responseHeaders,
+                    'duration_ms'      => $duration,
+                    'success'          => $success,
                 ]);
 
                 return [
-                    'success'   => $res['success'] ?? false,
-                    'reference' => $res['reference'] ?? $reference,
-                    'tokens'    => $res['tokens'] ?? [],
-                    'response'  => $res,
+                    'success'   => $success,
+                    'reference' => $apiRef,
+                    'tokens'    => $pins,
+                    'pins'      => $pins,
+                    'message'   => $data['message'] ?? ($success ? 'Success' : 'Exam pin purchase failed.'),
+                    'response'  => $data,
+                ];
+            }
+
+            if ($api === 'primebiller') {
+                $endpoint = rtrim((string) config('services.primebiller.base_url'), '/') . '/exam/';
+                $payload  = [
+                    'provider' => $examType->primebiller_provider_id,
+                    'quantity' => $quantity,
+                    'ref'      => $reference,
+                ];
+                $requestHeaders = [
+                    'Authorization' => 'Token ' . (config('services.primebiller.token') ?: AppSetting::get('primebiller_api_key')),
+                    'Cache-Control' => 'no-cache',
+                ];
+
+                $response        = Http::withHeaders($requestHeaders)->timeout(30)->asForm()->post($endpoint, $payload);
+                $httpStatus      = $response->status();
+                $responseHeaders = $response->headers();
+                $raw             = $response->json();
+                $data            = is_array($raw) ? $raw : ['message' => 'Unknown PrimeBiller response'];
+                $success         = (($data['status'] ?? '') === 'success');
+                $apiRef          = $data['reference'] ?? $reference;
+                $pins            = [];
+
+                if ($success) {
+                    $pins = $this->extractPayscribeExamPins($data['pins'] ?? $data);
+                } else {
+                    $data['message'] = $data['message'] ?? 'PrimeBiller exam pin purchase failed.';
+                }
+
+                $duration = (int) ((hrtime(true) - $start) / 1e6);
+                $loggedHeaders = $requestHeaders;
+                $loggedHeaders['Authorization'] = 'Token ***';
+
+                ApiLog::record([
+                    'user_id'          => auth()->id(),
+                    'service'          => 'epin',
+                    'provider'         => 'primebiller',
+                    'reference'        => $reference,
+                    'endpoint'         => $endpoint,
+                    'method'           => 'POST',
+                    'payload'          => $payload,
+                    'request_headers'  => $loggedHeaders,
+                    'response'         => $data,
+                    'http_status'      => $httpStatus,
+                    'response_headers' => $responseHeaders,
+                    'duration_ms'      => $duration,
+                    'success'          => $success,
+                ]);
+
+                return [
+                    'success'   => $success,
+                    'reference' => $apiRef,
+                    'tokens'    => $pins,
+                    'pins'      => $pins,
+                    'message'   => $data['message'] ?? ($success ? 'Success' : 'Exam pin purchase failed.'),
+                    'response'  => $data,
                 ];
             }
 
