@@ -1885,13 +1885,17 @@ class BillsApiController extends Controller
                 }
 
                 $serviceCode = method_exists($examType, 'idForApi') ? $examType->idForApi('payscribe') : ($examType->payscribe_service_id ?? $examType->slug);
-                $endpoint    = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/education/vend';
+                $endpoint    = rtrim(config('services.payscribe.base_url', 'https://api.payscribe.ng/api/v1'), '/') . '/epins/vend';
                 $payload     = [
+                    'id'        => $serviceCode,
                     'service'   => $serviceCode,
-                    'quantity'  => $quantity,
-                    'recipient' => $phone,
-                    'phone'     => $phone,
+                    'qty'       => (int) $quantity,
+                    'quantity'  => (int) $quantity,
                     'ref'       => $reference,
+                    'reference' => $reference,
+                    'phone'     => $phone,
+                    'recipient' => $phone,
+                    'account'   => $phone,
                 ];
 
                 $requestHeaders = [
@@ -1903,35 +1907,47 @@ class BillsApiController extends Controller
                 $response        = Http::withHeaders($requestHeaders)->timeout(30)->post($endpoint, $payload);
                 $httpStatus      = $response->status();
                 $responseHeaders = $response->headers();
-                $data            = $response->json() ?? [];
-                $rawStatus       = $data['status'] ?? null;
-                $success         = $response->successful() && (
+
+                $raw  = $response->json();
+                $data = is_array($raw) ? $raw : [
+                    'status'  => false,
+                    'message' => (is_string($raw) && trim($raw) !== '' ? $raw : ($response->body() ?: 'Service unavailable (HTTP ' . $httpStatus . ')')),
+                ];
+
+                $rawStatus  = $data['status'] ?? null;
+                $statusCode = $data['status_code'] ?? $data['code'] ?? null;
+                $success    = $response->successful() && (
                     $rawStatus === true ||
                     $rawStatus === 'true' ||
                     $rawStatus === 'success' ||
                     $rawStatus === 'process' ||
+                    $statusCode === 200 ||
+                    $statusCode === '200' ||
                     (($data['message']['status'] ?? null) === 'success')
                 );
 
                 $apiRef = $data['data']['trans_id']
                     ?? $data['data']['reference']
                     ?? $data['data']['transaction_id']
+                    ?? $data['data']['ref']
                     ?? $data['details']['transid']
                     ?? $data['details']['transaction_id']
                     ?? $data['message']['details']['transid']
                     ?? $data['message']['transaction_id']
                     ?? $data['transaction_id']
+                    ?? $data['trans_id']
                     ?? $data['transid']
+                    ?? $data['reference']
                     ?? $reference;
 
                 $pins = [];
                 if ($success) {
                     $pins = $this->extractPayscribeExamPins($data);
                 } else {
-                    $errMsg = is_array($data['message'] ?? null)
+                    $rawMsg = is_array($data['message'] ?? null)
                         ? ($data['message']['description'] ?? $data['message']['message'] ?? $data['description'] ?? 'Payscribe exam pin purchase failed.')
                         : ($data['description'] ?? $data['message'] ?? 'Payscribe exam pin purchase failed.');
-                    $data['message'] = $errMsg;
+                    $data['message'] = is_array($rawMsg) ? json_encode($rawMsg) : (string) $rawMsg;
                 }
 
                 $duration = (int) ((hrtime(true) - $start) / 1e6);
@@ -2066,6 +2082,9 @@ class BillsApiController extends Controller
             ?? $data['data']['pins']
             ?? $data['details']['cards']
             ?? $data['details']['tokens']
+            ?? $data['details']['pins']
+            ?? $data['data']['details']['tokens']
+            ?? $data['data']['details']['pins']
             ?? [];
 
         if (is_array($candidates) && !empty($candidates)) {
@@ -2080,6 +2099,12 @@ class BillsApiController extends Controller
                     if (str_contains($item, '<=>')) {
                         [$p, $s] = explode('<=>', $item, 2);
                         $pins[] = ['pin' => trim($p), 'serial' => trim($s)];
+                    } elseif (preg_match('/(?:pin|token)[:\s]+([A-Za-z0-9_-]+)/i', $item, $pinMatch)) {
+                        $serial = null;
+                        if (preg_match('/(?:serial|serial\s*no)[:\s]+([A-Za-z0-9_-]+)/i', $item, $serialMatch)) {
+                            $serial = $serialMatch[1];
+                        }
+                        $pins[] = ['pin' => $pinMatch[1], 'serial' => $serial];
                     } else {
                         $pins[] = ['pin' => trim($item), 'serial' => null];
                     }
@@ -2090,12 +2115,14 @@ class BillsApiController extends Controller
         if (empty($pins)) {
             $pool = is_array($data['data'] ?? null) ? array_merge($data, $data['data']) : $data;
             foreach ($pool as $k => $v) {
-                if (preg_match('/^(pin|token)\d*$/i', (string) $k) && is_string($v) && trim($v) !== '') {
-                    if (str_contains($v, '<=>')) {
-                        [$p, $s] = explode('<=>', $v, 2);
+                if (preg_match('/^(pin|token)\d*$/i', (string) $k) && (is_string($v) || is_numeric($v)) && trim((string) $v) !== '') {
+                    $strV = (string) $v;
+                    if (str_contains($strV, '<=>')) {
+                        [$p, $s] = explode('<=>', $strV, 2);
                         $pins[] = ['pin' => trim($p), 'serial' => trim($s)];
                     } else {
-                        $pins[] = ['pin' => trim($v), 'serial' => null];
+                        $serial = $pool['serial'] ?? $pool['serial_no'] ?? $pool['serialnumber'] ?? null;
+                        $pins[] = ['pin' => trim($strV), 'serial' => $serial ? (string) $serial : null];
                     }
                 }
             }

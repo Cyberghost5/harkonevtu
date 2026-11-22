@@ -68,7 +68,7 @@ class PayscribeExamPinIntegrationTest extends TestCase
         AppSetting::set('epins_api', 'payscribe');
 
         Http::fake([
-            'https://api.payscribe.ng/api/v1/education/vend' => Http::response([
+            'https://api.payscribe.ng/api/v1/epins/vend' => Http::response([
                 'status'  => true,
                 'message' => 'Transaction Successful',
                 'data'    => [
@@ -124,9 +124,9 @@ class PayscribeExamPinIntegrationTest extends TestCase
         ]);
 
         Http::assertSent(function (Request $request) {
-            return $request->url() === 'https://api.payscribe.ng/api/v1/education/vend'
-                && $request['service'] === 'waec'
-                && $request['quantity'] === 2;
+            return $request->url() === 'https://api.payscribe.ng/api/v1/epins/vend'
+                && ($request['service'] === 'waec' || $request['id'] === 'waec')
+                && ($request['quantity'] === 2 || $request['qty'] === 2);
         });
     }
 
@@ -135,7 +135,7 @@ class PayscribeExamPinIntegrationTest extends TestCase
         AppSetting::set('epins_api', 'payscribe');
 
         Http::fake([
-            'https://api.payscribe.ng/api/v1/education/vend' => Http::response([
+            'https://api.payscribe.ng/api/v1/epins/vend' => Http::response([
                 'status'  => true,
                 'message' => 'Transaction Successful',
                 'details' => [
@@ -183,7 +183,7 @@ class PayscribeExamPinIntegrationTest extends TestCase
         AppSetting::set('epins_api', 'payscribe');
 
         Http::fake([
-            'https://api.payscribe.ng/api/v1/education/vend' => Http::response([
+            'https://api.payscribe.ng/api/v1/epins/vend' => Http::response([
                 'status'      => false,
                 'description' => 'Pin stock exhausted',
             ], 400),
@@ -218,7 +218,7 @@ class PayscribeExamPinIntegrationTest extends TestCase
         AppSetting::set('epins_api', 'payscribe');
 
         Http::fake([
-            'https://api.payscribe.ng/api/v1/education/vend' => Http::response([
+            'https://api.payscribe.ng/api/v1/epins/vend' => Http::response([
                 'status'  => false,
                 'message' => 'Provider error',
             ], 200),
@@ -238,6 +238,81 @@ class PayscribeExamPinIntegrationTest extends TestCase
 
         $this->user->wallet->refresh();
         $this->assertEquals(10000.00, $this->user->wallet->balance);
+    }
+
+    public function test_api_exam_pin_handles_non_json_string_response_without_type_error(): void
+    {
+        AppSetting::set('epins_api', 'payscribe');
+
+        Http::fake([
+            'https://api.payscribe.ng/api/v1/epins/vend' => Http::response('', 500, ['Content-Type' => 'text/html']),
+        ]);
+
+        Sanctum::actingAs($this->user);
+
+        $response = $this->postJson('/api/v1/bills/exam-pins/purchase', [
+            'exam_type_id'    => $this->neco->id,
+            'quantity'        => 1,
+            'phone'           => '08091112233',
+            'transaction_pin' => '1234',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('status', false);
+
+        // Wallet balance refunded cleanly
+        $this->user->wallet->refresh();
+        $this->assertEquals(10000.00, $this->user->wallet->balance);
+
+        // Service transaction recorded as refunded
+        $this->assertDatabaseHas('service_transactions', [
+            'user_id'      => $this->user->id,
+            'service_type' => 'epin',
+            'provider'     => 'neco',
+            'status'       => 'refunded',
+        ]);
+
+        // API log recorded with failure, no PHP crash
+        $this->assertDatabaseHas('api_logs', [
+            'service'  => 'epin',
+            'provider' => 'payscribe',
+            'success'  => false,
+        ]);
+    }
+
+    public function test_api_exam_pin_extracts_pins_from_payscribe_pins_array(): void
+    {
+        AppSetting::set('epins_api', 'payscribe');
+
+        Http::fake([
+            'https://api.payscribe.ng/api/v1/epins/vend' => Http::response([
+                'status'      => true,
+                'description' => 'Successful',
+                'data'        => [
+                    'reference' => 'PS-EPIN-NECO-777',
+                    'pins'      => [
+                        [
+                            'pin'    => 'PIN-8877665544',
+                            'serial' => 'SER-112233',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        Sanctum::actingAs($this->user);
+
+        $response = $this->postJson('/api/v1/bills/exam-pins/purchase', [
+            'exam_type_id'    => $this->neco->id,
+            'quantity'        => 1,
+            'phone'           => '08091112233',
+            'transaction_pin' => '1234',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('status', true);
+        $response->assertJsonPath('data.tokens.0.pin', 'PIN-8877665544');
+        $response->assertJsonPath('data.tokens.0.serial', 'SER-112233');
     }
 
     public function test_admin_api_settings_includes_payscribe_in_epins_providers(): void
