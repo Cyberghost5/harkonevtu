@@ -223,7 +223,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">WhatsApp Community / Group Link</label>
                         <input type="url" name="whatsapp_group_link" value="{{ $s['whatsapp_group_link'] ?? '' }}"
@@ -235,6 +235,39 @@
                         <input type="url" name="telegram_channel_link" value="{{ $s['telegram_channel_link'] ?? '' }}"
                                placeholder="https://t.me/..."
                                class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.61c.28.15.6.18.92.08l10.4-5.99-2.32-2.33-9 8.24zM.54 1.55C.2 1.88 0 2.4 0 3.05v17.88c0 .65.2 1.18.55 1.51l.08.07 10.02-10.02v-.24L.62 1.49l-.08.06zM20.19 10.6l-2.85-1.65-2.54 2.54 2.54 2.55 2.87-1.65c.82-.47.82-1.32-.02-1.79zM3.18.39l9 8.24 2.32-2.32L4.1.31c-.36-.2-.7-.18-.92.08z"/></svg>
+                            Google Play Store Link
+                        </label>
+                        <input type="url" name="play_store_url" value="{{ $s['play_store_url'] ?? '' }}"
+                               placeholder="https://play.google.com/store/apps/details?id=..."
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                        <p class="text-xs text-slate-500 mt-1">Direct link to your app on the Google Play Store.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-slate-800 dark:text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.76 1.05-1.81.93-2.87-.9.04-2 .6-2.65 1.36-.57.65-1.07 1.72-.94 2.76 1.01.08 2.04-.49 2.66-1.25z"/></svg>
+                            Apple App Store Link
+                        </label>
+                        <input type="url" name="app_store_url" value="{{ $s['app_store_url'] ?? '' }}"
+                               placeholder="https://apps.apple.com/app/..."
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                        <p class="text-xs text-slate-500 mt-1">Direct link to your app on the Apple App Store.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Direct APK Download Link
+                        </label>
+                        <input type="url" name="apk_download_url" value="{{ $s['apk_download_url'] ?? '' }}"
+                               placeholder="https://yourdomain.com/downloads/app.apk"
+                               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-vtu-primary/30 transition-colors">
+                        <p class="text-xs text-slate-500 mt-1">Optional direct download link for users installing Android APK.</p>
                     </div>
                 </div>
             </div>

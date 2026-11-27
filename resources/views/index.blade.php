@@ -546,20 +546,40 @@
                         Our app is currently available for download for both Android and iOS devices. Users can get the app on their various app store.
                     </p>
                     {{-- App store badges --}}
-                    <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
-                        <a href="#" class="flex items-center gap-3 bg-black/30 hover:bg-black/50 border border-white/20 text-white px-5 py-3 rounded-xl transition-colors">
-                            <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.42c1.39.07 2.35.82 3.16.82.82 0 2.35-1.01 3.96-.86 1.53.12 2.67.75 3.4 1.97-3.54 2.1-2.95 7.09.48 8.93zm-3.23-15.6c-3.29.37-3.72 3.54-3.72 3.54 3.29-.08 3.72-3.54 3.72-3.54z"/></svg>
+                    @php
+                        $playUrl = !empty($appPlayStoreUrl) ? $appPlayStoreUrl : \App\Models\AppSetting::get('play_store_url', '');
+                        $iosUrl  = !empty($appStoreUrl) ? $appStoreUrl : \App\Models\AppSetting::get('app_store_url', '');
+                        $apkUrl  = !empty($appApkUrl) ? $appApkUrl : \App\Models\AppSetting::get('apk_download_url', '');
+                    @endphp
+                    <div class="flex flex-wrap gap-4 justify-center lg:justify-start items-center">
+                        <a href="{{ $iosUrl ?: route('app.download') }}" {{ $iosUrl ? 'target="_blank" rel="noopener noreferrer"' : '' }} class="flex items-center gap-3 bg-black/30 hover:bg-black/50 border border-white/20 text-white px-5 py-3 rounded-xl transition-all duration-200 hover:scale-105 shadow-md">
+                            <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.76 1.05-1.81.93-2.87-.9.04-2 .6-2.65 1.36-.57.65-1.07 1.72-.94 2.76 1.01.08 2.04-.49 2.66-1.25z"/></svg>
                             <div class="text-left">
                                 <div class="text-[10px] text-white/70 leading-none">Download on the</div>
                                 <div class="text-sm font-bold leading-tight">App Store</div>
                             </div>
                         </a>
-                        <a href="#" class="flex items-center gap-3 bg-black/30 hover:bg-black/50 border border-white/20 text-white px-5 py-3 rounded-xl transition-colors">
+                        <a href="{{ $playUrl ?: route('app.download') }}" {{ $playUrl ? 'target="_blank" rel="noopener noreferrer"' : '' }} class="flex items-center gap-3 bg-black/30 hover:bg-black/50 border border-white/20 text-white px-5 py-3 rounded-xl transition-all duration-200 hover:scale-105 shadow-md">
                             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.61c.28.15.6.18.92.08l10.4-5.99-2.32-2.33-9 8.24zM.54 1.55C.2 1.88 0 2.4 0 3.05v17.88c0 .65.2 1.18.55 1.51l.08.07 10.02-10.02v-.24L.62 1.49l-.08.06zM20.19 10.6l-2.85-1.65-2.54 2.54 2.54 2.55 2.87-1.65c.82-.47.82-1.32-.02-1.79zM3.18.39l9 8.24 2.32-2.32L4.1.31c-.36-.2-.7-.18-.92.08z"/></svg>
                             <div class="text-left">
                                 <div class="text-[10px] text-white/70 leading-none">Get it on</div>
                                 <div class="text-sm font-bold leading-tight">Google Play</div>
                             </div>
+                        </a>
+                        @if(!empty($apkUrl))
+                        <a href="{{ $apkUrl }}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 bg-black/30 hover:bg-black/50 border border-white/20 text-white px-5 py-3 rounded-xl transition-all duration-200 hover:scale-105 shadow-md">
+                            <svg class="h-7 w-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <div class="text-left">
+                                <div class="text-[10px] text-white/70 leading-none">Direct Download</div>
+                                <div class="text-sm font-bold leading-tight">Android APK</div>
+                            </div>
+                        </a>
+                        @endif
+                    </div>
+                    <div class="pt-1">
+                        <a href="{{ route('app.download') }}" class="inline-flex items-center gap-2 text-xs font-semibold text-white/90 hover:text-white underline underline-offset-4 decoration-white/40 hover:decoration-white transition-colors">
+                            <span>View installation guide & all download options</span>
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                         </a>
                     </div>
                 </div>

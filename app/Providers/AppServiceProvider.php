@@ -55,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
                     'paystack_secret_key', 'paystack_public_key',
                     'flutterwave_secret_key', 'flutterwave_public_key', 'flutterwave_encryption_key', 'flutterwave_hash',
                     'mail_host', 'mail_username', 'mail_password', 'mail_port', 'mail_from_address', 'mail_reply_to',
+                    'play_store_url', 'app_store_url', 'apk_download_url',
                 ]);
 
                 $rawPsSec = !empty($s['payscribe_secret_key']) ? $s['payscribe_secret_key'] : config('services.payscribe.secret_key');
@@ -147,6 +148,9 @@ class AppServiceProvider extends ServiceProvider
         View::share('siteLogo1',          $s['logo1']            ?? '');
         View::share('siteLogo2',          $s['logo2']            ?? '');
         View::share('landingPageLayout', $s['landing_page_layout'] ?? 'vtu_default');
+        View::share('appPlayStoreUrl',    $s['play_store_url'] ?? '');
+        View::share('appStoreUrl',        $s['app_store_url'] ?? '');
+        View::share('appApkUrl',          $s['apk_download_url'] ?? '');
         View::share('themeColor',         $c['primary']);
         View::share('themeSecondary',     $c['secondary']);
         View::share('themeDark',          $c['dark']);

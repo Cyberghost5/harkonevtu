@@ -150,9 +150,10 @@
                         <a href="#contact" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-vtu-primary transition-colors py-2">Contact</a>
                     @else
                         <a href="{{ url('/') }}" class="text-sm font-medium hover:text-vtu-primary transition-colors py-2 {{ Request::is('/') ? 'text-vtu-primary border-b-2 border-vtu-primary' : 'text-slate-600 dark:text-slate-300' }}">Home</a>
-                        <a href="#services" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-vtu-primary transition-colors py-2">Services</a>
-                        <a href="#pricing" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-vtu-primary transition-colors py-2">Pricing</a>
-                        <a href="#about" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-vtu-primary transition-colors py-2">About</a>
+                        <a href="{{ Request::is('/') ? '#services' : url('/#services') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-vtu-primary transition-colors py-2">Services</a>
+                        <a href="{{ Request::is('/') ? '#pricing' : url('/#pricing') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-vtu-primary transition-colors py-2">Pricing</a>
+                        <a href="{{ Request::is('/') ? '#about' : url('/#about') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-vtu-primary transition-colors py-2">About</a>
+                        <a href="{{ route('app.download') }}" class="text-sm font-medium hover:text-vtu-primary transition-colors py-2 {{ Request::is('download') ? 'text-vtu-primary border-b-2 border-vtu-primary' : 'text-slate-600 dark:text-slate-300' }}">Download App</a>
                     @endif
                 </nav>
 
@@ -207,9 +208,10 @@
                 <a href="#contact" class="block px-3 py-2 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-vtu-primary">Contact</a>
             @else
                 <a href="{{ url('/') }}" class="block px-3 py-2 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-vtu-primary">Home</a>
-                <a href="#services" class="block px-3 py-2 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-vtu-primary">Services</a>
-                <a href="#pricing" class="block px-3 py-2 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-vtu-primary">Pricing</a>
-                <a href="#about" class="block px-3 py-2 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-vtu-primary">About</a>
+                <a href="{{ Request::is('/') ? '#services' : url('/#services') }}" class="block px-3 py-2 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-vtu-primary">Services</a>
+                <a href="{{ Request::is('/') ? '#pricing' : url('/#pricing') }}" class="block px-3 py-2 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-vtu-primary">Pricing</a>
+                <a href="{{ Request::is('/') ? '#about' : url('/#about') }}" class="block px-3 py-2 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-vtu-primary">About</a>
+                <a href="{{ route('app.download') }}" class="block px-3 py-2 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-vtu-primary">Download App</a>
             @endif
             <hr class="border-slate-100 dark:border-slate-800 my-2">
             @auth
@@ -331,6 +333,7 @@
                     <div class="col-span-1">
                         <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Help & Support</h3>
                         <ul class="space-y-2 text-sm">
+                            <li><a href="{{ route('app.download') }}" class="hover:text-white transition-colors">Download App</a></li>
                             <li><a href="#" class="hover:text-white transition-colors">Contact Us</a></li>
                             <li><a href="#" class="hover:text-white transition-colors">FAQs</a></li>
                             <li><a href="{{ route('privacy-policy') }}" class="hover:text-white transition-colors">Privacy Policy</a></li>

@@ -46,6 +46,7 @@ Route::get('/api/docs/postman', [\App\Http\Controllers\ApiDocController::class, 
 
 Route::post('/contact/send', [SupportController::class, 'send'])->name('contact.send');
 
+Route::view('/download', 'download')->name('app.download');
 Route::view('/privacy-policy', 'privacy')->name('privacy-policy');
 Route::view('/terms-and-conditions', 'terms-conditions')->name('terms-conditions');
 Route::view('/terms-of-service', 'terms-of-service')->name('terms-of-service');

@@ -1264,6 +1264,9 @@ class ExtraApiController extends Controller
                 'maintenance_mode'     => AppSetting::get('app_maintenance_mode', '0') === '1',
                 'maintenance_message'  => AppSetting::get('app_maintenance_message', 'Platform is under routine maintenance. Please check back shortly.'),
                 'session_idle_timeout' => (int) AppSetting::get('session_idle_timeout', 5),
+                'play_store_url'       => AppSetting::get('play_store_url', ''),
+                'app_store_url'        => AppSetting::get('app_store_url', ''),
+                'apk_download_url'     => AppSetting::get('apk_download_url', ''),
                 
                 'services' => [
                     'airtime'                => AppSetting::get('service_airtime', '1') === '1',
