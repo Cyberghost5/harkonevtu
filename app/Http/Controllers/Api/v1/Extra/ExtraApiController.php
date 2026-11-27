@@ -1261,8 +1261,9 @@ class ExtraApiController extends Controller
                 'min_version'         => $minVersion,
                 'force_update'        => $isForceUpdate,
                 'is_update_available' => $isUpdateAvailable,
-                'maintenance_mode'    => AppSetting::get('app_maintenance_mode', '0') === '1',
-                'maintenance_message' => AppSetting::get('app_maintenance_message', 'Platform is under routine maintenance. Please check back shortly.'),
+                'maintenance_mode'     => AppSetting::get('app_maintenance_mode', '0') === '1',
+                'maintenance_message'  => AppSetting::get('app_maintenance_message', 'Platform is under routine maintenance. Please check back shortly.'),
+                'session_idle_timeout' => (int) AppSetting::get('session_idle_timeout', 5),
                 
                 'services' => [
                     'airtime'                => AppSetting::get('service_airtime', '1') === '1',

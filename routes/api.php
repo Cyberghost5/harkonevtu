@@ -43,6 +43,7 @@ Route::prefix('v1')->group(function () {
         Route::put('/profile',            [\App\Http\Controllers\Api\v1\User\UserController::class, 'updateProfile']);
         Route::post('/profile',           [\App\Http\Controllers\Api\v1\User\UserController::class, 'updateProfile']);
         Route::put('/password',           [\App\Http\Controllers\Api\v1\User\UserController::class, 'updatePassword']);
+        Route::post('/unlock',            [\App\Http\Controllers\Api\v1\User\UserController::class, 'unlock']);
         Route::put('/pin',                [\App\Http\Controllers\Api\v1\User\UserController::class, 'updatePin']);
         Route::post('/pin/verify',        [\App\Http\Controllers\Api\v1\User\UserController::class, 'verifyPin']);
         Route::post('/pin/reset-request', [\App\Http\Controllers\Api\v1\User\UserController::class, 'requestPinReset']);
@@ -88,8 +89,21 @@ Route::prefix('v1')->group(function () {
 
         // Exam Pins
         Route::get('/exam-pins/types',             [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'examTypes']);
+        Route::get('/exam-pins',                   [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'examTypes']);
         Route::post('/exam-pins/purchase',         [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'purchaseExamPin']);
+        Route::post('/exam-pins/buy',              [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'purchaseExamPin']);
+        Route::post('/exam-pins',                  [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'purchaseExamPin']);
         Route::get('/exam-pins/history',          [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'examPinHistory']);
+    });
+
+    // ── Exam Pins Services Direct Endpoints (Supports /api/v1/exam-pins/*) ────
+    Route::prefix('exam-pins')->middleware(['auth:sanctum', \App\Http\Middleware\EnsureVerified::class])->group(function () {
+        Route::get('/types',                       [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'examTypes']);
+        Route::get('/',                            [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'examTypes']);
+        Route::post('/purchase',                   [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'purchaseExamPin']);
+        Route::post('/buy',                        [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'purchaseExamPin']);
+        Route::post('/',                           [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'purchaseExamPin']);
+        Route::get('/history',                     [\App\Http\Controllers\Api\v1\Bills\BillsApiController::class, 'examPinHistory']);
     });
 
     // ── Wallet & Payment Gateway Endpoints (Milestone 5) ──────────────────────

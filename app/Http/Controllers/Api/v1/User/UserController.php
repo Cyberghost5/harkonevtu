@@ -125,6 +125,30 @@ class UserController extends Controller
     }
 
     /**
+     * Verify user password to unlock locked session.
+     * POST /api/v1/user/unlock
+     */
+    public function unlock(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'password' => ['required', 'string'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->jsonResponse(false, 'Password is required.', null, 422, $validator->errors());
+        }
+
+        $user = $request->user();
+        if (!Hash::check($request->password, $user->password)) {
+            return $this->jsonResponse(false, 'Incorrect password. Please try again.', null, 400);
+        }
+
+        return $this->jsonResponse(true, 'Session unlocked successfully.', [
+            'user' => $user->fresh('wallet'),
+        ]);
+    }
+
+    /**
      * Set or Update 4-digit Transaction PIN.
      * PUT /api/v1/user/pin
      */

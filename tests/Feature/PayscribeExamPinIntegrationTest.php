@@ -315,6 +315,57 @@ class PayscribeExamPinIntegrationTest extends TestCase
         $response->assertJsonPath('data.tokens.0.serial', 'SER-112233');
     }
 
+    public function test_api_exam_pin_purchase_via_direct_endpoint_alias(): void
+    {
+        AppSetting::set('epins_api', 'payscribe');
+
+        Http::fake([
+            'https://api.payscribe.ng/api/v1/epins/vend' => Http::response([
+                'status'      => true,
+                'description' => 'Successful',
+                'data'        => [
+                    'reference' => 'PS-EPIN-DIRECT-001',
+                    'pins'      => [
+                        [
+                            'pin'    => 'DIRECT-PIN-1234',
+                            'serial' => 'DIRECT-SER-5678',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        Sanctum::actingAs($this->user);
+
+        // Test POST /api/v1/exam-pins/purchase (direct alias without /bills/)
+        $response = $this->postJson('/api/v1/exam-pins/purchase', [
+            'exam_type_id'    => $this->neco->id,
+            'quantity'        => 1,
+            'phone'           => '08091112233',
+            'transaction_pin' => '1234',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('status', true);
+        $response->assertJsonPath('data.api_reference', 'PS-EPIN-DIRECT-001');
+        $response->assertJsonPath('data.tokens.0.pin', 'DIRECT-PIN-1234');
+    }
+
+    public function test_api_exam_pin_types_direct_endpoint_alias(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        // Test GET /api/v1/exam-pins/types
+        $resTypes = $this->getJson('/api/v1/exam-pins/types');
+        $resTypes->assertStatus(200);
+        $resTypes->assertJsonPath('status', true);
+
+        // Test GET /api/v1/exam-pins
+        $resBase = $this->getJson('/api/v1/exam-pins');
+        $resBase->assertStatus(200);
+        $resBase->assertJsonPath('status', true);
+    }
+
     public function test_admin_api_settings_includes_payscribe_in_epins_providers(): void
     {
         $admin = User::factory()->create([
